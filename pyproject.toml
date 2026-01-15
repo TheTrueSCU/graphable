@@ -1,26 +1,21 @@
 [project]
-name = "topology"
+name = "graphable"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
+authors = [
+    { name = "Richard West", email = "dopplereffect.us@gmail.com" }
+]
 requires-python = ">=3.13"
-dependencies = [
-    "emoji>=2.15.0",
-    "graphable",
-    "rich>=14.2.0",
-]
+dependencies = []
 
-[tool.uv.workspace]
-members = [
-    "graphable",
-]
-
-[tool.uv.sources]
-graphable = { workspace = true }
+[build-system]
+requires = ["uv_build>=0.9.17,<0.10.0"]
+build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
     "pytest>=9.0.2",
     "ruff>=0.14.11",
-    "ty>=0.0.11",
+    "ty>=0.0.12",
 ]
