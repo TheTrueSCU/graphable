@@ -36,11 +36,16 @@ class Graph[T: Graphable[Any, Any]]:
         self._nodes: set[T] = initial if initial else set[T]()
         self._topological_order: list[T] | None = None
 
-    def add_node(self, node: T) -> None:
+    def add_node(self, node: T) -> bool:
+        if node in self._nodes:
+            return False
+
         self._nodes.add(node)
 
         if self._topological_order is not None:
             self._topological_order = None
+
+        return True
 
     @property
     def sinks(self) -> list[T]:
