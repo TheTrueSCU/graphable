@@ -1,13 +1,21 @@
 [project]
 name = "graphable"
 version = "0.1.0"
-description = "Add your description here"
+description = "A lightweight, type-safe library for building, managing, and visualizing dependency graphs."
 readme = "README.md"
 authors = [
     { name = "Richard West", email = "dopplereffect.us@gmail.com" }
 ]
 requires-python = ">=3.13"
 dependencies = []
+keywords = ["graph", "dependency-graph", "topological-sort", "mermaid", "visualization"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 
 [build-system]
 requires = ["uv_build>=0.9.17,<0.10.0"]
@@ -15,7 +23,21 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "furo>=2025.12.19",
     "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+    "pytest-gitignore>=1.3",
+    "pytest-html-plus>=0.4.9",
+    "pytest-isort>=4.0.0",
+    "pytest-mock>=3.15.1",
+    "pytest-randomly>=4.0.1",
+    "pytest-sugar>=1.1.1",
+    "pytest-timeout>=2.4.0",
+    "pytest-xdist>=3.8.0",
     "ruff>=0.14.11",
+    "sphinx>=9.1.0",
+    "sphinx-autodoc-typehints>=3.6.2",
+    "starlette>=0.52.1",
     "ty>=0.0.12",
+    "uvicorn>=0.40.0",
 ]

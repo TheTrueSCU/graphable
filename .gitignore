@@ -6,11 +6,24 @@ dist/
 wheels/
 *.egg-info
 
-# Virtual environments
-.venv
+# QA files
+.coverage
+.pytest_cache/
+.pytest_worker_jsons/
+.ruff_cache/
+final_report.json
+htmlcov/
+htmlrep/
+plus_metadata.json
+report_output/
+screenshots/
 
-# VS Cod[e|ium]
+# Virtual environments
+.venv/
+
+# VS Code/Codium settings
 .vscode
 
 # temp files
+tmp/
 *.swp

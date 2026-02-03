@@ -1,0 +1,48 @@
+--- Topological Order ---
+- Postgres (Tags: persistence)
+- Redis (Tags: ephemeral)
+- FastAPI (Tags: backend)
+- React (Tags: frontend)
+- Celery (Tags: backend)
+
+--- Text Tree (Sinks to Sources) ---
+React
+└─ FastAPI
+   ├─ Redis
+   └─ Postgres
+Celery
+├─ Postgres
+└─ FastAPI
+   ├─ Redis
+   └─ Postgres
+
+--- Mermaid Definition ---
+flowchart TD
+Postgres --> Celery
+Postgres --> FastAPI
+Redis --> FastAPI
+FastAPI --> Celery
+FastAPI --> React
+React
+Celery
+
+--- Graphviz DOT ---
+digraph G {
+    rankdir="LR";
+    nodesep="0.5";
+    node [shape="rounded", style="filled", fontname="Arial"];
+    "Postgres" [label="Postgres", fillcolor="lightgrey"];
+    "Postgres" -> "Celery";
+    "Postgres" -> "FastAPI";
+    "Redis" [label="Redis", fillcolor="lightgrey"];
+    "Redis" -> "FastAPI";
+    "FastAPI" [label="FastAPI", fillcolor="lightblue"];
+    "FastAPI" -> "Celery";
+    "FastAPI" -> "React";
+    "React" [label="React", fillcolor="lightgreen"];
+    "Celery" [label="Celery", fillcolor="lightblue"];
+}
+
+--- Generating SVGs in docs/_static/examples/ ---
+Successfully generated: docs/_static/examples/topology_mermaid.svg
+Successfully generated: docs/_static/examples/topology_graphviz.svg

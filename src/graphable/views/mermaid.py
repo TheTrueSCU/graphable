@@ -1,16 +1,18 @@
 from atexit import register as on_script_exit
 from dataclasses import dataclass
 from functools import cache
+from logging import getLogger
 from pathlib import Path
 from shutil import which
 from string import Template
-from subprocess import CalledProcessError, PIPE, run
+from subprocess import PIPE, CalledProcessError, run
 from tempfile import NamedTemporaryFile
 from typing import Callable
 
 from ..graph import Graph
 from ..graphable import Graphable
 
+logger = getLogger(__name__)
 
 _MERMAID_CONFIG_JSON: str = '{ "htmlLabels": false }'
 _MMDC_SCRIPT_TEMPLATE: Template = Template("""
@@ -22,6 +24,19 @@ _PUPPETEER_CONFIG_JSON: str = '{ "args": [ "--no-sandbox" ] }'
 
 @dataclass
 class MermaidStylingConfig:
+    """
+    Configuration for customizing Mermaid diagram generation.
+
+    Attributes:
+        node_ref_fnc: Function to generate the node identifier (reference).
+        node_text_fnc: Function to generate the node label text.
+        node_style_fnc: Function to generate specific style for a node (or None).
+        node_style_default: Default style string for nodes (or None).
+        link_text_fnc: Function to generate label for links between nodes.
+        link_style_fnc: Function to generate style for links (or None).
+        link_style_default: Default style string for links (or None).
+    """
+
     node_ref_fnc: Callable[[Graphable], str] = lambda n: n.reference
     node_text_fnc: Callable[[Graphable], str] = lambda n: n.reference
     node_style_fnc: Callable[[Graphable], str] | None = None
@@ -32,18 +47,44 @@ class MermaidStylingConfig:
 
 
 def _check_mmdc_on_path() -> None:
+    """Check if 'mmdc' executable is available in the system path."""
     if which("mmdc") is None:
+        logger.error("mmdc not found on PATH.")
         raise FileNotFoundError("mmdc is required but not available on $PATH")
 
 
+def _cleanup_on_exit(path: Path) -> None:
+    """
+    Remove a temporary file if it still exists at script exit.
+
+    Args:
+        path (Path): The path to the file to remove.
+    """
+    if path.exists():
+        logger.debug(f"Cleaning up temporary file: {path}")
+        path.unlink()
+
+
 def _create_mmdc_script(mmdc_script_content: str) -> Path:
+    """Create a temporary shell script for executing mmdc."""
     with NamedTemporaryFile(delete=False, mode="w+", suffix=".sh") as f:
         f.write(mmdc_script_content)
         mmdc_script: Path = Path(f.name)
+    logger.debug(f"Created temporary mmdc script: {mmdc_script}")
     return mmdc_script
 
 
 def create_mmdc_script_content(source: Path, output: Path) -> str:
+    """
+    Generate the bash script content to run mmdc.
+
+    Args:
+        source (Path): Path to the source mermaid file.
+        output (Path): Path to the output file.
+
+    Returns:
+        str: The script content.
+    """
     mmdc_script_content: str = _MMDC_SCRIPT_TEMPLATE.substitute(
         mermaid_config=_write_mermaid_config(),
         output=output,
@@ -57,6 +98,16 @@ def create_mmdc_script_content(source: Path, output: Path) -> str:
 def create_topology_mermaid_mmd(
     graph: Graph, config: MermaidStylingConfig | None = None
 ) -> str:
+    """
+    Generate Mermaid flowchart definition from a Graph.
+
+    Args:
+        graph (Graph): The graph to convert.
+        config (MermaidStylingConfig | None): Styling configuration.
+
+    Returns:
+        str: The mermaid graph definition string.
+    """
     config = config or MermaidStylingConfig()
 
     def link_style(node: Graphable, subnode: Graphable) -> str | None:
@@ -93,6 +144,15 @@ def create_topology_mermaid_mmd(
 
 
 def _execute_build_script(build_script: Path) -> bool:
+    """
+    Execute the build script.
+
+    Args:
+        build_script (Path): Path to the script.
+
+    Returns:
+        bool: True if execution succeeded, False otherwise.
+    """
     try:
         run(
             ["/bin/env", "bash", build_script],
@@ -102,16 +162,25 @@ def _execute_build_script(build_script: Path) -> bool:
             text=True,
         )
         return True
-    except CalledProcessError:
-        print(f"error executing {build_script}")
+    except CalledProcessError as e:
+        logger.error(f"Error executing {build_script}: {e.stderr}")
     except FileNotFoundError:
-        print("could not execute script")
+        logger.error("Could not execute script: file not found.")
     return False
 
 
 def export_topology_mermaid_mmd(
     graph: Graph, output: Path, config: MermaidStylingConfig | None = None
 ) -> None:
+    """
+    Export the graph to a Mermaid .mmd file.
+
+    Args:
+        graph (Graph): The graph to export.
+        output (Path): The output file path.
+        config (MermaidStylingConfig | None): Styling configuration.
+    """
+    logger.info(f"Exporting mermaid mmd to: {output}")
     with open(output, "w+") as f:
         f.write(create_topology_mermaid_mmd(graph, config))
 
@@ -119,6 +188,15 @@ def export_topology_mermaid_mmd(
 def export_topology_mermaid_svg(
     graph: Graph, output: Path, config: MermaidStylingConfig | None = None
 ) -> None:
+    """
+    Export the graph to an SVG file using mmdc.
+
+    Args:
+        graph (Graph): The graph to export.
+        output (Path): The output file path.
+        config (MermaidStylingConfig | None): Styling configuration.
+    """
+    logger.info(f"Exporting mermaid svg to: {output}")
     _check_mmdc_on_path()
 
     mermaid: str = create_topology_mermaid_mmd(graph, config)
@@ -127,6 +205,8 @@ def export_topology_mermaid_svg(
         f.write(mermaid)
         source: Path = Path(f.name)
 
+    logger.debug(f"Created temporary mermaid source file: {source}")
+
     build_script: Path = _create_mmdc_script(
         create_mmdc_script_content(source=source, output=output)
     )
@@ -134,23 +214,28 @@ def export_topology_mermaid_svg(
     if _execute_build_script(build_script):
         build_script.unlink()
         source.unlink()
+        logger.info(f"Successfully exported SVG to {output}")
+    else:
+        logger.error(f"Failed to export SVG to {output}")
 
 
 @cache
 def _write_mermaid_config() -> Path:
+    """Write temporary mermaid config file."""
     with NamedTemporaryFile(delete=False, mode="w+", suffix=".json") as f:
         f.write(_MERMAID_CONFIG_JSON)
 
         path: Path = Path(f.name)
-        on_script_exit(path.unlink)
+        on_script_exit(lambda: _cleanup_on_exit(path))
         return path
 
 
 @cache
 def _write_puppeteer_config() -> Path:
+    """Write temporary puppeteer config file."""
     with NamedTemporaryFile(delete=False, mode="w+", suffix=".json") as f:
         f.write(_PUPPETEER_CONFIG_JSON)
 
         path: Path = Path(f.name)
-        on_script_exit(path.unlink)
+        on_script_exit(lambda: _cleanup_on_exit(path))
         return path

@@ -1,13 +1,24 @@
 from dataclasses import dataclass
+from logging import getLogger
 from pathlib import Path
 from typing import Callable
 
 from ..graph import Graph
 from ..graphable import Graphable
 
+logger = getLogger(__name__)
+
 
 @dataclass
 class TextTreeStylingConfig:
+    """
+    Configuration for text tree representation of the graph.
+
+    Attributes:
+        initial_indent: String to use for initial indentation.
+        node_text_fnc: Function to generate the text representation of a node.
+    """
+
     initial_indent: str = ""
     node_text_fnc: Callable[[Graphable], str] = lambda n: n.reference
 
@@ -15,8 +26,20 @@ class TextTreeStylingConfig:
 def create_topology_tree_txt(
     graph: Graph, config: TextTreeStylingConfig | None = None
 ) -> str:
+    """
+    Create a text-based tree representation of the graph topology.
+
+    Args:
+        graph (Graph): The graph to convert.
+        config (TextTreeStylingConfig | None): Styling configuration.
+
+    Returns:
+        str: The text tree representation.
+    """
     if config is None:
         config = TextTreeStylingConfig()
+
+    logger.debug("Creating topology tree text.")
 
     def create_topology_subtree_txt(
         node: Graphable,
@@ -25,6 +48,19 @@ def create_topology_tree_txt(
         is_root: bool = True,
         visited: set[Graphable] | None = None,
     ) -> str:
+        """
+        Recursively generate the text representation for a subtree.
+
+        Args:
+            node (Graphable): The current node being processed.
+            indent (str): The current indentation string.
+            is_last (bool): Whether this node is the last sibling.
+            is_root (bool): Whether this is the root of the (sub)tree.
+            visited (set[Graphable] | None): Set of already visited nodes to detect cycles/redundancy.
+
+        Returns:
+            str: The text representation of the subtree.
+        """
         if visited is None:
             visited = set[Graphable]()
         already_seen: bool = node in visited
@@ -72,5 +108,14 @@ def create_topology_tree_txt(
 def export_topology_tree_txt(
     graph: Graph, output: Path, config: TextTreeStylingConfig | None = None
 ) -> None:
+    """
+    Export the graph to a text tree file.
+
+    Args:
+        graph (Graph): The graph to export.
+        output (Path): The output file path.
+        config (TextTreeStylingConfig | None): Styling configuration.
+    """
+    logger.info(f"Exporting topology tree text to: {output}")
     with open(output, "w+") as f:
         f.write(create_topology_tree_txt(graph, config))
