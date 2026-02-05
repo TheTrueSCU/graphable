@@ -1,0 +1,79 @@
+name: Build Documentation
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+# Permissions and concurrency needed for GitHub Pages (commented out for now)
+# permissions:
+#   contents: read
+#   pages: write
+#   id-token: write
+
+# concurrency:
+#   group: "pages"
+#   cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+
+      - name: Install Mermaid CLI
+        run: npm install -g @mermaid-js/mermaid-cli
+
+      - name: Build documentation
+        run: |
+          uv sync
+          
+          # Generate coverage and test reports for inclusion in the documentation
+          # We use '|| true' because we want the docs even if coverage is below the threshold
+          just coverage || echo "Coverage threshold not met, but proceeding with documentation build."
+          
+          # Build the documentation (including example SVGs)
+          just docs
+          
+          # Ensure .nojekyll exists so GitHub Pages doesn't ignore files starting with underscore
+          touch docs/_build/html/.nojekyll
+
+      - name: Upload Documentation Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation
+          path: docs/_build/html
+
+      # GitHub Pages Deployment Steps (commented out for now)
+      # - name: Setup Pages
+      #   uses: actions/configure-pages@v5
+
+      # - name: Upload Pages artifact
+      #   uses: actions/upload-pages-artifact@v3
+      #   with:
+      #     path: 'docs/_build/html'
+
+      # - name: Deploy to GitHub Pages
+      #   id: deployment
+      #   uses: actions/deploy-pages@v4
