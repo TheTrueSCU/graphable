@@ -1,6 +1,6 @@
 [project]
 name = "graphable"
-version = "0.1.0"
+version = "0.2.0"
 description = "A lightweight, type-safe library for building, managing, and visualizing dependency graphs."
 readme = "README.md"
 authors = [
