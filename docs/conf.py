@@ -1,14 +1,21 @@
 import os
 import sys
+import tomllib
 from datetime import datetime
+from pathlib import Path
 
 # Add the src directory to the path so sphinx can find the code
 sys.path.insert(0, os.path.abspath("../src"))
 
-project = "graphable"
+# Get version information from pyproject.toml
+with open(Path(__file__).parent.parent / "pyproject.toml", "rb") as f:
+    pyproject = tomllib.load(f)
+
+project = pyproject["project"]["name"]
 copyright = f"{datetime.now().year}, Richard West"
 author = "Richard West"
-release = "0.1.0"
+release = pyproject["project"]["version"]
+version = ".".join(release.split(".")[:2])
 
 extensions = [
     "sphinx.ext.autodoc",
