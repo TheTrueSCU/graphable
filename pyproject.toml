@@ -1,6 +1,6 @@
 [project]
 name = "graphable"
-version = "0.2.2"
+version = "0.2.3"
 description = "A lightweight, type-safe library for building, managing, and visualizing dependency graphs."
 readme = "README.md"
 authors = [
@@ -8,7 +8,7 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = []
-keywords = ["graph", "dependency-graph", "topological-sort", "mermaid", "visualization"]
+keywords = ["graph", "dependency-graph", "topological-sort", "mermaid", "graphviz", "visualization"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -16,6 +16,10 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
+
+[project.urls]
+Repository = "https://github.com/TheTrueSCU/graphable"
+Documentation = "https://thetruescu.github.io/graphable"
 
 [build-system]
 requires = ["uv_build>=0.9.17,<0.10.0"]

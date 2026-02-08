@@ -3,7 +3,7 @@
 [![CI](https://github.com/TheTrueSCU/graphable/actions/workflows/ci.yml/badge.svg)](https://github.com/TheTrueSCU/graphable/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-`graphable` is a lightweight, type-safe Python library for building, managing, and visualizing dependency graphs. It provides a simple API for defining nodes and their relationships, performing topological sorts, and exporting graphs to various formats like Mermaid and ASCII text trees.
+`graphable` is a lightweight, type-safe Python library for building, managing, and visualizing dependency graphs. It provides a simple API for defining nodes and their relationships, performing topological sorts, and exporting graphs to various formats like Mermaid, Graphviz, and ASCII text trees.
 
 ## Features
 
@@ -12,6 +12,7 @@
 - **Filtering & Tagging:** Create subgraphs based on custom predicates or tags.
 - **Visualizations:**
     - **Mermaid:** Generate flowchart definitions or export directly to SVG.
+    - **Graphviz:** Generate DOT definitions or export to SVG with custom styling.
     - **Text Tree:** Generate beautiful ASCII tree representations.
 - **Modern Tooling:** Managed with `uv` and `just`.
 
@@ -64,6 +65,23 @@ print(mmd)
 # flowchart TD
 # Database --> API Service
 # API Service --> Web Frontend
+```
+
+## Visualizing with Graphviz
+
+```python
+from graphable.views.graphviz import create_topology_graphviz_dot
+
+dot = create_topology_graphviz_dot(g)
+print(dot)
+# Output:
+# digraph G {
+#     "Database" [label="Database"];
+#     "Database" -> "API Service";
+#     "API Service" [label="API Service"];
+#     "API Service" -> "Web Frontend";
+#     "Web Frontend" [label="Web Frontend"];
+# }
 ```
 
 ## Documentation
