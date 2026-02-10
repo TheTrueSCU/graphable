@@ -32,7 +32,7 @@ _cleanfiles type:
 [group('docs')]
 docs-examples:
     mkdir -p docs/_static/examples
-    uv run examples/basic_usage.py --mermaid-svg --graphviz-svg --output-dir docs/_static/examples > docs/_static/examples/basic_usage_output.txt
+    uv run examples/basic_usage.py --d2-svg --graphviz-svg --interactive-html --mermaid-svg --output-dir docs/_static/examples --puml-svg > docs/_static/examples/basic_usage_output.txt
 
 [group('docs')]
 docs: docs-examples
@@ -116,4 +116,7 @@ typing:
 [group('run')]
 @run *args:
     uv run cli/main.py {{ args }}
+
+demo:
+    uv run examples/basic_usage.py --mermaid-svg --graphviz-svg --d2-svg --puml-svg --output-dir examples_output
 

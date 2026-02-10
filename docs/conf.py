@@ -46,3 +46,9 @@ napoleon_numpy_docstring = False
 napoleon_use_ivar = True
 napoleon_use_param = True
 napoleon_use_rtype = True
+
+# Custom roles
+rst_prolog = """
+.. role:: raw-html(raw)
+   :format: html
+"""

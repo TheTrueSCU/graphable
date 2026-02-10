@@ -1,7 +1,7 @@
 from pathlib import Path
 from unittest.mock import mock_open, patch
 
-import pytest
+from pytest import fixture
 
 from graphable.graph import Graph
 from graphable.graphable import Graphable
@@ -13,7 +13,7 @@ from graphable.views.texttree import (
 
 
 class TestTextTree:
-    @pytest.fixture
+    @fixture
     def graph_fixture(self):
         a = Graphable("A")
         b = Graphable("B")

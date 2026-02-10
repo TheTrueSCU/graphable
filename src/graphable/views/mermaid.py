@@ -7,7 +7,7 @@ from shutil import which
 from string import Template
 from subprocess import PIPE, CalledProcessError, run
 from tempfile import NamedTemporaryFile
-from typing import Callable
+from typing import Any, Callable
 
 from ..graph import Graph
 from ..graphable import Graphable
@@ -37,12 +37,12 @@ class MermaidStylingConfig:
         link_style_default: Default style string for links (or None).
     """
 
-    node_ref_fnc: Callable[[Graphable], str] = lambda n: n.reference
-    node_text_fnc: Callable[[Graphable], str] = lambda n: n.reference
-    node_style_fnc: Callable[[Graphable], str] | None = None
+    node_ref_fnc: Callable[[Graphable[Any]], str] = lambda n: n.reference
+    node_text_fnc: Callable[[Graphable[Any]], str] = lambda n: n.reference
+    node_style_fnc: Callable[[Graphable[Any]], str] | None = None
     node_style_default: str | None = None
-    link_text_fnc: Callable[[Graphable, Graphable], str] = lambda n, sn: "-->"
-    link_style_fnc: Callable[[Graphable, Graphable], str] | None = None
+    link_text_fnc: Callable[[Graphable[Any], Graphable[Any]], str] = lambda n, sn: "-->"
+    link_style_fnc: Callable[[Graphable[Any], Graphable[Any]], str] | None = None
     link_style_default: str | None = None
 
 
@@ -50,7 +50,10 @@ def _check_mmdc_on_path() -> None:
     """Check if 'mmdc' executable is available in the system path."""
     if which("mmdc") is None:
         logger.error("mmdc not found on PATH.")
-        raise FileNotFoundError("mmdc is required but not available on $PATH")
+        raise FileNotFoundError(
+            "mmdc (Mermaid CLI) is required but not available on $PATH. "
+            "Install it via npm: 'npm install -g @mermaid-js/mermaid-cli'."
+        )
 
 
 def _cleanup_on_exit(path: Path) -> None:
@@ -110,12 +113,12 @@ def create_topology_mermaid_mmd(
     """
     config = config or MermaidStylingConfig()
 
-    def link_style(node: Graphable, subnode: Graphable) -> str | None:
+    def link_style(node: Graphable[Any], subnode: Graphable[Any]) -> str | None:
         if config.link_style_fnc:
             return config.link_style_fnc(node, subnode)
         return None
 
-    def node_style(node: Graphable) -> str | None:
+    def node_style(node: Graphable[Any]) -> str | None:
         if config.node_style_fnc and (style := config.node_style_fnc(node)):
             return style
         return config.node_style_default

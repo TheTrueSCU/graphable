@@ -1,34 +1,16 @@
 from __future__ import annotations
 
-from collections import deque
 from graphlib import CycleError, TopologicalSorter
 from logging import getLogger
 from typing import Any, Callable
 
+from .errors import GraphConsistencyError, GraphCycleError
 from .graphable import Graphable
 
 logger = getLogger(__name__)
 
 
-class GraphCycleError(Exception):
-    """
-    Exception raised when a cycle is detected in the graph.
-    """
-
-    def __init__(self, message: str, cycle: list[Any] | None = None):
-        super().__init__(message)
-        self.cycle = cycle
-
-
-class GraphConsistencyError(Exception):
-    """
-    Exception raised when the bi-directional relationships in the graph are inconsistent.
-    """
-
-    pass
-
-
-def graph[T: Graphable[Any, Any]](contains: list[T]) -> Graph[T]:
+def graph[T: Graphable[Any]](contains: list[T]) -> Graph[T]:
     """
     Constructs a Graph containing the given nodes and all their connected dependencies/dependents.
     It traverses the graph both up (dependencies) and down (dependents) from the initial nodes.
@@ -80,7 +62,7 @@ def graph[T: Graphable[Any, Any]](contains: list[T]) -> Graph[T]:
     return Graph(nodes)
 
 
-class Graph[T: Graphable[Any, Any]]:
+class Graph[T: Graphable[Any]]:
     """
     Represents a graph of Graphable nodes.
     """
@@ -101,41 +83,6 @@ class Graph[T: Graphable[Any, Any]]:
         if self._nodes:
             self.check_consistency()
             self.check_cycles()
-
-    def _find_path(self, start: T, target: T) -> list[T] | None:
-        """
-        Find a path from start to target using BFS.
-
-        Args:
-            start (T): The starting node.
-            target (T): The target node.
-
-        Returns:
-            list[T] | None: The shortest path as a list of nodes, or None if no path exists.
-        """
-        # BFS find shortest path
-        queue: deque[tuple[T, list[T]]] = deque()
-        for neighbor in start.dependents:
-            queue.append((neighbor, [start, neighbor]))
-
-        # We don't mark 'start' as visited in the set immediately if we want to find a cycle
-        # that returns to 'start'. However, if start == target, the above loop already handles it.
-        # Actually, the most robust way is to mark everything we pop as visited.
-        visited: set[T] = set()
-        while queue:
-            current, path = queue.popleft()
-            if current == target:
-                return path
-
-            if current in visited:
-                continue
-
-            visited.add(current)
-            for neighbor in current.dependents:
-                if neighbor not in visited:
-                    queue.append((neighbor, path + [neighbor]))
-
-        return None
 
     def check_cycles(self) -> None:
         """
@@ -207,7 +154,7 @@ class Graph[T: Graphable[Any, Any]]:
 
         # Check if adding this edge creates a cycle.
         # A cycle is created if there is already a path from 'dependent' to 'node'.
-        if path := self._find_path(dependent, node):
+        if path := dependent.find_path(node):
             cycle = path + [dependent]
             raise GraphCycleError(
                 f"Adding edge '{node.reference}' -> '{dependent.reference}' would create a cycle.",
@@ -243,7 +190,7 @@ class Graph[T: Graphable[Any, Any]]:
 
         # If the node is already part of a cycle (linked externally), adding it might be invalid
         # if we want to enforce DAG.
-        if cycle := self._find_path(node, node):
+        if cycle := node.find_path(node):
             raise GraphCycleError(
                 f"Node '{node.reference}' is part of an existing cycle.", cycle=cycle
             )
@@ -340,3 +287,15 @@ class Graph[T: Graphable[Any, Any]]:
             list[T]: Tagged topologically sorted nodes.
         """
         return [node for node in self.topological_order() if node.is_tagged(tag)]
+
+    def to_networkx(self):
+        """
+        Convert this graph to a networkx.DiGraph.
+        Requires 'networkx' to be installed.
+
+        Returns:
+            networkx.DiGraph: The converted directed graph.
+        """
+        from .views.networkx import to_networkx
+
+        return to_networkx(self)

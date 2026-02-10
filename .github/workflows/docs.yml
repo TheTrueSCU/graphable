@@ -45,6 +45,12 @@ jobs:
       - name: Install Mermaid CLI
         run: npm install -g @mermaid-js/mermaid-cli
 
+      - name: Install D2 CLI
+        run: curl -fsSL https://d2lang.com/install.sh | sh -s --
+
+      - name: Install Diagramming Tools (Graphviz & PlantUML)
+        run: sudo apt-get update && sudo apt-get install -y graphviz plantuml
+
       - name: Build documentation
         run: |
           uv sync

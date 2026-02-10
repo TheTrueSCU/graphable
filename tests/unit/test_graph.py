@@ -1,11 +1,11 @@
-import pytest
+from pytest import fixture, raises
 
 from graphable.graph import Graph, GraphConsistencyError, GraphCycleError, graph
 from graphable.graphable import Graphable
 
 
 class TestGraph:
-    @pytest.fixture
+    @fixture
     def nodes(self):
         a = Graphable("A")
         b = Graphable("B")
@@ -192,7 +192,7 @@ class TestGraph:
     def test_add_edge_self_loop(self):
         a = Graphable("A")
         g = Graph()
-        with pytest.raises(GraphCycleError) as excinfo:
+        with raises(GraphCycleError) as excinfo:
             g.add_edge(a, a)
         assert "Self-loop" in str(excinfo.value)
         assert excinfo.value.cycle == [a, a]
@@ -202,7 +202,7 @@ class TestGraph:
         b = Graphable("B")
         g = Graph()
         g.add_edge(a, b)
-        with pytest.raises(GraphCycleError) as excinfo:
+        with raises(GraphCycleError) as excinfo:
             g.add_edge(b, a)
         assert "create a cycle" in str(excinfo.value)
         assert excinfo.value.cycle is not None
@@ -216,7 +216,7 @@ class TestGraph:
         g = Graph()
         g.add_edge(a, b)
         g.add_edge(b, c)
-        with pytest.raises(GraphCycleError) as excinfo:
+        with raises(GraphCycleError) as excinfo:
             g.add_edge(c, a)
         assert "create a cycle" in str(excinfo.value)
         assert excinfo.value.cycle is not None
@@ -241,9 +241,9 @@ class TestGraph:
         graph_obj.add_edge(d, target)
 
         # This should hit the 'continue' for node 'D' or 'Target'
-        assert graph_obj._find_path(a, target) is not None
+        assert a.find_path(target) is not None
 
-        with pytest.raises(GraphCycleError) as excinfo:
+        with raises(GraphCycleError) as excinfo:
             graph_obj.add_edge(target, a)
         assert excinfo.value.cycle is not None
 
@@ -257,7 +257,7 @@ class TestGraph:
         a._add_depends_on(b)
 
         g = Graph()
-        with pytest.raises(GraphCycleError) as excinfo:
+        with raises(GraphCycleError) as excinfo:
             g.add_node(a)
         assert "existing cycle" in str(excinfo.value)
 
@@ -269,7 +269,7 @@ class TestGraph:
         b._add_dependent(a)
         a._add_depends_on(b)
 
-        with pytest.raises(GraphCycleError):
+        with raises(GraphCycleError):
             Graph(initial={a, b})
 
     def test_check_cycles_manual(self):
@@ -284,7 +284,7 @@ class TestGraph:
         b._add_dependent(a)
         a._add_depends_on(b)
 
-        with pytest.raises(GraphCycleError):
+        with raises(GraphCycleError):
             g.check_cycles()
 
     def test_consistency_broken_depends_on(self):
@@ -294,7 +294,7 @@ class TestGraph:
         a._add_depends_on(b)
 
         g = Graph()
-        with pytest.raises(GraphConsistencyError) as excinfo:
+        with raises(GraphConsistencyError) as excinfo:
             g.add_node(a)
         assert "depends on 'B', but 'B' does not list 'A' as a dependent" in str(
             excinfo.value
@@ -307,7 +307,7 @@ class TestGraph:
         a._add_dependent(b)
 
         g = Graph()
-        with pytest.raises(GraphConsistencyError) as excinfo:
+        with raises(GraphConsistencyError) as excinfo:
             g.add_node(a)
         assert "has dependent 'B', but 'B' does not depend on 'A'" in str(excinfo.value)
 
@@ -315,5 +315,5 @@ class TestGraph:
         a = Graphable("A")
         b = Graphable("B")
         a._add_depends_on(b)
-        with pytest.raises(GraphConsistencyError):
+        with raises(GraphConsistencyError):
             Graph(initial={a, b})

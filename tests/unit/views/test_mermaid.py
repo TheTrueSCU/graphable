@@ -2,7 +2,7 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from unittest.mock import MagicMock, mock_open, patch
 
-import pytest
+from pytest import fixture, raises
 
 from graphable.graph import Graph
 from graphable.graphable import Graphable
@@ -19,7 +19,7 @@ from graphable.views.mermaid import (
 
 
 class TestMermaid:
-    @pytest.fixture
+    @fixture
     def graph_fixture(self):
         a = Graphable("A")
         b = Graphable("B")
@@ -76,7 +76,7 @@ class TestMermaid:
     @patch("graphable.views.mermaid.which")
     def test_check_mmdc_on_path_failure(self, mock_which):
         mock_which.return_value = None
-        with pytest.raises(FileNotFoundError):
+        with raises(FileNotFoundError):
             _check_mmdc_on_path()
 
     def test_create_mmdc_script(self):

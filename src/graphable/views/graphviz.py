@@ -3,7 +3,7 @@ from logging import getLogger
 from pathlib import Path
 from shutil import which
 from subprocess import PIPE, CalledProcessError, run
-from typing import Callable
+from typing import Any, Callable
 
 from ..graph import Graph
 from ..graphable import Graphable
@@ -26,10 +26,12 @@ class GraphvizStylingConfig:
         edge_attr_default: Dictionary of default edge attributes.
     """
 
-    node_ref_fnc: Callable[[Graphable], str] = lambda n: str(n.reference)
-    node_label_fnc: Callable[[Graphable], str] = lambda n: str(n.reference)
-    node_attr_fnc: Callable[[Graphable], dict[str, str]] | None = None
-    edge_attr_fnc: Callable[[Graphable, Graphable], dict[str, str]] | None = None
+    node_ref_fnc: Callable[[Graphable[Any]], str] = lambda n: str(n.reference)
+    node_label_fnc: Callable[[Graphable[Any]], str] = lambda n: str(n.reference)
+    node_attr_fnc: Callable[[Graphable[Any]], dict[str, str]] | None = None
+    edge_attr_fnc: Callable[[Graphable[Any], Graphable[Any]], dict[str, str]] | None = (
+        None
+    )
     graph_attr: dict[str, str] | None = None
     node_attr_default: dict[str, str] | None = None
     edge_attr_default: dict[str, str] | None = None
@@ -39,7 +41,10 @@ def _check_dot_on_path() -> None:
     """Check if 'dot' executable is available in the system path."""
     if which("dot") is None:
         logger.error("dot not found on PATH.")
-        raise FileNotFoundError("dot (Graphviz) is required but not available on $PATH")
+        raise FileNotFoundError(
+            "dot (Graphviz) is required but not available on $PATH. "
+            "Install it via your package manager (e.g., 'sudo apt install graphviz')."
+        )
 
 
 def _format_attrs(attrs: dict[str, str] | None) -> str:

@@ -9,11 +9,20 @@
 
 - **Type-Safe:** Built with modern Python generics and type hints.
 - **Topological Sorting:** Easily get nodes in dependency order.
+- **Cycle Detection:** Built-in protection against circular dependencies.
 - **Filtering & Tagging:** Create subgraphs based on custom predicates or tags.
 - **Visualizations:**
     - **Mermaid:** Generate flowchart definitions or export directly to SVG.
     - **Graphviz:** Generate DOT definitions or export to SVG with custom styling.
-    - **Text Tree:** Generate beautiful ASCII tree representations.
+    - **D2:** Generate D2 definitions or export to SVG with modern styling and layouts.
+    - **PlantUML:** Generate component or deployment diagram definitions.
+    - **TikZ:** Generate high-quality LaTeX definitions for academic documents.
+    - **GraphML:** Industrial-standard XML export for professional analysis tools (Gephi, yEd).
+    - **Interactive HTML:** Generate a single, portable HTML file with zooming and panning.
+    - **JSON & Cytoscape:** Export graph structure as machine-readable data.
+    - **CSV:** Export simple edge lists for data processing.
+    - **NetworkX:** Seamless integration with the NetworkX library for advanced analysis.
+    - **Text Tree & ASCII Flowchart:** Generate beautiful ASCII representations.
 - **Modern Tooling:** Managed with `uv` and `just`.
 
 ## Installation
@@ -54,6 +63,26 @@ print(create_topology_tree_txt(g))
 #    └─ Database
 ```
 
+## Visualizing with ASCII Flowchart
+
+```python
+from graphable.views.asciiflow import create_topology_ascii_flow
+
+print(create_topology_ascii_flow(g))
+# Output:
+# +----------+
+# | Database |
+# +----------+
+#   v
+#   +--> API Service
+#
+# +-------------+
+# | API Service |
+# +-------------+
+#   v
+#   +--> Web Frontend
+```
+
 ## Visualizing with Mermaid
 
 ```python
@@ -82,6 +111,36 @@ print(dot)
 #     "API Service" -> "Web Frontend";
 #     "Web Frontend" [label="Web Frontend"];
 # }
+```
+
+## Advanced Analysis with NetworkX
+
+If you have `networkx` installed, you can convert your graph for advanced analysis:
+
+```python
+import networkx as nx
+
+# Convert to NetworkX DiGraph
+dg = g.to_networkx()
+
+# Use NetworkX algorithms
+print(nx.dag_longest_path(dg))
+# Output: ['Database', 'API Service', 'Web Frontend']
+```
+
+## Visualizing with D2
+
+```python
+from graphable.views.d2 import create_topology_d2
+
+d2 = create_topology_d2(g)
+print(d2)
+# Output:
+# Database: Database
+# Database -> API Service
+# API Service: API Service
+# API Service -> Web Frontend
+# Web Frontend: Web Frontend
 ```
 
 ## Documentation

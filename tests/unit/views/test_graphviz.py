@@ -2,7 +2,7 @@ from pathlib import Path
 from subprocess import CalledProcessError
 from unittest.mock import MagicMock, mock_open, patch
 
-import pytest
+from pytest import fixture, raises
 
 from graphable.graph import Graph
 from graphable.graphable import Graphable
@@ -16,7 +16,7 @@ from graphable.views.graphviz import (
 
 
 class TestGraphviz:
-    @pytest.fixture
+    @fixture
     def graph_fixture(self):
         a = Graphable("A")
         b = Graphable("B")
@@ -73,7 +73,7 @@ class TestGraphviz:
     @patch("graphable.views.graphviz.which")
     def test_check_dot_on_path_failure(self, mock_which):
         mock_which.return_value = None
-        with pytest.raises(FileNotFoundError):
+        with raises(FileNotFoundError):
             _check_dot_on_path()
 
     @patch("graphable.views.graphviz.run")
@@ -105,7 +105,7 @@ class TestGraphviz:
 
         mock_run.side_effect = CalledProcessError(1, "dot", stderr="error")
 
-        with pytest.raises(CalledProcessError):
+        with raises(CalledProcessError):
             export_topology_graphviz_svg(g, output_path)
 
     @patch("graphable.views.graphviz.run")
@@ -118,5 +118,5 @@ class TestGraphviz:
 
         mock_run.side_effect = Exception("generic error")
 
-        with pytest.raises(Exception):
+        with raises(Exception):
             export_topology_graphviz_svg(g, output_path)

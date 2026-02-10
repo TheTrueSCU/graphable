@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from logging import getLogger
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable
 
 from ..graph import Graph
 from ..graphable import Graphable
@@ -20,7 +20,7 @@ class TextTreeStylingConfig:
     """
 
     initial_indent: str = ""
-    node_text_fnc: Callable[[Graphable], str] = lambda n: n.reference
+    node_text_fnc: Callable[[Graphable[Any]], str] = lambda n: n.reference
 
 
 def create_topology_tree_txt(
@@ -42,11 +42,11 @@ def create_topology_tree_txt(
     logger.debug("Creating topology tree text.")
 
     def create_topology_subtree_txt(
-        node: Graphable,
+        node: Graphable[Any],
         indent: str = "",
         is_last: bool = True,
         is_root: bool = True,
-        visited: set[Graphable] | None = None,
+        visited: set[Graphable[Any]] | None = None,
     ) -> str:
         """
         Recursively generate the text representation for a subtree.
