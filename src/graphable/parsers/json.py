@@ -29,8 +29,12 @@ def load_graph_json(
             data = json.load(f)
     else:
         logger.debug("Loading JSON from string.")
-        # source must be str if not is_path
         data = json.loads(str(source))
+
+    # Handle wrapped structure: {"checksum": "...", "graph": {"nodes": ..., "edges": ...}}
+    if "graph" in data and ("nodes" not in data or "edges" not in data):
+        logger.debug("Detected wrapped JSON structure, extracting 'graph' object.")
+        data = data["graph"]
 
     nodes_data = data.get("nodes", [])
     edges_data = data.get("edges", [])

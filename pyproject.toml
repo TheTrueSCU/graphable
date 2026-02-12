@@ -1,6 +1,6 @@
 [project]
 name = "graphable"
-version = "0.3.0"
+version = "0.4.0"
 description = "A lightweight, type-safe library for building, managing, and visualizing dependency graphs."
 readme = "README.md"
 authors = [
@@ -8,13 +8,15 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = []
-keywords = ["graph", "dependency-graph", "topological-sort", "mermaid", "graphviz", "d2", "plantuml", "tikz", "cytoscape", "json", "csv", "networkx", "visualization"]
+keywords = ["graph", "dependency-graph", "topological-sort", "dag", "orchestration", "parallel-processing", "caching", "mermaid", "graphviz", "d2", "plantuml", "tikz", "cytoscape", "json", "csv", "networkx", "visualization"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Scientific/Engineering :: Visualization",
 ]
 
 [project.optional-dependencies]

@@ -98,21 +98,27 @@ def main():
     worker.add_tag("backend")
     ui.add_tag("frontend")
 
-    # 2. Container Protocols
-    print("--- 2. Container Protocols ---")
+    # 2. Container Protocols & Integrity
+    print("--- 2. Container Protocols & Integrity ---")
     print(f"Graph size: {len(g)} nodes")
     print(f"Is 'Postgres' in graph? {'Postgres' in g}")
     print(f"Access node by reference: {g['FastAPI'].reference}")
 
-    # 3. Reachability & Ordering
-    print("\n--- 3. Reachability & Ordering ---")
+    checksum = g.checksum()
+    print(f"Graph Checksum: {checksum}")
+    print(f"Checksum valid? {g.validate_checksum(checksum)}")
+
+    # 3. Reachability, Ordering & Parallel Sort
+    print("\n--- 3. Reachability, Ordering & Parallel Sort ---")
     print(f"Ancestors of React: {[n.reference for n in g.ancestors(ui)]}")
     print(f"Descendants of Postgres: {[n.reference for n in g.descendants(db)]}")
 
     if db < ui:
         print(f"Verified: {db.reference} is an ancestor of {ui.reference}")
-    if ui > db:
-        print(f"Verified: {ui.reference} is a descendant of {db.reference}")
+
+    print("Parallel execution layers:")
+    for i, layer in enumerate(g.parallelized_topological_order()):
+        print(f"  Layer {i}: {[n.reference for n in layer]}")
 
     # 4. Transitive Reduction
     print("\n--- 4. Transitive Reduction ---")

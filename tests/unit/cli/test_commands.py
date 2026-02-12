@@ -1,8 +1,11 @@
 from graphable.cli.commands.core import (
     check_command,
+    checksum_command,
     convert_command,
     info_command,
     reduce_command,
+    verify_command,
+    write_checksum_command,
 )
 
 
@@ -62,3 +65,52 @@ def test_reduce_command(tmp_path):
     data = json.loads(output_file.read_text())
     # Should have 2 edges (A->B, B->C) instead of 3
     assert len(data["edges"]) == 2
+
+
+def test_checksum_command(tmp_path):
+    graph_file = tmp_path / "test.json"
+    graph_file.write_text('{"nodes": [{"id": "A"}], "edges": []}')
+
+    from graphable.graph import Graph
+
+    g = Graph.from_json(graph_file)
+    expected = g.checksum()
+
+    assert checksum_command(graph_file) == expected
+
+
+def test_write_checksum_command(tmp_path):
+    graph_file = tmp_path / "test.json"
+    graph_file.write_text('{"nodes": [{"id": "A"}], "edges": []}')
+    checksum_file = tmp_path / "test.blake2b"
+
+    write_checksum_command(graph_file, checksum_file)
+    assert checksum_file.exists()
+
+    from graphable.graph import Graph
+
+    g = Graph.from_json(graph_file)
+    assert checksum_file.read_text() == g.checksum()
+
+
+def test_verify_command(tmp_path):
+    graph_file = tmp_path / "test.json"
+    graph_file.write_text('{"nodes": [{"id": "A"}], "edges": []}')
+
+    from graphable.graph import Graph
+
+    g = Graph.from_json(graph_file)
+    digest = g.checksum()
+
+    # Explicit expected
+    assert verify_command(graph_file, digest)["valid"] is True
+    assert verify_command(graph_file, "wrong")["valid"] is False
+
+    # Embedded checksum
+    embedded_file = tmp_path / "embedded.yaml"
+    g.write(embedded_file, embed_checksum=True)
+
+    data = verify_command(embedded_file)
+    assert data["valid"] is True
+    assert data["actual"] == digest
+    assert data["expected"] == digest

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from graphlib import CycleError, TopologicalSorter
+from hashlib import blake2b
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Callable, Iterator, cast
+from typing import Any, Callable, Iterator
 
 from .errors import GraphConsistencyError, GraphCycleError
 from .graphable import Graphable
@@ -23,44 +24,10 @@ def graph[T: Graphable[Any]](contains: list[T]) -> Graph[T]:
         Graph[T]: A Graph object containing all reachable nodes.
     """
     logger.debug(f"Building graph from {len(contains)} initial nodes.")
-
-    def go_down(node: T, nodes: set[T]) -> None:
-        """
-        Recursively traverse down the graph to find all dependent nodes.
-
-        Args:
-            node (T): The current node to traverse from.
-            nodes (set[T]): The set of nodes found so far.
-        """
-        for down_node in node.dependents:
-            if down_node in nodes:
-                continue
-
-            nodes.add(down_node)
-            go_down(down_node, nodes)
-
-    def go_up(node: T, nodes: set[T]) -> None:
-        """
-        Recursively traverse up the graph to find all dependency nodes.
-
-        Args:
-            node (T): The current node to traverse from.
-            nodes (set[T]): The set of nodes found so far.
-        """
-        for up_node in node.depends_on:
-            if up_node in nodes:
-                continue
-
-            nodes.add(up_node)
-            go_up(up_node, nodes)
-
-    nodes: set[T] = set(contains)
-    for node in contains:
-        go_up(node, nodes)
-        go_down(node, nodes)
-
-    logger.info(f"Graph built with {len(nodes)} total nodes.")
-    return Graph(nodes)
+    g = Graph(set(contains))
+    g.discover()
+    logger.info(f"Graph built with {len(g)} total nodes.")
+    return g
 
 
 class Graph[T: Graphable[Any]]:
@@ -78,12 +45,54 @@ class Graph[T: Graphable[Any]]:
         Raises:
             GraphCycleError: If the initial set of nodes contains a cycle.
         """
-        self._nodes: set[T] = initial if initial else set[T]()
+        self._nodes: set[T] = set()
         self._topological_order: list[T] | None = None
+        self._parallel_topological_order: list[set[T]] | None = None
+        self._checksum: str | None = None
 
-        if self._nodes:
+        if initial:
+            for node in initial:
+                self.add_node(node)
             self.check_consistency()
             self.check_cycles()
+
+    def discover(self) -> None:
+        """
+        Traverse the entire connectivity of the current nodes and add any
+        reachable ancestors or descendants that are not yet members.
+        """
+        logger.debug(f"Discovering reachable nodes from {len(self._nodes)} base nodes.")
+
+        def go_down(node: T, nodes: set[T]) -> None:
+            for down_node in node.dependents:
+                if down_node in nodes:
+                    continue
+
+                nodes.add(down_node)
+                go_down(down_node, nodes)
+
+        def go_up(node: T, nodes: set[T]) -> None:
+            for up_node in node.depends_on:
+                if up_node in nodes:
+                    continue
+
+                nodes.add(up_node)
+                go_up(up_node, nodes)
+
+        new_nodes: set[T] = set(self._nodes)
+        for node in list(self._nodes):
+            go_up(node, new_nodes)
+            go_down(node, new_nodes)
+
+        for node in new_nodes:
+            self.add_node(node)
+
+    def _invalidate_cache(self) -> None:
+        """Clear all cached calculations for this graph."""
+        logger.debug("Invalidating graph cache.")
+        self._topological_order = None
+        self._parallel_topological_order = None
+        self._checksum = None
 
     def __contains__(self, item: object) -> bool:
         """
@@ -133,8 +142,7 @@ class Graph[T: Graphable[Any]]:
     def is_equal_to(self, other: object) -> bool:
         """
         Check if this graph is equal to another graph.
-        Equality is defined as having the same nodes (by reference and tags)
-        and the same edges.
+        Equality is defined as having the same checksum (structural and metadata-wise).
 
         Args:
             other: The other object to compare with.
@@ -145,34 +153,219 @@ class Graph[T: Graphable[Any]]:
         if not isinstance(other, Graph):
             return False
 
-        if len(self) != len(other):
-            return False
+        return self.checksum() == other.checksum()
 
-        for node in self._nodes:
-            # Check if other graph has a node with the same reference
-            if node.reference not in other:
-                return False
+    def checksum(self) -> str:
+        """
+        Calculate a deterministic BLAKE2b checksum of the graph.
+        The checksum accounts for all member nodes (references and tags)
+        and edges between them. External nodes are excluded.
 
-            # other is instance of Graph, so other[ref] returns Graphable
-            other_node = cast(Graphable[Any], other[node.reference])
+        Returns:
+            str: The hexadecimal digest of the graph.
+        """
+        if self._checksum is not None:
+            return self._checksum
 
-            # Check tags
-            if node.tags != other_node.tags:
-                return False
+        # 1. Sort nodes by reference to ensure deterministic iteration
+        sorted_nodes = sorted(self._nodes, key=lambda n: str(n.reference))
 
-            # Check dependents (structure)
-            self_deps = {n.reference for n in node.dependents}
-            other_deps = {n.reference for n in other_node.dependents}
-            if self_deps != other_deps:
-                return False
+        hasher = blake2b()
 
-        return True
+        for node in sorted_nodes:
+            # 2. Add node reference
+            hasher.update(str(node.reference).encode())
+
+            # 3. Add sorted tags
+            for tag in sorted(node.tags):
+                hasher.update(f":tag:{tag}".encode())
+
+            # 4. Add sorted dependents (edges) - Only those in the graph
+            internal_dependents = [d for d in node.dependents if d in self._nodes]
+            for dep in sorted(internal_dependents, key=lambda n: str(n.reference)):
+                hasher.update(f":edge:{dep.reference}".encode())
+
+        self._checksum = hasher.hexdigest()
+        return self._checksum
+
+    def validate_checksum(self, expected: str) -> bool:
+        """
+        Validate the graph against an expected checksum.
+
+        Args:
+            expected (str): The expected BLAKE2b hexadecimal digest.
+
+        Returns:
+            bool: True if the checksums match, False otherwise.
+        """
+        return self.checksum() == expected
+
+    def write_checksum(self, path: Path | str) -> None:
+        """
+        Write the graph's current checksum to a file.
+
+        Args:
+            path: Path to the output checksum file.
+        """
+        p = Path(path)
+        digest = self.checksum()
+        logger.info(f"Writing checksum to: {p}")
+        with open(p, "w+") as f:
+            f.write(digest)
+
+    @staticmethod
+    def read_checksum(path: Path | str) -> str:
+        """
+        Read a checksum from a file.
+
+        Args:
+            path: Path to the checksum file.
+
+        Returns:
+            str: The checksum string.
+        """
+        p = Path(path)
+        logger.debug(f"Reading checksum from: {p}")
+        with open(p, "r") as f:
+            return f.read().strip()
+
+    @classmethod
+    def read(cls, path: Path | str, **kwargs: Any) -> Graph[Any]:
+        """Read a graph from a file, automatically detecting the format."""
+        from .parsers.utils import extract_checksum
+
+        p = Path(path)
+        ext = p.suffix.lower()
+        match ext:
+            case ".json":
+                g = cls.from_json(p, **kwargs)
+            case ".yaml" | ".yml":
+                g = cls.from_yaml(p, **kwargs)
+            case ".toml":
+                g = cls.from_toml(p, **kwargs)
+            case ".csv":
+                g = cls.from_csv(p, **kwargs)
+            case ".graphml":
+                g = cls.from_graphml(p, **kwargs)
+            case _:
+                raise ValueError(f"Unsupported extension for reading: {ext}")
+
+        if embedded := extract_checksum(p):
+            if not g.validate_checksum(embedded):
+                raise ValueError(f"Checksum validation failed for {p}")
+        return g
+
+    def write(
+        self,
+        path: Path | str,
+        transitive_reduction: bool = False,
+        embed_checksum: bool = False,
+        **kwargs: Any,
+    ) -> None:
+        """Write the graph to a file, automatically detecting the format."""
+        p = Path(path)
+        ext = p.suffix.lower()
+        match ext:
+            case ".json":
+                from .views.json import export_topology_json as fnc
+            case ".yaml" | ".yml":
+                from .views.yaml import export_topology_yaml as fnc
+            case ".toml":
+                from .views.toml import export_topology_toml as fnc
+            case ".csv":
+                from .views.csv import export_topology_csv as fnc
+            case ".graphml":
+                from .views.graphml import export_topology_graphml as fnc
+            case ".dot" | ".gv":
+                from .views.graphviz import export_topology_graphviz_dot as fnc
+            case ".mmd":
+                from .views.mermaid import export_topology_mermaid_mmd as fnc
+            case ".d2":
+                from .views.d2 import export_topology_d2 as fnc
+            case ".puml":
+                from .views.plantuml import export_topology_plantuml as fnc
+            case ".html":
+                from .views.html import export_topology_html as fnc
+            case ".tex":
+                from .views.tikz import export_topology_tikz as fnc
+            case ".txt":
+                from .views.texttree import export_topology_tree_txt as fnc
+            case ".ascii":
+                from .views.asciiflow import export_topology_ascii_flow as fnc
+            case ".svg":
+                from .views.mermaid import export_topology_mermaid_svg as fnc
+            case _:
+                raise ValueError(f"Unsupported extension: {ext}")
+        return self.export(fnc, p, transitive_reduction, embed_checksum, **kwargs)
+
+    def parallelized_topological_order(self) -> list[set[T]]:
+        """
+        Get the nodes in topological order, grouped into sets that can be processed in parallel.
+        Only nodes that are members of this graph are included.
+
+        Returns:
+            list[set[T]]: A list of sets of member nodes that have no unmet dependencies.
+        """
+        if self._parallel_topological_order is None:
+            logger.debug("Calculating parallel topological order.")
+            self._parallel_topological_order = []
+            sorter = TopologicalSorter({node: node.depends_on for node in self._nodes})
+            sorter.prepare()
+            while sorter.is_active():
+                ready = sorter.get_ready()
+                if not ready:
+                    break
+                # Filter to only include nodes that are actually in this graph
+                filtered_ready = {node for node in ready if node in self._nodes}
+                if filtered_ready:
+                    self._parallel_topological_order.append(filtered_ready)
+                sorter.done(*ready)
+
+        return self._parallel_topological_order
+
+    def parallelized_topological_order_filtered(
+        self, fn: Callable[[T], bool]
+    ) -> list[set[T]]:
+        """
+        Get a filtered list of nodes in parallelized topological order.
+
+        Args:
+            fn (Callable[[T], bool]): The predicate function.
+
+        Returns:
+            list[set[T]]: Filtered sets of nodes for parallel processing.
+        """
+        result = []
+        for group in self.parallelized_topological_order():
+            filtered_group = {node for node in group if fn(node)}
+            if filtered_group:
+                result.append(filtered_group)
+        return result
+
+    def parallelized_topological_order_tagged(self, tag: str) -> list[set[T]]:
+        """
+        Get a list of nodes with a specific tag in parallelized topological order.
+
+        Args:
+            tag (str): The tag to filter by.
+
+        Returns:
+            list[set[T]]: Tagged sets of nodes for parallel processing.
+        """
+        return self.parallelized_topological_order_filtered(lambda n: n.is_tagged(tag))
 
     def __eq__(self, other: object) -> bool:
         """
         Compare two graphs for equality.
         """
         return self.is_equal_to(other)
+
+    def __hash__(self) -> int:
+        """
+        Graphs are hashable by identity to allow them to be used in WeakSets
+        (e.g., as observers of Graphable nodes).
+        """
+        return id(self)
 
     def check_cycles(self) -> None:
         """
@@ -259,8 +452,7 @@ class Graph[T: Graphable[Any]]:
         logger.debug(f"Added edge: {node.reference} -> {dependent.reference}")
 
         # Invalidate cache
-        if self._topological_order is not None:
-            self._topological_order = None
+        self._invalidate_cache()
 
     def add_node(self, node: T) -> bool:
         """
@@ -287,10 +479,10 @@ class Graph[T: Graphable[Any]]:
 
         self._check_node_consistency(node)
         self._nodes.add(node)
+        node._register_observer(self)
         logger.debug(f"Added node: {node.reference}")
 
-        if self._topological_order is not None:
-            self._topological_order = None
+        self._invalidate_cache()
 
         return True
 
@@ -307,8 +499,7 @@ class Graph[T: Graphable[Any]]:
             dependent._remove_depends_on(node)
             logger.debug(f"Removed edge: {node.reference} -> {dependent.reference}")
 
-            if self._topological_order is not None:
-                self._topological_order = None
+            self._invalidate_cache()
 
     def remove_node(self, node: T) -> None:
         """
@@ -327,10 +518,10 @@ class Graph[T: Graphable[Any]]:
                 sub._remove_depends_on(node)
 
             self._nodes.remove(node)
+            node._unregister_observer(self)
             logger.debug(f"Removed node: {node.reference}")
 
-            if self._topological_order is not None:
-                self._topological_order = None
+            self._invalidate_cache()
 
     def ancestors(self, node: T) -> Iterator[T]:
         """
@@ -473,14 +664,18 @@ class Graph[T: Graphable[Any]]:
     def topological_order(self) -> list[T]:
         """
         Get the nodes in topological order.
+        Only nodes that are members of this graph are included.
 
         Returns:
-            list[T]: A list of nodes sorted topologically.
+            list[T]: A list of member nodes sorted topologically.
         """
         if self._topological_order is None:
             logger.debug("Calculating topological order.")
             sorter = TopologicalSorter({node: node.depends_on for node in self._nodes})
-            self._topological_order = list(sorter.static_order())
+            # Filter the static order to only include nodes that are in this graph
+            self._topological_order = [
+                node for node in sorter.static_order() if node in self._nodes
+            ]
 
         return self._topological_order
 
@@ -590,6 +785,7 @@ class Graph[T: Graphable[Any]]:
         export_fnc: Callable[..., None],
         output: Path | str,
         transitive_reduction: bool = False,
+        embed_checksum: bool = False,
         **kwargs: Any,
     ) -> None:
         """
@@ -599,9 +795,49 @@ class Graph[T: Graphable[Any]]:
             export_fnc: The export function to use (e.g., export_topology_graphviz_svg).
             output: The output file path.
             transitive_reduction: If True, export the transitive reduction of the graph.
+            embed_checksum: If True, embed the graph's checksum as a comment at the top.
             **kwargs: Additional arguments passed to the export function.
         """
         from pathlib import Path
 
+        from .views.utils import wrap_with_checksum
+
+        p = Path(output)
         target = self.transitive_reduction() if transitive_reduction else self
-        export_fnc(target, Path(output), **kwargs)
+
+        if not embed_checksum:
+            return export_fnc(target, p, **kwargs)
+
+        # To embed checksum, we need to capture the output string first.
+        # Most of our 'export_*' functions are just wrappers around 'create_*'.
+        # We'll look for the corresponding create function.
+        import types
+
+        if isinstance(export_fnc, types.FunctionType):
+            fnc_name = export_fnc.__name__.replace("export_", "create_")
+        else:
+            # Fallback for other callables
+            logger.warning(
+                f"Callable {export_fnc} is not a function. Exporting normally."
+            )
+            return export_fnc(target, p, **kwargs)
+
+        import importlib
+
+        module_path = export_fnc.__module__
+        module = importlib.import_module(module_path)
+        create_fnc = getattr(module, fnc_name, None)
+
+        if not create_fnc:
+            # Fallback: if we can't find create_*, just export normally without embedding
+            logger.warning(
+                f"Could not find {fnc_name} to embed checksum. Exporting normally."
+            )
+            return export_fnc(target, p, **kwargs)
+
+        content = create_fnc(target, **kwargs)
+        checksum = target.checksum()
+        wrapped = wrap_with_checksum(content, checksum, p.suffix)
+
+        with open(p, "w+") as f:
+            f.write(wrapped)

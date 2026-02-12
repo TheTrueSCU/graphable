@@ -14,7 +14,7 @@ from ...views.graphml import export_topology_graphml
 from ...views.graphviz import export_topology_graphviz_dot
 from ...views.html import export_topology_html
 from ...views.json import export_topology_json
-from ...views.mermaid import export_topology_mermaid_mmd, export_topology_mermaid_svg
+from ...views.mermaid import export_topology_mermaid_mmd
 from ...views.plantuml import export_topology_plantuml
 from ...views.texttree import export_topology_tree_txt
 from ...views.tikz import export_topology_tikz
@@ -85,27 +85,39 @@ def check_command(path: Path) -> dict[str, Any]:
         return {"valid": False, "error": str(e)}
 
 
-def reduce_command(input_path: Path, output_path: Path) -> None:
+def reduce_command(
+    input_path: Path, output_path: Path, embed_checksum: bool = False
+) -> None:
     g = load_graph(input_path)
-    reduced = g.transitive_reduction()
-
-    if output_path.suffix == ".svg":
-        # Default to mermaid for SVG reduction if not specified
-        export_topology_mermaid_svg(reduced, output_path)
-    elif exporter := get_exporter(output_path.suffix):
-        exporter(reduced, output_path)
-    else:
-        raise ValueError(f"No exporter available for extension: {output_path.suffix}")
+    g.write(output_path, transitive_reduction=True, embed_checksum=embed_checksum)
 
 
 def convert_command(input_path: Path, output_path: Path, **kwargs: Any) -> None:
     g = load_graph(input_path)
+    g.write(output_path, **kwargs)
 
-    if output_path.suffix == ".svg":
-        # Determine which SVG exporter to use
-        # Default to mermaid
-        export_topology_mermaid_svg(g, output_path, **kwargs)
-    elif exporter := get_exporter(output_path.suffix):
-        exporter(g, output_path, **kwargs)
-    else:
-        raise ValueError(f"No exporter available for extension: {output_path.suffix}")
+
+def checksum_command(path: Path) -> str:
+    g = load_graph(path)
+    return g.checksum()
+
+
+def verify_command(path: Path, expected: str | None = None) -> dict[str, Any]:
+    g = load_graph(path)
+    actual = g.checksum()
+
+    if expected is None:
+        # Check if there is an embedded checksum
+        from ...parsers.utils import extract_checksum
+
+        expected = extract_checksum(path)
+
+    if expected is None:
+        return {"valid": None, "actual": actual, "expected": None}
+
+    return {"valid": actual == expected, "actual": actual, "expected": expected}
+
+
+def write_checksum_command(graph_path: Path, checksum_path: Path) -> None:
+    g = load_graph(graph_path)
+    g.write_checksum(checksum_path)

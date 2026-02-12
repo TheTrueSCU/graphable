@@ -11,11 +11,14 @@
 - **Topological Sorting:** Easily get nodes in dependency order.
 - **Cycle Detection:** Built-in protection against circular dependencies.
 - **Filtering & Tagging:** Create subgraphs based on custom predicates or tags.
+- **Graph Syncing:** Automatically expand graphs to include all reachable nodes with `discover()`.
 - **Transitive Reduction:** Automatically remove redundant edges while preserving reachability.
 - **Reachability Analysis:** Easily find ancestors or descendants of any node.
 - **Node Ordering:** Compare nodes using standard operators (`a < b` means `a` is an ancestor of `b`).
 - **Container Protocols:** Use Pythonic idioms like `len(graph)`, `node in graph`, and `for node in graph`.
-- **Equality:** Compare graphs for structural and metadata equality using `==` or `is_equal_to()`.
+- **Integrity:** Generate and validate deterministic BLAKE2b checksums of graph structure and metadata.
+- **Parallel Sorting:** Group nodes into execution layers for parallel processing.
+- **Unified I/O:** Easy `Graph.read()` and `graph.write()` methods with automatic format detection.
 - **Parsing:** Reconstruct graphs from JSON, YAML, TOML, CSV, or GraphML files and strings.
 - **Clustering:** Group nodes into subgraphs/clusters in visualizations based on tags.
 - **Visualizations:**
@@ -285,6 +288,29 @@ if db < api:
     
 if ui > api:
     print("UI is a descendant of API")
+```
+
+### Checksums & Integrity
+
+Verify your graph hasn't changed:
+
+```python
+digest = g.checksum()
+# ... later ...
+if g.validate_checksum(digest):
+    print("Graph integrity verified.")
+```
+
+### Unified I/O
+
+Read and write any format without thinking about parsers:
+
+```python
+# Automatically detects JSON
+g = Graph.read("topology.json")
+
+# Automatically detects YAML
+g.write("topology.yaml")
 ```
 
 ## Documentation

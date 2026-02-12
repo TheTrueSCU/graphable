@@ -20,6 +20,9 @@ $ graphable [OPTIONS] COMMAND [ARGS]...
 * `check`: Validate graph integrity (cycles and...
 * `reduce`: Perform transitive reduction on a graph...
 * `convert`: Convert a graph between supported formats.
+* `checksum`: Calculate and print the graph checksum.
+* `verify`: Verify graph checksum (embedded or provided).
+* `write-checksum`: Write graph checksum to a standalone file.
 
 ## `graphable info`
 
@@ -74,6 +77,7 @@ $ graphable reduce [OPTIONS] INPUT OUTPUT
 
 **Options**:
 
+* `--embed`: Embed checksum in output
 * `--help`: Show this message and exit.
 
 ## `graphable convert`
@@ -90,6 +94,63 @@ $ graphable convert [OPTIONS] INPUT OUTPUT
 
 * `INPUT`: Input graph file  [required]
 * `OUTPUT`: Output graph file  [required]
+
+**Options**:
+
+* `--embed`: Embed checksum in output
+* `--help`: Show this message and exit.
+
+## `graphable checksum`
+
+Calculate and print the graph checksum.
+
+**Usage**:
+
+```console
+$ graphable checksum [OPTIONS] FILE
+```
+
+**Arguments**:
+
+* `FILE`: Graph file  [required]
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+## `graphable verify`
+
+Verify graph checksum (embedded or provided).
+
+**Usage**:
+
+```console
+$ graphable verify [OPTIONS] FILE
+```
+
+**Arguments**:
+
+* `FILE`: Graph file  [required]
+
+**Options**:
+
+* `--expected TEXT`: Expected checksum (hex)
+* `--help`: Show this message and exit.
+
+## `graphable write-checksum`
+
+Write graph checksum to a standalone file.
+
+**Usage**:
+
+```console
+$ graphable write-checksum [OPTIONS] FILE OUTPUT
+```
+
+**Arguments**:
+
+* `FILE`: Graph file  [required]
+* `OUTPUT`: Output checksum file  [required]
 
 **Options**:
 

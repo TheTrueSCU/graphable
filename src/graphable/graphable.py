@@ -1,3 +1,4 @@
+import weakref
 from collections import deque
 from logging import getLogger
 from typing import Any, Self, cast
@@ -26,7 +27,22 @@ class Graphable[T]:
         self._depends_on: set[Graphable[Any]] = set()
         self._reference: T = reference
         self._tags: set[str] = set()
+        self._observers: weakref.WeakSet[Any] = weakref.WeakSet()
         logger.debug(f"Created Graphable node for reference: {reference}")
+
+    def _notify_change(self) -> None:
+        """Notify all observers that this node has changed."""
+        for observer in list(self._observers):
+            if hasattr(observer, "_invalidate_cache"):
+                observer._invalidate_cache()
+
+    def _register_observer(self, observer: Any) -> None:
+        """Register an observer to be notified of changes."""
+        self._observers.add(observer)
+
+    def _unregister_observer(self, observer: Any) -> None:
+        """Unregister an observer."""
+        self._observers.discard(observer)
 
     def __eq__(self, other: object) -> bool:
         """
@@ -183,6 +199,7 @@ class Graphable[T]:
             logger.debug(
                 f"Node '{self.reference}': added dependent '{dependent.reference}'"
             )
+            self._notify_change()
 
     def _add_depends_on(self, depends_on: Self) -> None:
         """
@@ -196,6 +213,7 @@ class Graphable[T]:
             logger.debug(
                 f"Node '{self.reference}': added dependency '{depends_on.reference}'"
             )
+            self._notify_change()
 
     def _remove_dependent(self, dependent: Self) -> None:
         """
@@ -209,6 +227,7 @@ class Graphable[T]:
             logger.debug(
                 f"Node '{self.reference}': removed dependent '{dependent.reference}'"
             )
+            self._notify_change()
 
     def _remove_depends_on(self, depends_on: Self) -> None:
         """
@@ -222,6 +241,15 @@ class Graphable[T]:
             logger.debug(
                 f"Node '{self.reference}': removed dependency '{depends_on.reference}'"
             )
+            self._notify_change()
+
+    def _register_observer(self, observer: Any) -> None:
+        """Register an observer to be notified of changes."""
+        self._observers.add(observer)
+
+    def _unregister_observer(self, observer: Any) -> None:
+        """Unregister an observer."""
+        self._observers.discard(observer)
 
     def add_tag(self, tag: str) -> None:
         """
@@ -232,6 +260,7 @@ class Graphable[T]:
         """
         self._tags.add(tag)
         logger.debug(f"Added tag '{tag}' to {self.reference}")
+        self._notify_change()
 
     @property
     def dependents(self) -> set[Self]:
@@ -357,5 +386,7 @@ class Graphable[T]:
         Args:
             tag (str): The tag to remove.
         """
-        self._tags.discard(tag)
-        logger.debug(f"Removed tag '{tag}' from {self.reference}")
+        if tag in self._tags:
+            self._tags.discard(tag)
+            logger.debug(f"Removed tag '{tag}' from {self.reference}")
+            self._notify_change()

@@ -221,7 +221,10 @@ def export_topology_mermaid_mmd(
 
 
 def export_topology_mermaid_svg(
-    graph: Graph, output: Path, config: MermaidStylingConfig | None = None
+    graph: Graph,
+    output: Path,
+    config: MermaidStylingConfig | None = None,
+    embed_checksum: bool = False,
 ) -> None:
     """
     Export the graph to an SVG file using mmdc.
@@ -230,11 +233,17 @@ def export_topology_mermaid_svg(
         graph (Graph): The graph to export.
         output (Path): The output file path.
         config (MermaidStylingConfig | None): Styling configuration.
+        embed_checksum (bool): If True, embed the graph's checksum as a comment.
     """
     logger.info(f"Exporting mermaid svg to: {output}")
     _check_mmdc_on_path()
 
     mermaid: str = create_topology_mermaid_mmd(graph, config)
+
+    if embed_checksum:
+        from .utils import wrap_with_checksum
+
+        mermaid = wrap_with_checksum(mermaid, graph.checksum(), output.suffix)
 
     with NamedTemporaryFile(delete=False, mode="w+", suffix=".mmd") as f:
         f.write(mermaid)

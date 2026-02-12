@@ -209,6 +209,29 @@ Graphs can be compared for equality using the standard ``==`` operator or the ``
    if g1 == g2:
        print("The graphs are identical.")
 
+Subgraph Semantics & Syncing
+----------------------------
+
+A ``Graph`` instance acts as a "view" of a specific set of nodes. Even if a node in the graph is connected to "external" nodes that are not members of the graph, operations like topological sorts and checksums will only respect and include nodes that are explicitly part of the ``Graph`` instance.
+
+**Filtering Behavior**
+
+*   **Topological Order**: Methods like ``topological_order()`` and ``parallelized_topological_order()`` will filter out any nodes not present in the graph's membership.
+*   **Checksums**: The ``checksum()`` method only accounts for nodes in the graph and edges between those specific nodes.
+
+**Syncing with Discover**
+
+If you want to expand a ``Graph`` to include all reachable ancestors and descendants of its current nodes, you can use the ``discover()`` method. This effectively "syncs" the graph with the full connected structure of its members.
+
+.. code-block:: python
+
+   # G only contains node 'A' initially
+   g = Graph({a})
+
+   # A depends on B, B depends on C
+   # After discover(), G will contain A, B, and C
+   g.discover()
+
 Node Ordering
 -------------
 
@@ -224,6 +247,61 @@ This provides a clean way to check for dependency relationships directly between
 
    if node_a < node_b:
        print("node_a must come before node_b")
+
+Caching & Performance
+---------------------
+
+The ``Graph`` class implements an efficient observer-based caching system for expensive operations:
+*   ``topological_order()``
+*   ``parallelized_topological_order()``
+*   ``checksum()``
+
+Calculations are performed once and cached. If any node in the graph is modified (tags changed, dependencies added/removed), the graph is automatically notified and invalidates its cache. This ensures high performance for repeated access while maintaining absolute correctness.
+
+Unified I/O
+-----------
+
+``graphable`` provides high-level ``read()`` and ``write()`` methods that automatically detect the file format based on the extension. This is the simplest way to work with graph files.
+
+.. code-block:: python
+
+   # Reading
+   g = Graph.read("topology.json")
+
+   # Writing (supports all formats including graphical)
+   g.write("topology.svg")
+   g.write("topology.yaml")
+
+   # Supports transitive reduction during write
+   g.write("simple.mmd", transitive_reduction=True)
+
+Integrity & Checksums
+---------------------
+
+To ensure your graph structure and metadata (tags) haven't changed, you can use the deterministic BLAKE2b checksum feature.
+
+.. code-block:: python
+
+   # Calculate hex digest
+   digest = g.checksum()
+
+   # Validate later
+   if g.validate_checksum(digest):
+       print("Integrity verified!")
+
+The checksum is stable across different Python sessions and is independent of node creation order.
+
+Parallel Processing
+-------------------
+
+For task orchestration, you often need to know which nodes can be processed simultaneously. The ``parallelized_topological_order()`` method groups nodes into independent "layers."
+
+.. code-block:: python
+
+   for i, layer in enumerate(g.parallelized_topological_order()):
+       print(f"Layer {i} (can run in parallel): {[n.reference for n in layer]}")
+
+Like the standard topological sort, this also supports ``_filtered`` and ``_tagged`` variants.
 
 Command Line Interface
 ----------------------
