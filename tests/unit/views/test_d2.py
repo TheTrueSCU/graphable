@@ -139,3 +139,29 @@ class TestD2:
 
         with raises(Exception):
             export_topology_d2_svg(g, output_path)
+
+    def test_create_topology_d2_clustering(self):
+        a = Graphable("A")
+        a.add_tag("group1")
+        b = Graphable("B")
+        b.add_tag("group1")
+        c = Graphable("C")
+        c.add_tag("group2")
+
+        g = Graph()
+        g.add_edge(a, b)
+        g.add_edge(b, c)
+
+        from graphable.views.d2 import D2StylingConfig
+
+        config = D2StylingConfig(cluster_by_tag=True)
+
+        d2 = create_topology_d2(g, config)
+
+        assert "group1: {" in d2
+        assert "group2: {" in d2
+        assert "A: A" in d2
+        assert "B: B" in d2
+        assert "C: C" in d2
+        assert "A -> B" in d2
+        assert "B -> C" in d2

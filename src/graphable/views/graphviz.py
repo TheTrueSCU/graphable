@@ -35,6 +35,8 @@ class GraphvizStylingConfig:
     graph_attr: dict[str, str] | None = None
     node_attr_default: dict[str, str] | None = None
     edge_attr_default: dict[str, str] | None = None
+    cluster_by_tag: bool = False
+    tag_sort_fnc: Callable[[set[str]], list[str]] = lambda s: sorted(list(s))
 
 
 def _check_dot_on_path() -> None:
@@ -82,15 +84,42 @@ def create_topology_graphviz_dot(
     if config.edge_attr_default:
         dot.append(f"    edge{_format_attrs(config.edge_attr_default)};")
 
-    # Nodes and Edges
+    def get_cluster(node: Graphable[Any]) -> str | None:
+        if not config.cluster_by_tag or not node.tags:
+            return None
+        sorted_tags = config.tag_sort_fnc(node.tags)
+        return sorted_tags[0] if sorted_tags else None
+
+    # Group nodes by cluster
+    clusters: dict[str | None, list[Graphable[Any]]] = {}
+    for node in graph.topological_order():
+        cluster = get_cluster(node)
+        if cluster not in clusters:
+            clusters[cluster] = []
+        clusters[cluster].append(node)
+
+    # Nodes (potentially within clusters)
+    for cluster_name, nodes in clusters.items():
+        indent = "    "
+        if cluster_name:
+            dot.append(f'    subgraph "cluster_{cluster_name}" {{')
+            dot.append(f'        label="{cluster_name}";')
+            indent = "        "
+
+        for node in nodes:
+            node_ref = config.node_ref_fnc(node)
+            node_attrs = {"label": config.node_label_fnc(node)}
+            if config.node_attr_fnc:
+                node_attrs.update(config.node_attr_fnc(node))
+
+            dot.append(f'{indent}"{node_ref}"{_format_attrs(node_attrs)};')
+
+        if cluster_name:
+            dot.append("    }")
+
+    # Edges
     for node in graph.topological_order():
         node_ref = config.node_ref_fnc(node)
-        node_attrs = {"label": config.node_label_fnc(node)}
-        if config.node_attr_fnc:
-            node_attrs.update(config.node_attr_fnc(node))
-
-        dot.append(f'    "{node_ref}"{_format_attrs(node_attrs)};')
-
         for dependent in node.dependents:
             dep_ref = config.node_ref_fnc(dependent)
             edge_attrs = {}

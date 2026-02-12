@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from graphlib import CycleError, TopologicalSorter
 from logging import getLogger
+from pathlib import Path
 from typing import Any, Callable
 
 from .errors import GraphConsistencyError, GraphCycleError
@@ -83,6 +84,51 @@ class Graph[T: Graphable[Any]]:
         if self._nodes:
             self.check_consistency()
             self.check_cycles()
+
+    def __contains__(self, item: Any) -> bool:
+        """
+        Check if a node or its reference is in the graph.
+
+        Args:
+            item (Any): Either a Graphable node or a reference object.
+
+        Returns:
+            bool: True if present, False otherwise.
+        """
+        if isinstance(item, Graphable):
+            return item in self._nodes
+
+        return any(node.reference == item for node in self._nodes)
+
+    def __getitem__(self, reference: Any) -> T:
+        """
+        Get a node by its reference.
+
+        Args:
+            reference (Any): The reference object to search for.
+
+        Returns:
+            T: The Graphable node.
+
+        Raises:
+            KeyError: If no node with the given reference exists.
+        """
+        for node in self._nodes:
+            if node.reference == reference:
+                return node
+        raise KeyError(f"No node found with reference: {reference}")
+
+    def __iter__(self):
+        """
+        Iterate over nodes in topological order.
+        """
+        return iter(self.topological_order())
+
+    def __len__(self) -> int:
+        """
+        Get the number of nodes in the graph.
+        """
+        return len(self._nodes)
 
     def check_cycles(self) -> None:
         """
@@ -204,6 +250,86 @@ class Graph[T: Graphable[Any]]:
 
         return True
 
+    def remove_edge(self, node: T, dependent: T) -> None:
+        """
+        Remove a directed edge from node to dependent.
+
+        Args:
+            node (T): The source node.
+            dependent (T): The target node.
+        """
+        if node in self._nodes and dependent in self._nodes:
+            node._remove_dependent(dependent)
+            dependent._remove_depends_on(node)
+            logger.debug(f"Removed edge: {node.reference} -> {dependent.reference}")
+
+            if self._topological_order is not None:
+                self._topological_order = None
+
+    def remove_node(self, node: T) -> None:
+        """
+        Remove a node and all its connected edges from the graph.
+
+        Args:
+            node (T): The node to remove.
+        """
+        if node in self._nodes:
+            # Remove from all nodes it depends on
+            for dep in list(node.depends_on):
+                dep._remove_dependent(node)
+
+            # Remove from all nodes that depend on it
+            for sub in list(node.dependents):
+                sub._remove_depends_on(node)
+
+            self._nodes.remove(node)
+            logger.debug(f"Removed node: {node.reference}")
+
+            if self._topological_order is not None:
+                self._topological_order = None
+
+    def ancestors(self, node: T) -> set[T]:
+        """
+        Get all nodes that the given node depends on, recursively.
+
+        Args:
+            node (T): The starting node.
+
+        Returns:
+            set[T]: A set of all ancestor nodes.
+        """
+        ancestors: set[T] = set()
+
+        def discover(current: T):
+            for dep in current.depends_on:
+                if dep not in ancestors:
+                    ancestors.add(dep)
+                    discover(dep)
+
+        discover(node)
+        return ancestors
+
+    def descendants(self, node: T) -> set[T]:
+        """
+        Get all nodes that depend on the given node, recursively.
+
+        Args:
+            node (T): The starting node.
+
+        Returns:
+            set[T]: A set of all descendant nodes.
+        """
+        descendants: set[T] = set()
+
+        def discover(current: T):
+            for sub in current.dependents:
+                if sub not in descendants:
+                    descendants.add(sub)
+                    discover(sub)
+
+        discover(node)
+        return descendants
+
     @property
     def sinks(self) -> list[T]:
         """
@@ -299,3 +425,89 @@ class Graph[T: Graphable[Any]]:
         from .views.networkx import to_networkx
 
         return to_networkx(self)
+
+    def transitive_reduction(self) -> Graph[T]:
+        """
+        Compute the transitive reduction of this DAG.
+        A transitive reduction of a directed acyclic graph G is a graph G' with the same nodes
+        and the same reachability as G, but with as few edges as possible.
+
+        Returns:
+            Graph[T]: A new Graph instance containing the same nodes (cloned) but with redundant edges removed.
+        """
+        import copy
+
+        logger.debug("Calculating transitive reduction.")
+
+        # 1. Clone nodes without edges to avoid modifying the original graph.
+        node_map: dict[T, T] = {}
+        for node in self._nodes:
+            new_node = copy.copy(node)
+            # Reset internal edge tracking
+            new_node._dependents = set()
+            new_node._depends_on = set()
+            # Manually clone tags to avoid shared state
+            new_node._tags = set(node.tags)
+            node_map[node] = new_node
+
+        # 2. Identify redundant edges.
+        # An edge (u, v) is redundant if there exists a path from u to v of length > 1.
+        redundant_edges: set[tuple[T, T]] = set()
+        for u in self._nodes:
+            for v in u.dependents:
+                # Check if v is reachable from u through any other neighbor w.
+                if any(w.find_path(v) for w in u.dependents if w != v):
+                    redundant_edges.add((u, v))
+
+        # 3. Construct the new graph with non-redundant edges.
+        new_graph = Graph(set(node_map.values()))
+        for u in self._nodes:
+            for v in u.dependents:
+                if (u, v) not in redundant_edges:
+                    new_graph.add_edge(node_map[u], node_map[v])
+
+        logger.info(
+            f"Transitive reduction complete. Removed {len(redundant_edges)} redundant edges."
+        )
+        return new_graph
+
+    def render(
+        self,
+        view_fnc: Callable[..., str],
+        transitive_reduction: bool = False,
+        **kwargs: Any,
+    ) -> str:
+        """
+        Render the graph using a view function.
+
+        Args:
+            view_fnc: The view function to use (e.g., create_topology_mermaid_mmd).
+            transitive_reduction: If True, render the transitive reduction of the graph.
+            **kwargs: Additional arguments passed to the view function.
+
+        Returns:
+            str: The rendered representation.
+        """
+        target = self.transitive_reduction() if transitive_reduction else self
+        return view_fnc(target, **kwargs)
+
+    def export(
+        self,
+        export_fnc: Callable[..., None],
+        output: Path | str,
+        transitive_reduction: bool = False,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Export the graph using an export function.
+
+        Args:
+            export_fnc: The export function to use (e.g., export_topology_graphviz_svg).
+            output: The output file path.
+            transitive_reduction: If True, export the transitive reduction of the graph.
+            **kwargs: Additional arguments passed to the export function.
+        """
+        from pathlib import Path
+
+        target = self.transitive_reduction() if transitive_reduction else self
+        export_fnc(target, Path(output), **kwargs)

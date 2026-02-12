@@ -114,3 +114,31 @@ class TestPlantUML:
 
         with raises(Exception):
             export_topology_plantuml_svg(g, output_path)
+
+    def test_create_topology_plantuml_clustering(self):
+        a = Graphable("A")
+        a.add_tag("group1")
+        b = Graphable("B")
+        b.add_tag("group1")
+        c = Graphable("C")
+        c.add_tag("group2")
+
+        g = Graph()
+        g.add_edge(a, b)
+        g.add_edge(b, c)
+
+        from graphable.views.plantuml import PlantUmlStylingConfig
+
+        config = PlantUmlStylingConfig(
+            cluster_by_tag=True, node_ref_fnc=lambda n: n.reference
+        )
+
+        puml = create_topology_plantuml(g, config)
+
+        assert 'package "group1" {' in puml
+        assert 'package "group2" {' in puml
+        assert 'node "A" as A' in puml
+        assert 'node "B" as B' in puml
+        assert 'node "C" as C' in puml
+        assert "A --> B" in puml
+        assert "B --> C" in puml

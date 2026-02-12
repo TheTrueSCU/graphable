@@ -35,6 +35,8 @@ class D2StylingConfig:
     global_style: dict[str, str] | None = None
     layout: str | None = None
     theme: str | None = None
+    cluster_by_tag: bool = False
+    tag_sort_fnc: Callable[[set[str]], list[str]] = lambda s: sorted(list(s))
 
 
 def _check_d2_on_path() -> None:
@@ -80,27 +82,56 @@ def create_topology_d2(graph: Graph, config: D2StylingConfig | None = None) -> s
     if config.theme:
         d2.append("direction: down")  # Default direction
 
-    # Nodes
+    def get_cluster(node: Graphable[Any]) -> str | None:
+        if not config.cluster_by_tag or not node.tags:
+            return None
+        sorted_tags = config.tag_sort_fnc(node.tags)
+        return sorted_tags[0] if sorted_tags else None
+
+    # Group nodes by cluster
+    clusters: dict[str | None, list[Graphable[Any]]] = {}
+    for node in graph.topological_order():
+        cluster = get_cluster(node)
+        if cluster not in clusters:
+            clusters[cluster] = []
+        clusters[cluster].append(node)
+
+    # Nodes (potentially within clusters)
+    for cluster_name, nodes in clusters.items():
+        indent = ""
+        if cluster_name:
+            d2.append(f"{cluster_name}: {{")
+            indent = "  "
+
+        for node in nodes:
+            node_ref = config.node_ref_fnc(node)
+            node_label = config.node_label_fnc(node)
+            d2.append(f"{indent}{node_ref}: {node_label}")
+
+            if config.node_style_fnc:
+                styles = config.node_style_fnc(node)
+                d2.extend(_format_styles(styles, indent=indent + "  "))
+
+        if cluster_name:
+            d2.append("}")
+
+    # Edges
     for node in graph.topological_order():
         node_ref = config.node_ref_fnc(node)
-        node_label = config.node_label_fnc(node)
-        d2.append(f"{node_ref}: {node_label}")
-
-        if config.node_style_fnc:
-            styles = config.node_style_fnc(node)
-            d2.extend(_format_styles(styles, indent="  "))
-
-        # Edges
         for dependent in node.dependents:
             dep_ref = config.node_ref_fnc(dependent)
+            # If nodes are in clusters, D2 handles flat references or nested references.
+            # Usually, if IDs are unique, flat references work.
+            # But if we wanted to be explicit: cluster.node_ref
+            # For now, let's assume node_ref is globally unique (the default is reference string).
             edge_line = f"{node_ref} -> {dep_ref}"
 
             if config.edge_style_fnc:
                 edge_styles = config.edge_style_fnc(node, dependent)
                 if edge_styles:
                     d2.append(f"{edge_line}: {{")
-                    d2.extend(_format_styles(edge_styles, indent="    "))
-                    d2.append("  }")
+                    d2.extend(_format_styles(edge_styles, indent="  "))
+                    d2.append("}")
                 else:
                     d2.append(edge_line)
             else:

@@ -135,6 +135,37 @@ The following methods support the ``check_cycles`` parameter:
 
 In addition, the ``Graph.add_edge`` and ``Graph.add_node`` methods always perform cycle detection to ensure the integrity of the graph.
 
+Transitive Reduction
+--------------------
+
+For complex graphs, redundant edges can clutter the visualization. Transitive reduction removes these edges while preserving the reachability of the graph.
+
+.. code-block:: python
+
+   # Returns a new Graph instance with redundant edges removed
+   reduced_g = graph.transitive_reduction()
+
+   # Or render directly using the convenience method
+   from graphable.views.mermaid import create_topology_mermaid_mmd
+   print(graph.render(create_topology_mermaid_mmd, transitive_reduction=True))
+
+Clustering by Tags
+------------------
+
+You can group nodes into clusters in visualizations like Mermaid, Graphviz, D2, and PlantUML based on their tags.
+
+.. code-block:: python
+
+   from graphable.views.mermaid import MermaidStylingConfig, create_topology_mermaid_mmd
+
+   # Enable clustering in the configuration
+   config = MermaidStylingConfig(cluster_by_tag=True)
+
+   # Render the graph with clusters
+   print(graph.render(create_topology_mermaid_mmd, config=config))
+
+Nodes are grouped by their first tag (by default, tags are sorted alphabetically). You can provide a custom ``tag_sort_fnc`` in the configuration to control which tag is used for grouping.
+
 ASCII Flowchart
 ---------------
 
@@ -167,25 +198,21 @@ Data Export & Interoperability
 
 ``graphable`` makes it easy to move your graph data into other tools for analysis or custom visualization.
 
-**JSON & Cytoscape**
+**JSON, YAML & TOML**
 
-Export to a standard JSON format or a specialized Cytoscape.js-compatible schema:
+Export to standard machine-readable formats:
 
 .. code-block:: python
 
-   from graphable.views.json import create_topology_json, JsonStylingConfig
-   from graphable.views.cytoscape import create_topology_cytoscape, CytoscapeStylingConfig
+   from graphable.views.json import create_topology_json
+   from graphable.views.yaml import create_topology_yaml
+   from graphable.views.toml import create_topology_toml
 
-   # Generic JSON
-   # Custom indent and metadata
-   json_config = JsonStylingConfig(indent=4, node_data_fnc=lambda n: {"type": "service"})
-   generic_data = create_topology_json(g, config=json_config)
+   json_data = create_topology_json(g)
+   yaml_data = create_topology_yaml(g)
+   toml_data = create_topology_toml(g)
 
-   # Cytoscape.js Elements format
-   # Ready to be loaded into an interactive web viewer
-   cy_data = create_topology_cytoscape(g)
-
-**Interactive HTML**
+**Cytoscape**
 
 Generate a standalone, interactive HTML file that you can share with anyone. It uses Cytoscape.js for rendering and supports zooming, panning, and dragging:
 

@@ -317,3 +317,203 @@ class TestGraph:
         a._add_depends_on(b)
         with raises(GraphConsistencyError):
             Graph(initial={a, b})
+
+    def test_container_len(self, nodes):
+        a, b, _ = nodes
+        g = Graph()
+        assert len(g) == 0
+        g.add_node(a)
+        assert len(g) == 1
+        g.add_node(b)
+        assert len(g) == 2
+
+    def test_container_iter(self, nodes):
+        a, b, c = nodes
+        g = Graph()
+        g.add_edge(a, b)
+        g.add_edge(b, c)
+
+        # Iteration should follow topological order
+        iterated = list(g)
+        assert iterated == [a, b, c]
+
+    def test_container_contains(self, nodes):
+        a, b, _ = nodes
+        g = Graph()
+        g.add_node(a)
+
+        assert a in g
+        assert "A" in g
+        assert b not in g
+        assert "B" not in g
+
+    def test_container_getitem(self, nodes):
+        a, b, _ = nodes
+        g = Graph()
+        g.add_node(a)
+
+        assert g["A"] == a
+        with raises(KeyError):
+            _ = g["B"]
+
+    def test_remove_edge(self, nodes):
+        a, b, _ = nodes
+        g = Graph()
+        g.add_edge(a, b)
+        assert b in a.dependents
+        assert a in b.depends_on
+
+        g.remove_edge(a, b)
+        assert b not in a.dependents
+        assert a not in b.depends_on
+        assert a in g
+        assert b in g
+
+    def test_remove_node(self, nodes):
+        a, b, c = nodes
+        g = Graph()
+        g.add_edge(a, b)
+        g.add_edge(b, c)
+
+        g.remove_node(b)
+        assert b not in g
+        assert b not in a.dependents
+        assert b not in c.depends_on
+        assert a in g
+        assert c in g
+
+    def test_ancestors_descendants(self):
+        # A -> B -> C -> D
+        a = Graphable("A")
+        b = Graphable("B")
+        c = Graphable("C")
+        d = Graphable("D")
+        g = Graph()
+        g.add_edge(a, b)
+        g.add_edge(b, c)
+        g.add_edge(c, d)
+
+        assert g.ancestors(d) == {a, b, c}
+        assert g.ancestors(c) == {a, b}
+        assert g.ancestors(a) == set()
+
+        assert g.descendants(a) == {b, c, d}
+        assert g.descendants(b) == {c, d}
+        assert g.descendants(d) == set()
+
+    def test_ancestors_diamond(self):
+        # A -> B -> D
+        # A -> C -> D
+        a = Graphable("A")
+        b = Graphable("B")
+        c = Graphable("C")
+        d = Graphable("D")
+        g = Graph()
+        g.add_edge(a, b)
+        g.add_edge(a, c)
+        g.add_edge(b, d)
+        g.add_edge(c, d)
+
+        assert g.ancestors(d) == {a, b, c}
+        assert g.descendants(a) == {b, c, d}
+
+    def test_transitive_reduction_simple(self):
+        # A -> B -> C
+        # A -> C (redundant)
+        a = Graphable("A")
+        b = Graphable("B")
+        c = Graphable("C")
+
+        g = Graph()
+        g.add_edge(a, b)
+        g.add_edge(b, c)
+        g.add_edge(a, c)
+
+        assert len(g.topological_order()) == 3
+        # Check that A has 2 dependents
+        assert len(g["A"].dependents) == 2
+
+        reduced = g.transitive_reduction()
+
+        assert len(reduced.topological_order()) == 3
+        # In reduced graph, A should only have B as dependent
+        assert len(reduced["A"].dependents) == 1
+        assert reduced["A"].dependents == {reduced["B"]}
+        assert reduced["B"].dependents == {reduced["C"]}
+        assert len(reduced["C"].dependents) == 0
+
+    def test_transitive_reduction_diamond(self):
+        # A -> B -> D
+        # A -> C -> D
+        # A -> D (redundant)
+        a = Graphable("A")
+        b = Graphable("B")
+        c = Graphable("C")
+        d = Graphable("D")
+
+        g = Graph()
+        g.add_edge(a, b)
+        g.add_edge(b, d)
+        g.add_edge(a, c)
+        g.add_edge(c, d)
+        g.add_edge(a, d)
+
+        reduced = g.transitive_reduction()
+
+        # A -> D should be removed
+        assert len(reduced["A"].dependents) == 2
+        assert reduced["D"] not in reduced["A"].dependents
+        assert reduced["B"] in reduced["A"].dependents
+        assert reduced["C"] in reduced["A"].dependents
+
+    def test_transitive_reduction_preserves_tags(self):
+        a = Graphable("A")
+        a.add_tag("important")
+        b = Graphable("B")
+
+        g = Graph()
+        g.add_edge(a, b)
+
+        reduced = g.transitive_reduction()
+        assert "important" in reduced["A"].tags
+
+        # Verify tags are NOT shared (cloned)
+        reduced["A"].add_tag("reduced-only")
+        assert "reduced-only" in reduced["A"].tags
+        assert "reduced-only" not in g["A"].tags
+
+    def test_graph_render_convenience(self):
+        a = Graphable("A")
+        b = Graphable("B")
+        c = Graphable("C")
+        g = Graph()
+        g.add_edge(a, b)
+        g.add_edge(b, c)
+        g.add_edge(a, c)
+
+        from graphable.views.mermaid import create_topology_mermaid_mmd
+
+        # Without reduction
+        out = g.render(create_topology_mermaid_mmd)
+        assert "A --> C" in out
+
+        # With reduction
+        out_reduced = g.render(create_topology_mermaid_mmd, transitive_reduction=True)
+        assert "A --> C" not in out_reduced
+        assert "A --> B" in out_reduced
+        assert "B --> C" in out_reduced
+
+    def test_graph_export_convenience(self, tmp_path):
+        a = Graphable("A")
+        b = Graphable("B")
+        g = Graph()
+        g.add_edge(a, b)
+
+        from graphable.views.mermaid import export_topology_mermaid_mmd
+
+        output_file = tmp_path / "graph.mmd"
+        g.export(export_topology_mermaid_mmd, output=output_file)
+
+        assert output_file.exists()
+        content = output_file.read_text()
+        assert "A --> B" in content

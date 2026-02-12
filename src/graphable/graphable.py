@@ -144,6 +144,32 @@ class Graphable[T]:
                 f"Node '{self.reference}': added dependency '{depends_on.reference}'"
             )
 
+    def _remove_dependent(self, dependent: Self) -> None:
+        """
+        Internal method to remove a dependent node.
+
+        Args:
+            dependent (Self): The node to remove.
+        """
+        if dependent in self._dependents:
+            self._dependents.remove(dependent)
+            logger.debug(
+                f"Node '{self.reference}': removed dependent '{dependent.reference}'"
+            )
+
+    def _remove_depends_on(self, depends_on: Self) -> None:
+        """
+        Internal method to remove a dependency.
+
+        Args:
+            depends_on (Self): The node to remove.
+        """
+        if depends_on in self._depends_on:
+            self._depends_on.remove(depends_on)
+            logger.debug(
+                f"Node '{self.reference}': removed dependency '{depends_on.reference}'"
+            )
+
     def add_tag(self, tag: str) -> None:
         """
         Add a tag to this node.

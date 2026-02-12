@@ -48,7 +48,9 @@ class TestMermaid:
 
         mmd = create_topology_mermaid_mmd(g, config)
 
-        assert "Node:A --link--> Node:B" in mmd
+        assert "A --link--> B" in mmd
+        assert "A[Node:A]" in mmd
+        assert "B[Node:B]" in mmd
         assert "style A fill:#f9f,stroke:#333" in mmd
         assert "linkStyle default stroke-width:2px,fill:none,stroke:red" in mmd
 
@@ -189,3 +191,30 @@ class TestMermaid:
         # So it DOES NOT unlink if it fails. That might be a bug or intentional for debugging.
         # But for coverage, it covers line 207.
         assert mock_script_path.unlink.call_count == 0
+
+    def test_create_topology_mermaid_mmd_clustering(self):
+        a = Graphable("A")
+        a.add_tag("group1")
+        b = Graphable("B")
+        b.add_tag("group1")
+        c = Graphable("C")
+        c.add_tag("group2")
+
+        g = Graph()
+        g.add_edge(a, b)
+        g.add_edge(b, c)
+
+        from graphable.views.mermaid import MermaidStylingConfig
+
+        config = MermaidStylingConfig(cluster_by_tag=True)
+
+        mmd = create_topology_mermaid_mmd(g, config)
+
+        assert "subgraph group1" in mmd
+        assert "subgraph group2" in mmd
+        assert "A[A]" in mmd
+        assert "B[B]" in mmd
+        assert "C[C]" in mmd
+        # Ensure connections still exist
+        assert "A --> B" in mmd
+        assert "B --> C" in mmd

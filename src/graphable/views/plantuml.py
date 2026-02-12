@@ -27,6 +27,8 @@ class PlantUmlStylingConfig:
     node_label_fnc: Callable[[Graphable[Any]], str] = lambda n: str(n.reference)
     node_type: str = "node"
     direction: str = "top to bottom direction"
+    cluster_by_tag: bool = False
+    tag_sort_fnc: Callable[[set[str]], list[str]] = lambda s: sorted(list(s))
 
 
 def _check_plantuml_on_path() -> None:
@@ -55,11 +57,34 @@ def create_topology_plantuml(
     config = config or PlantUmlStylingConfig()
     puml: list[str] = ["@startuml", f"{config.direction}"]
 
-    # Nodes
+    def get_cluster(node: Graphable[Any]) -> str | None:
+        if not config.cluster_by_tag or not node.tags:
+            return None
+        sorted_tags = config.tag_sort_fnc(node.tags)
+        return sorted_tags[0] if sorted_tags else None
+
+    # Group nodes by cluster
+    clusters: dict[str | None, list[Graphable[Any]]] = {}
     for node in graph.topological_order():
-        node_ref = config.node_ref_fnc(node)
-        node_label = config.node_label_fnc(node)
-        puml.append(f'{config.node_type} "{node_label}" as {node_ref}')
+        cluster = get_cluster(node)
+        if cluster not in clusters:
+            clusters[cluster] = []
+        clusters[cluster].append(node)
+
+    # Nodes (potentially within clusters)
+    for cluster_name, nodes in clusters.items():
+        indent = ""
+        if cluster_name:
+            puml.append(f'package "{cluster_name}" {{')
+            indent = "  "
+
+        for node in nodes:
+            node_ref = config.node_ref_fnc(node)
+            node_label = config.node_label_fnc(node)
+            puml.append(f'{indent}{config.node_type} "{node_label}" as {node_ref}')
+
+        if cluster_name:
+            puml.append("}")
 
     # Edges
     for node in graph.topological_order():

@@ -120,3 +120,31 @@ class TestGraphviz:
 
         with raises(Exception):
             export_topology_graphviz_svg(g, output_path)
+
+    def test_create_topology_graphviz_dot_clustering(self):
+        a = Graphable("A")
+        a.add_tag("group1")
+        b = Graphable("B")
+        b.add_tag("group1")
+        c = Graphable("C")
+        c.add_tag("group2")
+
+        g = Graph()
+        g.add_edge(a, b)
+        g.add_edge(b, c)
+
+        from graphable.views.graphviz import GraphvizStylingConfig
+
+        config = GraphvizStylingConfig(cluster_by_tag=True)
+
+        dot = create_topology_graphviz_dot(g, config)
+
+        assert 'subgraph "cluster_group1"' in dot
+        assert 'label="group1";' in dot
+        assert 'subgraph "cluster_group2"' in dot
+        assert 'label="group2";' in dot
+        assert '"A" [label="A"];' in dot
+        assert '"B" [label="B"];' in dot
+        assert '"C" [label="C"];' in dot
+        assert '"A" -> "B"' in dot
+        assert '"B" -> "C"' in dot

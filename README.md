@@ -11,15 +11,19 @@
 - **Topological Sorting:** Easily get nodes in dependency order.
 - **Cycle Detection:** Built-in protection against circular dependencies.
 - **Filtering & Tagging:** Create subgraphs based on custom predicates or tags.
+- **Transitive Reduction:** Automatically remove redundant edges while preserving reachability.
+- **Reachability Analysis:** Easily find ancestors or descendants of any node.
+- **Container Protocols:** Use Pythonic idioms like `len(graph)`, `node in graph`, and `for node in graph`.
+- **Clustering:** Group nodes into subgraphs/clusters in visualizations based on tags.
 - **Visualizations:**
-    - **Mermaid:** Generate flowchart definitions or export directly to SVG.
-    - **Graphviz:** Generate DOT definitions or export to SVG with custom styling.
-    - **D2:** Generate D2 definitions or export to SVG with modern styling and layouts.
-    - **PlantUML:** Generate component or deployment diagram definitions.
+    - **Mermaid:** Generate flowchart definitions or export directly to SVG. Supports clustering.
+    - **Graphviz:** Generate DOT definitions or export to SVG with custom styling. Supports clustering.
+    - **D2:** Generate D2 definitions or export to SVG with modern styling and layouts. Supports clustering.
+    - **PlantUML:** Generate component or deployment diagram definitions. Supports clustering.
     - **TikZ:** Generate high-quality LaTeX definitions for academic documents.
     - **GraphML:** Industrial-standard XML export for professional analysis tools (Gephi, yEd).
     - **Interactive HTML:** Generate a single, portable HTML file with zooming and panning.
-    - **JSON & Cytoscape:** Export graph structure as machine-readable data.
+    - **JSON, YAML & TOML:** Export graph structure as machine-readable data.
     - **CSV:** Export simple edge lists for data processing.
     - **NetworkX:** Seamless integration with the NetworkX library for advanced analysis.
     - **Text Tree & ASCII Flowchart:** Generate beautiful ASCII representations.
@@ -141,6 +145,43 @@ print(d2)
 # API Service: API Service
 # API Service -> Web Frontend
 # Web Frontend: Web Frontend
+```
+
+## Advanced Usage
+
+### Pythonic Protocols
+
+```python
+print(f"Nodes: {len(g)}")
+if "Database" in g:
+    node = g["Database"]
+    
+for node in g:  # Iterates in topological order
+    print(node.reference)
+```
+
+### Transitive Reduction
+
+Clean up your graphs by removing redundant edges:
+
+```python
+reduced_g = g.transitive_reduction()
+# Or render directly
+print(g.render(create_topology_mermaid_mmd, transitive_reduction=True))
+```
+
+### Clustering by Tags
+
+Group nodes in visualizations:
+
+```python
+from graphable.views.mermaid import MermaidStylingConfig
+
+a.add_tag("backend")
+b.add_tag("backend")
+config = MermaidStylingConfig(cluster_by_tag=True)
+
+print(g.render(create_topology_mermaid_mmd, config=config))
 ```
 
 ## Documentation
