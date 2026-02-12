@@ -34,11 +34,67 @@
 
 ## Installation
 
+### As a Library
+
+Use your preferred package manager to add `graphable` to your project:
+
 ```bash
+# Using uv (recommended)
 uv add graphable
-# or
+
+# Using pip
 pip install graphable
 ```
+
+### As a Command Line Tool
+
+To use the `graphable` CLI globally, we recommend using `pipx`. You can choose between the bare-bones version or the full-featured "Rich" version:
+
+```bash
+# Full version with beautiful terminal output (recommended)
+pipx install "graphable[cli]"
+
+# Bare-bones version (standard library only)
+pipx install graphable
+```
+
+---
+
+## Command Line Interface
+
+`graphable` provides a powerful CLI for analyzing and transforming graph files.
+
+### Basic Usage
+
+```bash
+# Get summary information about a graph
+graphable info topology.json
+
+# Validate a graph for cycles and consistency
+graphable check topology.yaml
+
+# Convert between any supported formats
+graphable convert input.json output.mmd
+
+# Simplify a graph using transitive reduction
+graphable reduce complex.graphml simple.svg
+```
+
+### Automation & CI/CD
+
+If you have the `cli` extra installed but need plain-text output for logging or automation, use the `--bare` flag:
+
+```bash
+graphable --bare info topology.json
+```
+
+### Supported Formats
+
+The CLI automatically detects formats based on file extensions:
+- **Parsers:** `.json`, `.yaml`/`.yml`, `.toml`, `.csv`, `.graphml`
+- **Exporters:** `.json`, `.yaml`, `.toml`, `.csv`, `.graphml`, `.dot`, `.mmd`, `.d2`, `.puml`, `.html`, `.tex`, `.txt`, `.ascii`, `.svg`
+
+---
 
 ## Quick Start
 

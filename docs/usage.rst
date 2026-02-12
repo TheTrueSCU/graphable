@@ -225,6 +225,39 @@ This provides a clean way to check for dependency relationships directly between
    if node_a < node_b:
        print("node_a must come before node_b")
 
+Command Line Interface
+----------------------
+
+``graphable`` includes a command-line tool for managing graph files without writing Python code. It is available as the ``graphable`` command after installation.
+
+**Installation**
+
+To get the full experience with formatted tables and panels, install the ``cli`` extra:
+
+.. code-block:: bash
+
+   pipx install "graphable[cli]"
+
+**Subcommands**
+
+*   **``info <file>``**: Displays summary statistics about the graph, including node count, edge count, and identified source/sink nodes.
+*   **``check <file>``**: Performs validation on the graph. It checks for circular dependencies and bidirectional consistency.
+*   **``convert <input> <output>``**: Converts a graph from one format to another. The format is automatically detected from the file extension.
+*   **``reduce <input> <output>``**: Reads a graph, computes its transitive reduction (removing redundant edges), and saves the simplified version to the output file.
+
+**CI/CD and Automation**
+
+If you are using ``graphable`` in a script or CI/CD pipeline and want to ensure plain-text output regardless of installed dependencies, use the ``--bare`` flag before the subcommand:
+
+.. code-block:: bash
+
+   graphable --bare info topology.json
+
+**Supported Extensions**
+
+- **Input**: ``.json``, ``.yaml``, ``.yml``, ``.toml``, ``.csv``, ``.graphml``
+- **Output**: All input formats plus ``.dot``, ``.gv``, ``.mmd``, ``.d2``, ``.puml``, ``.html``, ``.tex``, ``.txt``, ``.ascii``, ``.svg``
+
 ASCII Flowchart
 ---------------
 

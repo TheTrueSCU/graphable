@@ -30,3 +30,8 @@ jobs:
 
       - name: Run checks
         run: just check
+
+      - name: Verify CLI documentation sync
+        run: |
+          just docs-usage
+          git diff --exit-code USAGE.md || (echo "CLI documentation is out of sync. Please run 'just docs-usage' and commit the changes." && exit 1)

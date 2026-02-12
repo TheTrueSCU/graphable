@@ -35,7 +35,11 @@ docs-examples:
     uv run examples/basic_usage.py --d2-svg --graphviz-svg --interactive-html --mermaid-svg --output-dir docs/_static/examples --puml-svg > docs/_static/examples/basic_usage_output.txt
 
 [group('docs')]
-docs: docs-examples
+docs-usage:
+    @uv run typer src/graphable/cli/rich_cli.py utils docs --name graphable --output USAGE.md
+
+[group('docs')]
+docs: docs-examples docs-usage
     #!/usr/bin/env bash
     mkdir -p docs/_extra
     if [ -d "htmlcov" ]; then
@@ -115,7 +119,7 @@ typing:
 
 [group('run')]
 @run *args:
-    uv run cli/main.py {{ args }}
+    uv run graphable {{ args }}
 
 demo:
     uv run examples/basic_usage.py --mermaid-svg --graphviz-svg --d2-svg --puml-svg --output-dir examples_output
