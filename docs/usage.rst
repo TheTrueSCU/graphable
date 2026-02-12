@@ -166,6 +166,65 @@ You can group nodes into clusters in visualizations like Mermaid, Graphviz, D2, 
 
 Nodes are grouped by their first tag (by default, tags are sorted alphabetically). You can provide a custom ``tag_sort_fnc`` in the configuration to control which tag is used for grouping.
 
+Parsing Graphs
+--------------
+
+``graphable`` can reconstruct graphs from all major export formats. This is useful for terminal-based tools or for persisting graph structures between sessions.
+
+.. code-block:: python
+
+   from graphable.graph import Graph
+
+   # Load from JSON file
+   g_json = Graph.from_json("topology.json")
+
+   # Load from YAML string
+   yaml_content = "nodes: [{id: A}, {id: B}], edges: [{source: A, target: B}]"
+   g_yaml = Graph.from_yaml(yaml_content)
+
+   # Load from CSV edge list
+   g_csv = Graph.from_csv("edges.csv")
+
+The following static methods are available on the ``Graph`` class:
+
+*   ``from_json(source, reference_type=str)``
+*   ``from_yaml(source, reference_type=str)``
+*   ``from_toml(source, reference_type=str)``
+*   ``from_csv(source, reference_type=str)``
+*   ``from_graphml(source, reference_type=str)``
+
+Equality Comparison
+-------------------
+
+Graphs can be compared for equality using the standard ``==`` operator or the ``is_equal_to()`` method. Two graphs are considered equal if they have:
+1. The same number of nodes.
+2. Nodes with matching references and tags.
+3. The same directed edges between those nodes.
+
+.. code-block:: python
+
+   g1 = Graph.from_json("graph.json")
+   g2 = Graph.from_yaml("graph.yaml")
+
+   if g1 == g2:
+       print("The graphs are identical.")
+
+Node Ordering
+-------------
+
+``Graphable`` nodes support rich comparison operators based on their reachability in the graph:
+- ``a < b``: ``a`` is a proper ancestor of ``b``.
+- ``a <= b``: ``a`` is an ancestor of or identical to ``b``.
+- ``a > b``: ``a`` is a proper descendant of ``b``.
+- ``a >= b``: ``a`` is a descendant of or identical to ``b``.
+
+This provides a clean way to check for dependency relationships directly between node objects.
+
+.. code-block:: python
+
+   if node_a < node_b:
+       print("node_a must come before node_b")
+
 ASCII Flowchart
 ---------------
 

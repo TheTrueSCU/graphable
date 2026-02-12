@@ -104,10 +104,15 @@ def main():
     print(f"Is 'Postgres' in graph? {'Postgres' in g}")
     print(f"Access node by reference: {g['FastAPI'].reference}")
 
-    # 3. Reachability
-    print("\n--- 3. Reachability ---")
+    # 3. Reachability & Ordering
+    print("\n--- 3. Reachability & Ordering ---")
     print(f"Ancestors of React: {[n.reference for n in g.ancestors(ui)]}")
     print(f"Descendants of Postgres: {[n.reference for n in g.descendants(db)]}")
+
+    if db < ui:
+        print(f"Verified: {db.reference} is an ancestor of {ui.reference}")
+    if ui > db:
+        print(f"Verified: {ui.reference} is a descendant of {db.reference}")
 
     # 4. Transitive Reduction
     print("\n--- 4. Transitive Reduction ---")
@@ -206,7 +211,18 @@ def main():
     g.remove_node(cache)
     print(f"Removed Redis. Graph size: {len(g)}")
 
-    # 21. Optional SVG & HTML Generation
+    # 21. Parsing Demo
+    print("\n--- 21. Parsing Demo ---")
+    json_data = create_topology_json(g)
+    parsed_g = Graph.from_json(json_data)
+    print(f"Reconstructed graph from JSON. Nodes: {len(parsed_g)}")
+    print(f"Nodes in topological order: {[n.reference for n in parsed_g]}")
+
+    # 22. Equality Demo
+    print("\n--- 22. Equality Demo ---")
+    print(f"Is parsed_g equal to g? {parsed_g == g}")
+
+    # 23. Optional SVG & HTML Generation
     if (
         args.mermaid_svg
         or args.graphviz_svg

@@ -3,7 +3,7 @@ from __future__ import annotations
 from graphlib import CycleError, TopologicalSorter
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Iterator, cast
 
 from .errors import GraphConsistencyError, GraphCycleError
 from .graphable import Graphable
@@ -85,12 +85,12 @@ class Graph[T: Graphable[Any]]:
             self.check_consistency()
             self.check_cycles()
 
-    def __contains__(self, item: Any) -> bool:
+    def __contains__(self, item: object) -> bool:
         """
         Check if a node or its reference is in the graph.
 
         Args:
-            item (Any): Either a Graphable node or a reference object.
+            item (object): Either a Graphable node or a reference object.
 
         Returns:
             bool: True if present, False otherwise.
@@ -129,6 +129,50 @@ class Graph[T: Graphable[Any]]:
         Get the number of nodes in the graph.
         """
         return len(self._nodes)
+
+    def is_equal_to(self, other: object) -> bool:
+        """
+        Check if this graph is equal to another graph.
+        Equality is defined as having the same nodes (by reference and tags)
+        and the same edges.
+
+        Args:
+            other: The other object to compare with.
+
+        Returns:
+            bool: True if equal, False otherwise.
+        """
+        if not isinstance(other, Graph):
+            return False
+
+        if len(self) != len(other):
+            return False
+
+        for node in self._nodes:
+            # Check if other graph has a node with the same reference
+            if node.reference not in other:
+                return False
+
+            # other is instance of Graph, so other[ref] returns Graphable
+            other_node = cast(Graphable[Any], other[node.reference])
+
+            # Check tags
+            if node.tags != other_node.tags:
+                return False
+
+            # Check dependents (structure)
+            self_deps = {n.reference for n in node.dependents}
+            other_deps = {n.reference for n in other_node.dependents}
+            if self_deps != other_deps:
+                return False
+
+        return True
+
+    def __eq__(self, other: object) -> bool:
+        """
+        Compare two graphs for equality.
+        """
+        return self.is_equal_to(other)
 
     def check_cycles(self) -> None:
         """
@@ -288,47 +332,45 @@ class Graph[T: Graphable[Any]]:
             if self._topological_order is not None:
                 self._topological_order = None
 
-    def ancestors(self, node: T) -> set[T]:
+    def ancestors(self, node: T) -> Iterator[T]:
         """
-        Get all nodes that the given node depends on, recursively.
+        Get an iterator for all nodes that the given node depends on, recursively.
 
         Args:
             node (T): The starting node.
 
-        Returns:
-            set[T]: A set of all ancestor nodes.
+        Yields:
+            T: The next ancestor node.
         """
-        ancestors: set[T] = set()
 
-        def discover(current: T):
+        def discover(current: T, visited: set[T]) -> Iterator[T]:
             for dep in current.depends_on:
-                if dep not in ancestors:
-                    ancestors.add(dep)
-                    discover(dep)
+                if dep not in visited:
+                    visited.add(dep)
+                    yield dep
+                    yield from discover(dep, visited)
 
-        discover(node)
-        return ancestors
+        return discover(node, set())
 
-    def descendants(self, node: T) -> set[T]:
+    def descendants(self, node: T) -> Iterator[T]:
         """
-        Get all nodes that depend on the given node, recursively.
+        Get an iterator for all nodes that depend on the given node, recursively.
 
         Args:
             node (T): The starting node.
 
-        Returns:
-            set[T]: A set of all descendant nodes.
+        Yields:
+            T: The next descendant node.
         """
-        descendants: set[T] = set()
 
-        def discover(current: T):
+        def discover(current: T, visited: set[T]) -> Iterator[T]:
             for sub in current.dependents:
-                if sub not in descendants:
-                    descendants.add(sub)
-                    discover(sub)
+                if sub not in visited:
+                    visited.add(sub)
+                    yield sub
+                    yield from discover(sub, visited)
 
-        discover(node)
-        return descendants
+        return discover(node, set())
 
     @property
     def sinks(self) -> list[T]:
@@ -349,6 +391,58 @@ class Graph[T: Graphable[Any]]:
             list[T]: A list of source nodes.
         """
         return [node for node in self._nodes if 0 == len(node.depends_on)]
+
+    @staticmethod
+    def parse(
+        parser_fnc: Callable[..., Graph[Any]], source: str | Path, **kwargs: Any
+    ) -> Graph[Any]:
+        """
+        Parse a graph from a source using a parser function.
+
+        Args:
+            parser_fnc: The parser function to use (e.g., load_graph_json).
+            source: The source to parse (string or path).
+            **kwargs: Additional arguments passed to the parser function.
+
+        Returns:
+            Graph: A new Graph instance.
+        """
+        return parser_fnc(source, **kwargs)
+
+    @classmethod
+    def from_csv(cls, source: str | Path, **kwargs: Any) -> Graph[Any]:
+        """Create a Graph from a CSV edge list."""
+        from .parsers.csv import load_graph_csv
+
+        return cls.parse(load_graph_csv, source, **kwargs)
+
+    @classmethod
+    def from_graphml(cls, source: str | Path, **kwargs: Any) -> Graph[Any]:
+        """Create a Graph from a GraphML file or string."""
+        from .parsers.graphml import load_graph_graphml
+
+        return cls.parse(load_graph_graphml, source, **kwargs)
+
+    @classmethod
+    def from_json(cls, source: str | Path, **kwargs: Any) -> Graph[Any]:
+        """Create a Graph from a JSON file or string."""
+        from .parsers.json import load_graph_json
+
+        return cls.parse(load_graph_json, source, **kwargs)
+
+    @classmethod
+    def from_toml(cls, source: str | Path, **kwargs: Any) -> Graph[Any]:
+        """Create a Graph from a TOML file or string."""
+        from .parsers.toml import load_graph_toml
+
+        return cls.parse(load_graph_toml, source, **kwargs)
+
+    @classmethod
+    def from_yaml(cls, source: str | Path, **kwargs: Any) -> Graph[Any]:
+        """Create a Graph from a YAML file or string."""
+        from .parsers.yaml import load_graph_yaml
+
+        return cls.parse(load_graph_yaml, source, **kwargs)
 
     def subgraph_filtered(self, fn: Callable[[T], bool]) -> Graph[T]:
         """

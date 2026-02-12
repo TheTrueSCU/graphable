@@ -13,7 +13,10 @@
 - **Filtering & Tagging:** Create subgraphs based on custom predicates or tags.
 - **Transitive Reduction:** Automatically remove redundant edges while preserving reachability.
 - **Reachability Analysis:** Easily find ancestors or descendants of any node.
+- **Node Ordering:** Compare nodes using standard operators (`a < b` means `a` is an ancestor of `b`).
 - **Container Protocols:** Use Pythonic idioms like `len(graph)`, `node in graph`, and `for node in graph`.
+- **Equality:** Compare graphs for structural and metadata equality using `==` or `is_equal_to()`.
+- **Parsing:** Reconstruct graphs from JSON, YAML, TOML, CSV, or GraphML files and strings.
 - **Clustering:** Group nodes into subgraphs/clusters in visualizations based on tags.
 - **Visualizations:**
     - **Mermaid:** Generate flowchart definitions or export directly to SVG. Supports clustering.
@@ -182,6 +185,50 @@ b.add_tag("backend")
 config = MermaidStylingConfig(cluster_by_tag=True)
 
 print(g.render(create_topology_mermaid_mmd, config=config))
+```
+
+### Parsing Graphs
+
+Reconstruct graphs from exported data:
+
+```python
+# From a file
+g = Graph.from_json("graph.json")
+
+# From a string (YAML)
+yaml_data = """
+nodes:
+  - id: Database
+  - id: API
+edges:
+  - source: Database
+    target: API
+"""
+g = Graph.from_yaml(yaml_data)
+```
+
+### Equality Comparison
+
+Compare graphs easily:
+
+```python
+g1 = Graph.from_json("topology.json")
+g2 = Graph.from_yaml("topology.yaml")
+
+if g1 == g2:
+    print("Graphs are identical in structure and tags.")
+```
+
+### Node Ordering
+
+Nodes support comparison based on reachability:
+
+```python
+if db < api:
+    print("Database is an ancestor of API")
+    
+if ui > api:
+    print("UI is a descendant of API")
 ```
 
 ## Documentation

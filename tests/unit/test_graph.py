@@ -393,13 +393,13 @@ class TestGraph:
         g.add_edge(b, c)
         g.add_edge(c, d)
 
-        assert g.ancestors(d) == {a, b, c}
-        assert g.ancestors(c) == {a, b}
-        assert g.ancestors(a) == set()
+        assert set(g.ancestors(d)) == {a, b, c}
+        assert set(g.ancestors(c)) == {a, b}
+        assert set(g.ancestors(a)) == set()
 
-        assert g.descendants(a) == {b, c, d}
-        assert g.descendants(b) == {c, d}
-        assert g.descendants(d) == set()
+        assert set(g.descendants(a)) == {b, c, d}
+        assert set(g.descendants(b)) == {c, d}
+        assert set(g.descendants(d)) == set()
 
     def test_ancestors_diamond(self):
         # A -> B -> D
@@ -414,8 +414,8 @@ class TestGraph:
         g.add_edge(b, d)
         g.add_edge(c, d)
 
-        assert g.ancestors(d) == {a, b, c}
-        assert g.descendants(a) == {b, c, d}
+        assert set(g.ancestors(d)) == {a, b, c}
+        assert set(g.descendants(a)) == {b, c, d}
 
     def test_transitive_reduction_simple(self):
         # A -> B -> C

@@ -28,6 +28,59 @@ class Graphable[T]:
         self._tags: set[str] = set()
         logger.debug(f"Created Graphable node for reference: {reference}")
 
+    def __eq__(self, other: object) -> bool:
+        """
+        Check if this node is equal to another.
+        Nodes are considered equal if they are the same object.
+        """
+        return self is other
+
+    def __hash__(self) -> int:
+        """
+        Restore default hash behavior (identity-based).
+        """
+        return id(self)
+
+    def __lt__(self, other: object) -> bool:
+        """
+        Check if this node is 'less than' another.
+        Defined as: this node is a proper ancestor of the other node.
+        """
+        if not isinstance(other, Graphable):
+            return NotImplemented
+
+        return self.find_path(other) is not None
+
+    def __le__(self, other: object) -> bool:
+        """
+        Check if this node is 'less than or equal' to another.
+        Defined as: this node is an ancestor of or identical to the other node.
+        """
+        if not isinstance(other, Graphable):
+            return NotImplemented
+
+        return self is other or self.find_path(other) is not None
+
+    def __gt__(self, other: object) -> bool:
+        """
+        Check if this node is 'greater than' another.
+        Defined as: this node is a proper descendant of the other node.
+        """
+        if not isinstance(other, Graphable):
+            return NotImplemented
+
+        return other.find_path(self) is not None
+
+    def __ge__(self, other: object) -> bool:
+        """
+        Check if this node is 'greater than or equal' to another.
+        Defined as: this node is a descendant of or identical to the other node.
+        """
+        if not isinstance(other, Graphable):
+            return NotImplemented
+
+        return self is other or other.find_path(self) is not None
+
     def add_dependencies(
         self, dependencies: set[Self], check_cycles: bool = False
     ) -> None:

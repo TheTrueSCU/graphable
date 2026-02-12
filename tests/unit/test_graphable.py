@@ -236,3 +236,49 @@ class TestGraphable:
 
         a.add_dependent(a)
         assert a.find_path(a) == [a, a]
+
+    def test_ordering(self):
+        a = Graphable("A")
+        b = Graphable("B")
+        c = Graphable("C")
+
+        a.add_dependent(b)
+        b.add_dependent(c)
+
+        # A is ancestor of B and C
+        # B is ancestor of C
+        assert a < b
+        assert b < c
+        assert a < c
+
+        assert c > b
+        assert b > a
+        assert c > a
+
+        assert a <= b
+        assert a <= a
+
+        assert c >= b
+        assert c >= c
+
+        # Incomparable nodes
+        d = Graphable("D")
+        assert not (a < d)
+        assert not (d < a)
+        assert not (a > d)
+        assert not (d > a)
+
+        # Equality
+        assert a == a
+        assert a != b
+        assert not (a == b)
+
+    def test_total_ordering_decorator(self):
+        # Verify that functools.total_ordering filled in the rest
+        a = Graphable("A")
+        b = Graphable("B")
+        a.add_dependent(b)
+
+        assert a <= b  # Should be True
+        assert b >= a  # Should be True
+        assert b > a  # Should be True
