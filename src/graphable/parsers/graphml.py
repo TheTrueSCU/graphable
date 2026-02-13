@@ -4,94 +4,72 @@ from pathlib import Path
 from typing import Any
 
 from ..graph import Graph
-from ..graphable import Graphable
-from .utils import is_path
+from ..registry import register_parser
+from .utils import build_graph_from_data, is_path
 
 logger = getLogger(__name__)
 
 
-def load_graph_graphml(
-    source: str | Path, reference_type: type = str
-) -> Graph[Graphable[Any]]:
+@register_parser(".graphml")
+def load_graph_graphml(source: str | Path, reference_type: type = str) -> Graph[Any]:
     """
-    Load a graph from a GraphML file or string.
+    Load a Graph from a GraphML XML source.
 
     Args:
-        source: Path to a GraphML file or GraphML string.
-        reference_type: The type to cast the node reference to (default: str).
+        source: GraphML XML string or path to a GraphML file.
+        reference_type: The type to cast the reference string to.
 
     Returns:
-        Graph: A new Graph instance populated from the GraphML data.
+        Graph: The loaded Graph instance.
     """
     if is_path(source):
-        logger.debug(f"Loading GraphML from file: {source}")
         tree = ET.parse(source)
         root = tree.getroot()
     else:
-        logger.debug("Loading GraphML from string.")
         root = ET.fromstring(str(source))
 
-    # GraphML namespaces can be tricky, but often it's just http://graphml.graphdrawing.org/xmlns
-    ns = {"ns": "http://graphml.graphdrawing.org/xmlns"}
+    # GraphML uses namespaces
+    ns = {"g": "http://graphml.graphdrawing.org/xmlns"}
 
-    # If the root doesn't match the namespace, try without it
-    if "http://graphml.graphdrawing.org/xmlns" not in root.tag:
+    graph_elem = root.find("g:graph", ns)
+    if graph_elem is None:
+        # Fallback for no namespace
+        graph_elem = root.find("graph")
+        if graph_elem is None:
+            return Graph()
         ns = {}
 
-    graph_elem = root.find(".//ns:graph", ns) if ns else root.find(".//graph")
-    if graph_elem is None:
-        logger.error("No <graph> element found in GraphML.")
-        return Graph()
-
-    node_map: dict[str, Graphable[Any]] = {}
-    g = Graph()
-
-    # Find nodes
-    nodes = graph_elem.findall("ns:node", ns) if ns else graph_elem.findall("node")
-    for node_elem in nodes:
+    nodes_data = []
+    for node_elem in graph_elem.findall("g:node" if ns else "node", ns):
         node_id = node_elem.get("id")
-        if not node_id:
-            continue
+        node_entry = {"id": node_id}
 
-        # Look for tags or reference in data elements
-        reference = node_id
-        tags = []
+        # Handle data fields (tags, etc)
+        for data_elem in node_elem.findall("g:data" if ns else "data", ns):
+            key = data_elem.get("key")
+            if key == "tags" and data_elem.text:
+                node_entry["tags"] = data_elem.text.split(",")
+            elif key == "duration" and data_elem.text:
+                node_entry["duration"] = data_elem.text
+            elif key == "status" and data_elem.text:
+                node_entry["status"] = data_elem.text
 
-        data_elems = (
-            node_elem.findall("ns:data", ns) if ns else node_elem.findall("data")
-        )
-        for data in data_elems:
-            key = data.get("key")
-            if key == "reference":
-                reference = data.text or node_id
-            elif key == "tags":
-                if data.text:
-                    tags = [t.strip() for t in data.text.split(",") if t.strip()]
+        nodes_data.append(node_entry)
 
-        try:
-            typed_ref = reference_type(reference)
-        except (ValueError, TypeError):
-            typed_ref = reference
-
-        node = Graphable(typed_ref)
-        for tag in tags:
-            node.add_tag(tag)
-
-        node_map[node_id] = node
-
-    # Find edges
-    edges = graph_elem.findall("ns:edge", ns) if ns else graph_elem.findall("edge")
-    for edge_elem in edges:
+    edges_data = []
+    for edge_elem in graph_elem.findall("g:edge" if ns else "edge", ns):
         u_id = edge_elem.get("source")
         v_id = edge_elem.get("target")
+        edge_entry = {"source": u_id, "target": v_id}
 
-        if u_id in node_map and v_id in node_map:
-            g.add_edge(node_map[u_id], node_map[v_id])
+        # Handle edge attributes
+        for data_elem in edge_elem.findall("g:data" if ns else "data", ns):
+            key = data_elem.get("key")
+            if key and data_elem.text:
+                edge_entry[key] = data_elem.text
 
-    # Add any orphans
-    for node in node_map.values():
-        if node not in g:
-            g.add_node(node)
+        edges_data.append(edge_entry)
 
+    g = build_graph_from_data(nodes_data, edges_data, reference_type)
     logger.info(f"Loaded graph with {len(g)} nodes from GraphML.")
     return g

@@ -1,20 +1,19 @@
-import tomllib
 from logging import getLogger
 from pathlib import Path
 from typing import Any
 
 from ..graph import Graph
-from ..graphable import Graphable
-from .utils import is_path
+from ..registry import register_parser
+from .utils import build_graph_from_data, is_path
 
 logger = getLogger(__name__)
 
 
-def load_graph_toml(
-    source: str | Path, reference_type: type = str
-) -> Graph[Graphable[Any]]:
+@register_parser(".toml")
+def load_graph_toml(source: str | Path, reference_type: type = str) -> Graph[Any]:
     """
     Load a graph from a TOML string or file.
+    Uses 'tomllib' (Python 3.11+) or 'tomli'.
 
     Args:
         source: TOML string or path to a TOML file.
@@ -23,6 +22,17 @@ def load_graph_toml(
     Returns:
         Graph: A new Graph instance populated from the TOML data.
     """
+    try:
+        import tomllib
+    except ImportError:
+        try:
+            import tomli as tomllib
+        except ImportError:
+            logger.error("No TOML parser found. On Python < 3.11, install 'tomli'.")
+            raise ImportError(
+                "TOML parsing requires 'tomllib' (Python 3.11+) or 'tomli'."
+            )
+
     if is_path(source):
         logger.debug(f"Loading TOML from file: {source}")
         with open(source, "rb") as f:
@@ -31,41 +41,13 @@ def load_graph_toml(
         logger.debug("Loading TOML from string.")
         data = tomllib.loads(str(source))
 
+    # Handle wrapped structure
+    if "graph" in data and ("nodes" not in data or "edges" not in data):
+        data = data["graph"]
+
     nodes_data = data.get("nodes", [])
     edges_data = data.get("edges", [])
 
-    # 1. Create all nodes
-    node_map: dict[str, Graphable[Any]] = {}
-    for entry in nodes_data:
-        node_id = str(entry["id"])
-        reference = entry.get("reference", node_id)
-
-        try:
-            typed_reference = reference_type(reference)
-        except (ValueError, TypeError):
-            typed_reference = reference
-
-        node = Graphable(typed_reference)
-        for tag in entry.get("tags", []):
-            node.add_tag(tag)
-
-        node_map[node_id] = node
-
-    # 2. Link nodes with edges
-    g = Graph()
-    for edge in edges_data:
-        u_id = str(edge["source"])
-        v_id = str(edge["target"])
-
-        if u_id in node_map and v_id in node_map:
-            g.add_edge(node_map[u_id], node_map[v_id])
-        else:
-            logger.warning(f"Edge references unknown node(s): {u_id} -> {v_id}")
-
-    # 3. Add any orphaned nodes
-    for node in node_map.values():
-        if node not in g:
-            g.add_node(node)
-
+    g = build_graph_from_data(nodes_data, edges_data, reference_type)
     logger.info(f"Loaded graph with {len(g)} nodes from TOML.")
     return g

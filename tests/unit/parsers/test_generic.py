@@ -122,3 +122,12 @@ def test_graph_from_graphml():
     g = Graph.from_graphml(data)
     assert len(g) == 1
     assert "A" in g
+
+
+def test_graph_from_json_invalid_ref_type():
+    data = '{"nodes": [{"id": "A"}], "edges": []}'
+
+    # Passing int as reference_type for "A" should fail and fallback to str
+    g = Graph.from_json(data, reference_type=int)
+    assert len(g) == 1
+    assert g["A"].reference == "A"

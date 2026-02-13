@@ -1,6 +1,6 @@
 from pytest import fixture, raises
 
-from graphable.graph import Graph, GraphConsistencyError, GraphCycleError, graph
+from graphable.graph import Graph, GraphConsistencyError, GraphCycleError
 from graphable.graphable import Graphable
 
 
@@ -104,7 +104,7 @@ class TestGraph:
         b._add_dependent(c)
         c._add_depends_on(b)
 
-        g = graph([b])
+        g = Graph([b], discover=True)
         topo = g.topological_order()
         assert len(topo) == 3
         assert a in topo
@@ -488,6 +488,158 @@ class TestGraph:
         assert set(g.ancestors(d)) == {a, b, c}
         assert set(g.descendants(a)) == {b, c, d}
 
+    def test_upstream_downstream_of(self):
+        a, b, c, d = Graphable("A"), Graphable("B"), Graphable("C"), Graphable("D")
+        g = Graph()
+        g.add_edge(a, b)
+        g.add_edge(b, c)
+        g.add_edge(c, d)
+
+        up = g.upstream_of(c)
+        assert set(up.topological_order()) == {a, b, c}
+        assert d not in up
+
+        down = g.downstream_of(b)
+        assert set(down.topological_order()) == {b, c, d}
+        assert a not in down
+
+    def test_cpm_and_longest_path(self):
+        a = Graphable("A")
+        b = Graphable("B")
+        c = Graphable("C")
+        d = Graphable("D")
+
+        a.duration = 2
+        b.duration = 3
+        c.duration = 1
+        d.duration = 4
+
+        g = Graph()
+        g.add_edge(a, b)
+        g.add_edge(a, c)
+        g.add_edge(b, d)
+        g.add_edge(c, d)
+
+        # Paths:
+        # A(2) -> B(3) -> D(4) = 9
+        # A(2) -> C(1) -> D(4) = 7
+
+        analysis = g.cpm_analysis()
+        assert analysis[a]["ES"] == 0
+        assert analysis[a]["EF"] == 2
+        assert analysis[b]["ES"] == 2
+        assert analysis[b]["EF"] == 5
+        assert analysis[c]["ES"] == 2
+        assert analysis[c]["EF"] == 3
+        assert analysis[d]["ES"] == 5  # max(EF(B), EF(C)) = max(5, 3) = 5
+        assert analysis[d]["EF"] == 9
+
+        assert analysis[b]["slack"] == 0
+        assert analysis[c]["slack"] == 2
+
+        cp = g.critical_path()
+        assert a in cp
+        assert b in cp
+        assert d in cp
+        assert c not in cp
+
+        lp = g.longest_path()
+        assert lp == [a, b, d]
+
+    def test_all_paths(self):
+        a = Graphable("A")
+        b = Graphable("B")
+        c = Graphable("C")
+        d = Graphable("D")
+        g = Graph()
+        g.add_edge(a, b)
+        g.add_edge(a, c)
+        g.add_edge(b, d)
+        g.add_edge(c, d)
+
+        paths = g.all_paths(a, d)
+        assert len(paths) == 2
+        assert [a, b, d] in paths
+        assert [a, c, d] in paths
+
+    def test_suggest_cycle_breaks(self):
+        a = Graphable("A")
+        b = Graphable("B")
+        c = Graphable("C")
+
+        # Manually create a cycle A -> B -> C -> A
+        # We can't use g.add_edge because it prevents cycles.
+        # We'll use a graph with manual links and g.add_node.
+        a._add_dependent(b)
+        b._add_depends_on(a)
+        b._add_dependent(c)
+        c._add_depends_on(b)
+        c._add_dependent(a)
+        a._add_depends_on(c)
+
+        g = Graph()
+        # Use a list of nodes to bypass Graph constructor cycle check
+        g._nodes = {a, b, c}
+
+        breaks = g.suggest_cycle_breaks()
+        assert len(breaks) > 0
+        u, v = breaks[0]
+        # Any edge in the cycle is a valid break
+        assert (u == a and v == b) or (u == b and v == c) or (u == c and v == a)
+
+    def test_subgraph_between(self):
+        a, b, c, d, e = [Graphable(x) for x in "ABCDE"]
+        g = Graph()
+        g.add_edge(a, b)
+        g.add_edge(b, d)
+        g.add_edge(a, c)
+        g.add_edge(c, d)
+        g.add_edge(d, e)
+
+        # Paths from A to D are [A,B,D] and [A,C,D]
+        sub = g.subgraph_between(a, d)
+        assert set(sub.topological_order()) == {a, b, c, d}
+        assert e not in sub
+
+    def test_diff_graph(self):
+        a1, b1 = Graphable("A"), Graphable("B")
+        g1 = Graph()
+        g1.add_edge(a1, b1)
+
+        a2, c2 = Graphable("A"), Graphable("C")
+        g2 = Graph()
+        g2.add_edge(a2, c2)
+
+        dg = g1.diff_graph(g2)
+        # dg should have A, B, C
+        nodes = {n.reference: n for n in dg.topological_order()}
+        assert "A" in nodes
+        assert "B" in nodes
+        assert "C" in nodes
+
+        assert nodes["B"].is_tagged("diff:removed")
+        assert nodes["C"].is_tagged("diff:added")
+
+        # Check edges
+        # A->B should be removed (red)
+        # A->C should be added (green)
+        assert nodes["A"].edge_attributes(nodes["B"])["color"] == "red"
+        assert nodes["A"].edge_attributes(nodes["C"])["color"] == "green"
+
+    def test_transitive_closure(self):
+        a, b, c = [Graphable(x) for x in "ABC"]
+        g = Graph()
+        g.add_edge(a, b)
+        g.add_edge(b, c)
+
+        closure = g.transitive_closure()
+        assert len(closure) == 3
+        # Should have edges A->B, B->C, AND A->C
+        nodes = {n.reference: n for n in closure.topological_order()}
+        assert nodes["B"] in nodes["A"].dependents
+        assert nodes["C"] in nodes["B"].dependents
+        assert nodes["C"] in nodes["A"].dependents
+
     def test_transitive_reduction_simple(self):
         a, b, c = Graphable("A"), Graphable("B"), Graphable("C")
         g = Graph()
@@ -612,3 +764,76 @@ class TestGraph:
         # Verify it can be read back
         g_read = Graph.read(json_file)
         assert g == g_read
+
+    def test_clone(self, nodes):
+        a, b, _ = nodes
+        g = Graph()
+        g.add_edge(a, b, weight=5)
+        a.add_tag("t1")
+
+        # Clone without edges
+        c1 = g.clone(include_edges=False)
+        assert len(c1) == 2
+        assert len(c1["A"].dependents) == 0
+        assert "t1" in c1["A"].tags
+        assert c1["A"] is not a  # Should be a copy
+
+        # Clone with edges
+        c2 = g.clone(include_edges=True)
+        assert len(c2) == 2
+        assert len(c2["A"].dependents) == 1
+        assert c2["A"].edge_attributes(c2["B"])["weight"] == 5
+
+    def test_checksum_includes_metadata(self, nodes):
+        a, b, _ = nodes
+        g = Graph({a, b})
+        g.add_edge(a, b, weight=10)
+
+        c1 = g.checksum()
+
+        # Change duration
+        a.duration = 1.0
+        c2 = g.checksum()
+        assert c1 != c2
+
+        # Change status
+        b.status = "completed"
+        c3 = g.checksum()
+        assert c2 != c3
+
+        # Change edge attribute
+        a.set_edge_attribute(b, "weight", 20)
+        c4 = g.checksum()
+        assert c3 != c4
+
+    def test_export_fallback(self, tmp_path):
+        g = Graph([Graphable("A")])
+
+        # A function that is NOT in the CREATOR_MAP
+        def mock_exporter(graph, path):
+            with open(path, "w") as f:
+                f.write("mock output")
+
+        output = tmp_path / "mock.txt"
+        # Calling with embed_checksum=True should trigger the fallback warning and export normally
+        g.export(mock_exporter, output, embed_checksum=True)
+        assert output.read_text() == "mock output"
+
+    def test_bfs_dfs(self):
+        a, b, c, d = [Graphable(x) for x in "ABCD"]
+        g = Graph()
+        g.add_edge(a, b)
+        g.add_edge(a, c)
+        g.add_edge(b, d)
+        g.add_edge(c, d)
+
+        # BFS from A: A, then [B, C], then D
+        bfs_nodes = list(g.bfs(a))
+        assert bfs_nodes[0] == a
+        assert set(bfs_nodes[1:3]) == {b, c}
+        assert bfs_nodes[3] == d
+
+        # DFS from A: A, then B... or C...
+        dfs_nodes = list(g.dfs(a))
+        assert len(dfs_nodes) == 4
+        assert dfs_nodes[0] == a

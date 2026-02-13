@@ -3,6 +3,7 @@ from logging import getLogger
 from pathlib import Path
 
 from ..graph import Graph
+from ..registry import register_view
 from .cytoscape import CytoscapeStylingConfig, create_topology_cytoscape
 
 logger = getLogger(__name__)
@@ -67,6 +68,16 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
     </div>
     <div id="cy"></div>
     <script>
+        // Live Reload Logic
+        (function() {{
+            var protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            var address = protocol + '//' + window.location.host + '/ws';
+            var socket = new WebSocket(address);
+            socket.onmessage = function(msg) {{
+                if (msg.data == 'reload') window.location.reload();
+            }};
+        }})();
+
         var cy = cytoscape({{
             container: document.getElementById('cy'),
             elements: {elements},
@@ -139,6 +150,7 @@ def create_topology_html(graph: Graph, config: HtmlStylingConfig | None = None) 
     )
 
 
+@register_view(".html", creator_fnc=create_topology_html)
 def export_topology_html(
     graph: Graph, output: Path, config: HtmlStylingConfig | None = None
 ) -> None:

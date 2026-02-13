@@ -6,6 +6,7 @@ from typing import Any, Callable
 
 from ..graph import Graph
 from ..graphable import Graphable
+from ..registry import register_view
 
 logger = getLogger(__name__)
 
@@ -62,7 +63,7 @@ def create_topology_cytoscape(
         elements.append({"data": node_data})
 
         # Edges
-        for dependent in node.dependents:
+        for dependent, attrs in graph.internal_dependents(node):
             dep_id = config.reference_fnc(dependent)
             edge_id = f"{node_id}_{dep_id}"
             edge_data = {
@@ -73,11 +74,15 @@ def create_topology_cytoscape(
             if config.edge_data_fnc:
                 edge_data.update(config.edge_data_fnc(node, dependent))
 
+            # Add existing attributes
+            edge_data.update(attrs)
+
             elements.append({"data": edge_data})
 
     return json.dumps(elements, indent=config.indent)
 
 
+@register_view(".cy.json", creator_fnc=create_topology_cytoscape)
 def export_topology_cytoscape(
     graph: Graph,
     output: Path,

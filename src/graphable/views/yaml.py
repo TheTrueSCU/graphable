@@ -5,6 +5,7 @@ from typing import Any, Callable
 
 from ..graph import Graph
 from ..graphable import Graphable
+from ..registry import register_view
 
 logger = getLogger(__name__)
 
@@ -62,7 +63,7 @@ def create_topology_yaml(graph: Graph, config: YamlStylingConfig | None = None) 
             node_entry.update(config.node_data_fnc(node))
         nodes.append(node_entry)
 
-        for dependent in node.dependents:
+        for dependent, _ in graph.internal_dependents(node):
             edges.append({"source": node_id, "target": config.reference_fnc(dependent)})
 
     data = {"nodes": nodes, "edges": edges}
@@ -70,6 +71,7 @@ def create_topology_yaml(graph: Graph, config: YamlStylingConfig | None = None) 
     return yaml.dump(data, indent=config.indent, sort_keys=False)
 
 
+@register_view([".yaml", ".yml"], creator_fnc=create_topology_yaml)
 def export_topology_yaml(
     graph: Graph,
     output: Path,

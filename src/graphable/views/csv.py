@@ -6,6 +6,7 @@ from typing import Any, Callable
 
 from ..graph import Graph
 from ..graphable import Graphable
+from ..registry import register_view
 
 logger = getLogger(__name__)
 
@@ -35,13 +36,14 @@ def create_topology_csv(
 
     for node in graph.topological_order():
         source_text = node_text_fnc(node)
-        for dependent in node.dependents:
+        for dependent, _ in graph.internal_dependents(node):
             target_text = node_text_fnc(dependent)
             writer.writerow([source_text, target_text])
 
     return output.getvalue()
 
 
+@register_view(".csv", creator_fnc=create_topology_csv)
 def export_topology_csv(
     graph: Graph,
     output: Path,

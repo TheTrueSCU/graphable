@@ -5,6 +5,7 @@ from typing import Any, Callable
 
 from ..graph import Graph
 from ..graphable import Graphable
+from ..registry import register_view
 
 logger = getLogger(__name__)
 
@@ -63,8 +64,9 @@ def create_topology_ascii_flow(
         lines.append(top_border)
 
         # Show dependencies (outgoing edges)
-        if node.dependents:
-            for i, dependent in enumerate(node.dependents):
+        internal_deps = list(graph.internal_dependents(node))
+        if internal_deps:
+            for i, (dependent, _) in enumerate(internal_deps):
                 dep_text = config.node_text_fnc(dependent)
                 if i == 0:
                     lines.append(f"  v\n  +--> {dep_text}")
@@ -76,6 +78,7 @@ def create_topology_ascii_flow(
     return "\n".join(lines)
 
 
+@register_view(".ascii", creator_fnc=create_topology_ascii_flow)
 def export_topology_ascii_flow(
     graph: Graph, output: Path, config: AsciiflowStylingConfig | None = None
 ) -> None:

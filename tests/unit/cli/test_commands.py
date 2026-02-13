@@ -2,6 +2,8 @@ from graphable.cli.commands.core import (
     check_command,
     checksum_command,
     convert_command,
+    diff_command,
+    diff_visual_command,
     info_command,
     reduce_command,
     verify_command,
@@ -114,3 +116,25 @@ def test_verify_command(tmp_path):
     assert data["valid"] is True
     assert data["actual"] == digest
     assert data["expected"] == digest
+
+
+def test_diff_command(tmp_path):
+    f1 = tmp_path / "v1.json"
+    f1.write_text('{"nodes": [{"id": "A"}], "edges": []}')
+    f2 = tmp_path / "v2.json"
+    f2.write_text('{"nodes": [{"id": "A"}, {"id": "B"}], "edges": []}')
+
+    diff = diff_command(f1, f2)
+    assert "B" in diff["added_nodes"]
+
+
+def test_diff_visual_command(tmp_path):
+    f1 = tmp_path / "v1.json"
+    f1.write_text('{"nodes": [{"id": "A"}], "edges": []}')
+    f2 = tmp_path / "v2.json"
+    f2.write_text('{"nodes": [{"id": "A"}, {"id": "B"}], "edges": []}')
+    output = tmp_path / "diff.json"
+
+    diff_visual_command(f1, f2, output)
+    assert output.exists()
+    assert "diff:added" in output.read_text()

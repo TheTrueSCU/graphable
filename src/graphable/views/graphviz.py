@@ -7,6 +7,7 @@ from typing import Any, Callable
 
 from ..graph import Graph
 from ..graphable import Graphable
+from ..registry import register_view
 
 logger = getLogger(__name__)
 
@@ -120,7 +121,7 @@ def create_topology_graphviz_dot(
     # Edges
     for node in graph.topological_order():
         node_ref = config.node_ref_fnc(node)
-        for dependent in node.dependents:
+        for dependent, attrs in graph.internal_dependents(node):
             dep_ref = config.node_ref_fnc(dependent)
             edge_attrs = {}
             if config.edge_attr_fnc:
@@ -132,6 +133,7 @@ def create_topology_graphviz_dot(
     return "\n".join(dot)
 
 
+@register_view([".dot", ".gv"], creator_fnc=create_topology_graphviz_dot)
 def export_topology_graphviz_dot(
     graph: Graph, output: Path, config: GraphvizStylingConfig | None = None
 ) -> None:

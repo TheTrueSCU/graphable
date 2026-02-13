@@ -282,3 +282,26 @@ class TestGraphable:
         assert a <= b  # Should be True
         assert b >= a  # Should be True
         assert b > a  # Should be True
+
+    def test_edge_attributes(self):
+        a = Graphable("A")
+        b = Graphable("B")
+        a.add_dependent(b, weight=10, label="primary")
+
+        assert a.edge_attributes(b)["weight"] == 10
+        assert a.edge_attributes(b)["label"] == "primary"
+        assert b.edge_attributes(a)["weight"] == 10
+
+        # Test updating attribute
+        a.set_edge_attribute(b, "weight", 20)
+        assert b.edge_attributes(a)["weight"] == 20
+
+    def test_node_duration_and_status(self):
+        a = Graphable("A")
+        assert a.duration == 0.0
+        assert a.status == "pending"
+
+        a.duration = 5.0
+        a.status = "running"
+        assert a.duration == 5.0
+        assert a.status == "running"

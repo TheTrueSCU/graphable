@@ -5,6 +5,7 @@ from typing import Any, Callable
 
 from ..graph import Graph
 from ..graphable import Graphable
+from ..registry import register_view
 
 logger = getLogger(__name__)
 
@@ -54,7 +55,7 @@ def create_topology_tikz(graph: Graph, config: TikzStylingConfig | None = None) 
             # TikZ graph syntax: alias/Label
             lines.append(f'    {node_ref} ["{node_label}"];')
 
-            for dependent in node.dependents:
+            for dependent, _ in graph.internal_dependents(node):
                 dep_ref = config.node_ref_fnc(dependent)
                 lines.append(f"    {node_ref} -> {dep_ref};")
 
@@ -70,7 +71,7 @@ def create_topology_tikz(graph: Graph, config: TikzStylingConfig | None = None) 
 
         for node in graph.topological_order():
             node_ref = config.node_ref_fnc(node)
-            for dependent in node.dependents:
+            for dependent, _ in graph.internal_dependents(node):
                 dep_ref = config.node_ref_fnc(dependent)
                 lines.append(
                     f"  \\draw[{config.edge_options}] ({node_ref}) -- ({dep_ref});"
@@ -80,6 +81,7 @@ def create_topology_tikz(graph: Graph, config: TikzStylingConfig | None = None) 
     return "\n".join(lines)
 
 
+@register_view(".tex", creator_fnc=create_topology_tikz)
 def export_topology_tikz(
     graph: Graph, output: Path, config: TikzStylingConfig | None = None
 ) -> None:

@@ -11,6 +11,7 @@ from typing import Any, Callable
 
 from ..graph import Graph
 from ..graphable import Graphable
+from ..registry import register_view
 
 logger = getLogger(__name__)
 
@@ -20,6 +21,21 @@ _MMDC_SCRIPT_TEMPLATE: Template = Template("""
 /bin/env mmdc -c $mermaid_config -i $source -o $output -p $puppeteer_config
 """)
 _PUPPETEER_CONFIG_JSON: str = '{ "args": [ "--no-sandbox" ] }'
+
+
+def _get_node_style(node: Graphable[Any]) -> str | None:
+    for tag in node.tags:
+        if tag.startswith("color:"):
+            color = tag.split(":", 1)[1]
+            return f"fill:{color},color:white"
+    return None
+
+
+def _get_link_style(node: Graphable[Any], subnode: Graphable[Any]) -> str | None:
+    attrs = node.edge_attributes(subnode)
+    if color := attrs.get("color"):
+        return f"stroke:{color},stroke-width:2px"
+    return None
 
 
 @dataclass
@@ -37,12 +53,14 @@ class MermaidStylingConfig:
         link_style_default: Default style string for links (or None).
     """
 
-    node_ref_fnc: Callable[[Graphable[Any]], str] = lambda n: n.reference
-    node_text_fnc: Callable[[Graphable[Any]], str] = lambda n: n.reference
-    node_style_fnc: Callable[[Graphable[Any]], str] | None = None
+    node_ref_fnc: Callable[[Graphable[Any]], str] = lambda n: str(n.reference)
+    node_text_fnc: Callable[[Graphable[Any]], str] = lambda n: str(n.reference)
+    node_style_fnc: Callable[[Graphable[Any]], str] | None = _get_node_style
     node_style_default: str | None = None
     link_text_fnc: Callable[[Graphable[Any], Graphable[Any]], str] = lambda n, sn: "-->"
-    link_style_fnc: Callable[[Graphable[Any], Graphable[Any]], str] | None = None
+    link_style_fnc: Callable[[Graphable[Any], Graphable[Any]], str] | None = (
+        _get_link_style
+    )
     link_style_default: str | None = None
     cluster_by_tag: bool = False
     tag_sort_fnc: Callable[[set[str]], list[str]] = lambda s: sorted(list(s))
@@ -163,7 +181,7 @@ def create_topology_mermaid_mmd(
     link_num: int = 0
     for node in graph.topological_order():
         node_ref = config.node_ref_fnc(node)
-        for subnode in node.dependents:
+        for subnode, _ in graph.internal_dependents(node):
             subnode_ref = config.node_ref_fnc(subnode)
             mermaid.append(
                 f"{node_ref} {config.link_text_fnc(node, subnode)} {subnode_ref}"
@@ -204,6 +222,7 @@ def _execute_build_script(build_script: Path) -> bool:
     return False
 
 
+@register_view(".mmd", creator_fnc=create_topology_mermaid_mmd)
 def export_topology_mermaid_mmd(
     graph: Graph, output: Path, config: MermaidStylingConfig | None = None
 ) -> None:
@@ -220,6 +239,7 @@ def export_topology_mermaid_mmd(
         f.write(create_topology_mermaid_mmd(graph, config))
 
 
+@register_view(".svg")
 def export_topology_mermaid_svg(
     graph: Graph,
     output: Path,

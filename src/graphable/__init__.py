@@ -1,5 +1,5 @@
 from .errors import GraphConsistencyError, GraphCycleError
-from .graph import Graph, graph
+from .graph import Graph
 from .graphable import Graphable
 from .parsers.csv import load_graph_csv
 from .parsers.graphml import load_graph_graphml
@@ -12,7 +12,6 @@ __all__ = [
     "Graphable",
     "GraphConsistencyError",
     "GraphCycleError",
-    "graph",
     "load_graph_csv",
     "load_graph_graphml",
     "load_graph_json",

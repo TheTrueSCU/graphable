@@ -5,6 +5,7 @@ from typing import Any, Callable
 
 from ..graph import Graph
 from ..graphable import Graphable
+from ..registry import register_view
 
 logger = getLogger(__name__)
 
@@ -82,12 +83,13 @@ def create_topology_tree_txt(
             return "\n".join(subtree)
         visited.add(node)
 
-        for i, subnode in enumerate(node.depends_on, start=1):
+        internal_deps = list(graph.internal_depends_on(node))
+        for i, (subnode, _) in enumerate(internal_deps, start=1):
             subtree.append(
                 create_topology_subtree_txt(
                     node=subnode,
                     indent=next_indent,
-                    is_last=(i == len(node.depends_on)),
+                    is_last=(i == len(internal_deps)),
                     is_root=False,
                     visited=visited,
                 )
@@ -105,6 +107,7 @@ def create_topology_tree_txt(
     return "\n".join(tree)
 
 
+@register_view(".txt", creator_fnc=create_topology_tree_txt)
 def export_topology_tree_txt(
     graph: Graph, output: Path, config: TextTreeStylingConfig | None = None
 ) -> None:

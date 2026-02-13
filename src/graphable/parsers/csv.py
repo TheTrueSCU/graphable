@@ -1,78 +1,63 @@
 import csv
+import io
 from logging import getLogger
 from pathlib import Path
 from typing import Any
 
 from ..graph import Graph
-from ..graphable import Graphable
-from .utils import is_path
+from ..registry import register_parser
+from .utils import build_graph_from_data, is_path
 
 logger = getLogger(__name__)
 
 
-def load_graph_csv(
-    source: str | Path, reference_type: type = str
-) -> Graph[Graphable[Any]]:
+@register_parser(".csv")
+def load_graph_csv(source: str | Path, reference_type: type = str) -> Graph[Any]:
     """
-    Load a graph from a CSV file containing an edge list.
-    Expected format: source,target (with optional header).
+    Load a Graph from a CSV edge list.
 
     Args:
-        source: Path to a CSV file or CSV string.
-        reference_type: The type to cast the node reference to (default: str).
+        source: CSV string or path to a CSV file.
+        reference_type: The type to cast the reference string to.
 
     Returns:
-        Graph: A new Graph instance populated from the CSV data.
+        Graph: The loaded Graph instance.
     """
     if is_path(source):
-        logger.debug(f"Loading CSV from file: {source}")
         with open(source, "r", newline="") as f:
-            lines = f.readlines()
+            content = f.read()
     else:
-        logger.debug("Loading CSV from string.")
-        lines = str(source).strip().splitlines()
+        content = str(source)
 
-    if not lines:
-        return Graph()
+    f = io.StringIO(content.strip())
+    reader = csv.reader(f)
 
     # Detect header
-    has_header = False
-    first_line = lines[0].lower()
-    if "source" in first_line and "target" in first_line:
-        has_header = True
+    first_row = next(reader, None)
+    if not first_row:
+        return Graph()
 
-    reader = csv.reader(lines[1:] if has_header else lines)
-
-    g = Graph()
-    node_map: dict[str, Graphable[Any]] = {}
-
-    def get_or_create_node(ref_str: str) -> Graphable[Any]:
-        if ref_str not in node_map:
-            try:
-                typed_ref = reference_type(ref_str)
-            except (ValueError, TypeError):
-                typed_ref = ref_str
-            node_map[ref_str] = Graphable(typed_ref)
-        return node_map[ref_str]
+    edges_data = []
+    # Check if first row is header
+    if first_row == ["source", "target"]:
+        # Standard header
+        pass
+    else:
+        # No header, treat first row as data
+        edges_data.append({"source": first_row[0], "target": first_row[1]})
 
     for row in reader:
-        if len(row) < 2:
-            continue
+        if len(row) >= 2:
+            edges_data.append({"source": row[0], "target": row[1]})
 
-        u_str, v_str = row[0].strip(), row[1].strip()
-        if not u_str or not v_str:
-            continue
+    # Collect unique node IDs from edges
+    node_ids = set()
+    for edge in edges_data:
+        node_ids.add(edge["source"])
+        node_ids.add(edge["target"])
 
-        u = get_or_create_node(u_str)
-        v = get_or_create_node(v_str)
+    nodes_data = [{"id": nid} for nid in node_ids]
 
-        # add_edge also adds nodes to graph if not present
-        g.add_edge(u, v)
-
-    # Ensure all discovered nodes are in the graph (even if they only appeared as dependents)
-    for node in node_map.values():
-        if node not in g:
-            g.add_node(node)
-
+    g = build_graph_from_data(nodes_data, edges_data, reference_type)
     logger.info(f"Loaded graph with {len(g)} nodes from CSV.")
     return g

@@ -9,6 +9,8 @@ Basic Usage
 This script (available in the repository as ``examples/basic_usage.py``) shows how to:
 - Define nodes and relationships.
 - Use tags for organization and styling.
+- Utilize orchestration attributes (duration, status).
+- Perform advanced analysis (CPM, diffing, slicing).
 - Generate text-based and graphical representations.
 
 .. code-block:: bash
@@ -29,73 +31,145 @@ Running the script produces the following text output:
    :language: text
    :caption: Execution Output
 
-Visualizations
---------------
+Orchestration & Edge Attributes
+-------------------------------
 
-The script also generates visual representations of the graph.
+``graphable`` supports rich metadata on both nodes and edges, making it ideal for task orchestration and workflow management.
 
-Mermaid SVG
-^^^^^^^^^^^
+**Node Attributes**
 
-The Mermaid visualization shows the flow and relationships:
-
-.. image:: _static/examples/topology_mermaid.svg
-   :alt: Mermaid Topology Diagram
-   :align: center
-
-Graphviz SVG
-^^^^^^^^^^^^
-
-The Graphviz visualization (with custom styling) provides a different perspective:
-
-.. image:: _static/examples/topology_graphviz.svg
-   :alt: Graphviz Topology Diagram
-   :align: center
-
-D2 SVG
-^^^^^^
-
-The modern D2 visualization with automatic layout:
-
-.. image:: _static/examples/topology_d2.svg
-   :alt: D2 Topology Diagram
-   :align: center
-
-PlantUML SVG
-^^^^^^^^^^^^
-
-The enterprise-standard PlantUML visualization:
-
-.. image:: _static/examples/topology_plantuml.svg
-   :alt: PlantUML Topology Diagram
-   :align: center
-
-Graphviz Styling
-^^^^^^^^^^^^^^^^
-
-The Graphviz view supports extensive customization through the ``GraphvizStylingConfig`` class. You can customize node labels, attributes, and global graph settings.
+Nodes have built-in support for ``duration`` and ``status``:
 
 .. code-block:: python
 
-   from graphable.views.graphviz import GraphvizStylingConfig, create_topology_graphviz_dot
+   task = Graphable("Compile")
+   task.duration = 15.5  # seconds
+   task.status = "running"
 
-   gv_config = GraphvizStylingConfig(
-       graph_attr={"rankdir": "LR", "nodesep": "0.5"},
-       node_attr_default={"shape": "rounded", "style": "filled", "fontname": "Arial"},
-       node_attr_fnc=lambda n: {
-           "fillcolor": "lightblue" if "backend" in n.tags else "lightgreen"
-       },
-   )
-   dot = create_topology_graphviz_dot(graph, gv_config)
+**Edge Attributes**
 
-Key configuration options include:
+Edges can store arbitrary key-value pairs, such as weights or labels:
 
-*   ``graph_attr``: Global attributes for the graph (e.g., ``rankdir``, ``label``).
-*   ``node_attr_default``: Default attributes applied to all nodes.
-*   ``edge_attr_default``: Default attributes applied to all edges.
-*   ``node_attr_fnc``: A function that takes a ``Graphable[Any]`` and returns a dictionary of attributes for that specific node.
-*   ``edge_attr_fnc``: A function that takes two ``Graphable[Any]`` nodes (source and target) and returns attributes for the edge between them.
-*   ``node_label_fnc``: Customize how labels are generated for each node.
+.. code-block:: python
+
+   # Add edge with attributes
+   graph.add_edge(node_a, node_b, weight=10, label="primary")
+
+   # Retrieve attributes
+   attrs = node_a.edge_attributes(node_b)
+   print(attrs["weight"])
+
+   # Modify attributes
+   node_a.set_edge_attribute(node_b, "weight", 20)
+
+Dependency Algorithms
+---------------------
+
+Beyond simple topological sorts, ``graphable`` provides native implementations of common graph algorithms.
+
+**Critical Path Method (CPM)**
+
+Identify the "critical" chain of tasks that determines the minimum project duration:
+
+.. code-block:: python
+
+   # Returns ES, EF, LS, LF, and slack for all nodes
+   analysis = graph.cpm_analysis()
+
+   # Returns a list of nodes on the critical path
+   cp = graph.critical_path()
+
+**Longest Path**
+
+Find the deepest chain of dependencies based on node durations:
+
+.. code-block:: python
+
+   lp = graph.longest_path()
+
+**Transitive Closure**
+
+Analyze the full reachability of your graph. The transitive closure contains an edge (u, v) if a path exists from u to v in the original graph:
+
+.. code-block:: python
+
+   closure = graph.transitive_closure()
+
+**All Paths**
+
+Find every possible route between two nodes:
+
+.. code-block:: python
+
+   paths = graph.all_paths(source, target)
+
+Advanced Slicing
+----------------
+
+Extract focused subgraphs to analyze specific parts of your dependency tree.
+
+.. code-block:: python
+
+   # All nodes that 'target' depends on (recursively)
+   upstream = graph.upstream_of(target)
+
+   # All nodes that depend on 'source' (recursively)
+   downstream = graph.downstream_of(source)
+
+   # All nodes and edges on any path between 'start' and 'end'
+   between = graph.subgraph_between(start, end)
+
+Custom Traversals (BFS & DFS)
+-----------------------------
+
+For custom logic, you can perform breadth-first or depth-first searches using generators. This allows you to use standard Python loops to process nodes in a specific order.
+
+.. code-block:: python
+
+   from graphable.enums import Direction
+
+   # Breadth-First Search (level-by-level)
+   for node in graph.bfs(start_node):
+       print(f"Current depth level node: {node.reference}")
+
+   # Depth-First Search (deep chains)
+   for node in graph.dfs(start_node, direction=Direction.UP):
+       print(f"Ancestry chain node: {node.reference}")
+
+The ``bfs()`` and ``dfs()`` methods both accept a ``direction`` parameter (``Direction.UP`` or ``Direction.DOWN``) and a ``limit_to_graph`` boolean (defaulting to ``True``).
+
+Graph Diffing
+-------------
+
+Compare two versions of a graph to identify what changed.
+
+**Structural Diff**
+
+Get a detailed dictionary of added, removed, and modified nodes/edges:
+
+.. code-block:: python
+
+   diff_data = g_old.diff(g_new)
+   print(diff_data["added_nodes"])
+
+**Visual Diff**
+
+Create a special "diff graph" where changes are tagged and colored (added=green, removed=red, modified=orange):
+
+.. code-block:: python
+
+   dg = g_old.diff_graph(g_new)
+   print(dg.render(create_topology_mermaid_mmd))
+
+Cycle Resolution
+----------------
+
+If your graph contains cycles (which prevents it from being a DAG), ``graphable`` can suggest which edges to remove to restore its integrity.
+
+.. code-block:: python
+
+   # Returns a list of (source, target) tuples to remove
+   suggested_breaks = graph.suggest_cycle_breaks()
 
 Cycle Detection
 ---------------
@@ -126,10 +200,10 @@ This check is performed using a Breadth-First Search (BFS) to find if a path alr
 
 The following methods support the ``check_cycles`` parameter:
 
-*   ``add_dependency(dependency, check_cycles=False)``
-*   ``add_dependencies(dependencies, check_cycles=False)``
-*   ``add_dependent(dependent, check_cycles=False)``
-*   ``add_dependents(dependents, check_cycles=False)``
+*   ``add_dependency(dependency, check_cycles=False, **attributes)``
+*   ``add_dependencies(dependencies, check_cycles=False, **attributes)``
+*   ``add_dependent(dependent, check_cycles=False, **attributes)``
+*   ``add_dependents(dependents, check_cycles=False, **attributes)``
 *   ``requires(dependency, check_cycles=False)``
 *   ``provides_to(dependent, check_cycles=False)``
 
@@ -198,8 +272,8 @@ Equality Comparison
 
 Graphs can be compared for equality using the standard ``==`` operator or the ``is_equal_to()`` method. Two graphs are considered equal if they have:
 1. The same number of nodes.
-2. Nodes with matching references and tags.
-3. The same directed edges between those nodes.
+2. Nodes with matching references, tags, durations, and statuses.
+3. The same directed edges with matching attributes.
 
 .. code-block:: python
 
@@ -256,7 +330,7 @@ The ``Graph`` class implements an efficient observer-based caching system for ex
 *   ``parallelized_topological_order()``
 *   ``checksum()``
 
-Calculations are performed once and cached. If any node in the graph is modified (tags changed, dependencies added/removed), the graph is automatically notified and invalidates its cache. This ensures high performance for repeated access while maintaining absolute correctness.
+Calculations are performed once and cached. If any node in the graph is modified (tags changed, duration/status updated, dependencies added/removed), the graph is automatically notified and invalidates its cache. This ensures high performance for repeated access while maintaining absolute correctness.
 
 Unified I/O
 -----------
@@ -278,7 +352,7 @@ Unified I/O
 Integrity & Checksums
 ---------------------
 
-To ensure your graph structure and metadata (tags) haven't changed, you can use the deterministic BLAKE2b checksum feature.
+To ensure your graph structure and metadata (tags, duration, status, edge attributes) haven't changed, you can use the deterministic BLAKE2b checksum feature.
 
 .. code-block:: python
 
@@ -318,10 +392,14 @@ To get the full experience with formatted tables and panels, install the ``cli``
 
 **Subcommands**
 
-*   **``info <file>``**: Displays summary statistics about the graph, including node count, edge count, and identified source/sink nodes.
-*   **``check <file>``**: Performs validation on the graph. It checks for circular dependencies and bidirectional consistency.
-*   **``convert <input> <output>``**: Converts a graph from one format to another. The format is automatically detected from the file extension.
-*   **``reduce <input> <output>``**: Reads a graph, computes its transitive reduction (removing redundant edges), and saves the simplified version to the output file.
+*   **``info <file>``**: Displays summary statistics about the graph.
+*   **``check <file>``**: Performs validation (cycles and consistency).
+*   **``convert <input> <output>``**: Converts between formats.
+*   **``reduce <input> <output>``**: Computes transitive reduction.
+*   **``diff <file1> <file2> [-o output]``**: Compares two graphs.
+*   **``serve <file> [-p port]``**: Starts a live-reloading interactive visualization.
+*   **``checksum <file>``**: Prints the graph checksum.
+*   **``verify <file> [--expected hash]``**: Verifies integrity.
 
 **CI/CD and Automation**
 
@@ -335,6 +413,17 @@ If you are using ``graphable`` in a script or CI/CD pipeline and want to ensure 
 
 - **Input**: ``.json``, ``.yaml``, ``.yml``, ``.toml``, ``.csv``, ``.graphml``
 - **Output**: All input formats plus ``.dot``, ``.gv``, ``.mmd``, ``.d2``, ``.puml``, ``.html``, ``.tex``, ``.txt``, ``.ascii``, ``.svg``
+
+Live Visualization
+------------------
+
+The ``serve`` command provides a "Live Preview" experience. It starts a local web server and automatically reloads the visualization in your browser whenever you save changes to the input graph file.
+
+.. code-block:: bash
+
+   graphable serve architecture.json --port 8080
+
+This is perfect for architecting and debugging complex dependency systems in real-time.
 
 ASCII Flowchart
 ---------------

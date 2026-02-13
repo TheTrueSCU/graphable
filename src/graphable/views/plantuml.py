@@ -7,6 +7,7 @@ from typing import Any, Callable
 
 from ..graph import Graph
 from ..graphable import Graphable
+from ..registry import register_view
 
 logger = getLogger(__name__)
 
@@ -89,7 +90,7 @@ def create_topology_plantuml(
     # Edges
     for node in graph.topological_order():
         node_ref = config.node_ref_fnc(node)
-        for dependent in node.dependents:
+        for dependent, _ in graph.internal_dependents(node):
             dep_ref = config.node_ref_fnc(dependent)
             puml.append(f"{node_ref} --> {dep_ref}")
 
@@ -97,6 +98,7 @@ def create_topology_plantuml(
     return "\n".join(puml)
 
 
+@register_view(".puml", creator_fnc=create_topology_plantuml)
 def export_topology_plantuml(
     graph: Graph, output: Path, config: PlantUmlStylingConfig | None = None
 ) -> None:

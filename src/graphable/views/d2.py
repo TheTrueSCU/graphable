@@ -7,6 +7,7 @@ from typing import Any, Callable
 
 from ..graph import Graph
 from ..graphable import Graphable
+from ..registry import register_view
 
 logger = getLogger(__name__)
 
@@ -118,13 +119,12 @@ def create_topology_d2(graph: Graph, config: D2StylingConfig | None = None) -> s
     # Edges
     for node in graph.topological_order():
         node_ref = config.node_ref_fnc(node)
-        for dependent in node.dependents:
-            dep_ref = config.node_ref_fnc(dependent)
+        for dependent, _ in graph.internal_dependents(node):
             # If nodes are in clusters, D2 handles flat references or nested references.
             # Usually, if IDs are unique, flat references work.
             # But if we wanted to be explicit: cluster.node_ref
             # For now, let's assume node_ref is globally unique (the default is reference string).
-            edge_line = f"{node_ref} -> {dep_ref}"
+            edge_line = f"{node_ref} -> {config.node_ref_fnc(dependent)}"
 
             if config.edge_style_fnc:
                 edge_styles = config.edge_style_fnc(node, dependent)
@@ -140,6 +140,7 @@ def create_topology_d2(graph: Graph, config: D2StylingConfig | None = None) -> s
     return "\n".join(d2)
 
 
+@register_view(".d2", creator_fnc=create_topology_d2)
 def export_topology_d2(
     graph: Graph, output: Path, config: D2StylingConfig | None = None
 ) -> None:

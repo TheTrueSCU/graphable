@@ -1,11 +1,18 @@
 import weakref
 from collections import deque
 from logging import getLogger
-from typing import Any, Self, cast
+from typing import Any, Protocol, Self, cast, runtime_checkable
 
 from .errors import GraphCycleError
 
 logger = getLogger(__name__)
+
+
+@runtime_checkable
+class GraphObserver(Protocol):
+    """Protocol for objects that need to be notified of node changes."""
+
+    def _invalidate_cache(self) -> None: ...
 
 
 class Graphable[T]:
@@ -23,26 +30,49 @@ class Graphable[T]:
         Args:
             reference (T): The underlying object this node represents.
         """
-        self._dependents: set[Graphable[Any]] = set()
-        self._depends_on: set[Graphable[Any]] = set()
+        self._dependents: dict[Graphable[Any], dict[str, Any]] = {}
+        self._depends_on: dict[Graphable[Any], dict[str, Any]] = {}
         self._reference: T = reference
         self._tags: set[str] = set()
-        self._observers: weakref.WeakSet[Any] = weakref.WeakSet()
+        self._observers: weakref.WeakSet[GraphObserver] = weakref.WeakSet()
+        self._duration: float = 0.0
+        self._status: str = "pending"
         logger.debug(f"Created Graphable node for reference: {reference}")
 
     def _notify_change(self) -> None:
         """Notify all observers that this node has changed."""
         for observer in list(self._observers):
-            if hasattr(observer, "_invalidate_cache"):
-                observer._invalidate_cache()
+            observer._invalidate_cache()
 
-    def _register_observer(self, observer: Any) -> None:
+    def _register_observer(self, observer: GraphObserver) -> None:
         """Register an observer to be notified of changes."""
         self._observers.add(observer)
 
-    def _unregister_observer(self, observer: Any) -> None:
+    def _unregister_observer(self, observer: GraphObserver) -> None:
         """Unregister an observer."""
         self._observers.discard(observer)
+
+    @property
+    def duration(self) -> float:
+        """Get the duration of this node."""
+        return self._duration
+
+    @duration.setter
+    def duration(self, value: float) -> None:
+        """Set the duration of this node."""
+        self._duration = value
+        self._notify_change()
+
+    @property
+    def status(self) -> str:
+        """Get the status of this node."""
+        return self._status
+
+    @status.setter
+    def status(self, value: str) -> None:
+        """Set the status of this node."""
+        self._status = value
+        self._notify_change()
 
     def __eq__(self, other: object) -> bool:
         """
@@ -98,7 +128,7 @@ class Graphable[T]:
         return self is other or other.find_path(self) is not None
 
     def add_dependencies(
-        self, dependencies: set[Self], check_cycles: bool = False
+        self, dependencies: set[Self], check_cycles: bool = False, **attributes: Any
     ) -> None:
         """
         Add multiple dependencies to this node.
@@ -106,18 +136,22 @@ class Graphable[T]:
         Args:
             dependencies (set[Self]): A set of Graphable nodes to add as dependencies.
             check_cycles (bool): If True, check if adding these dependencies would create a cycle.
+            **attributes: Edge attributes to apply to all added dependencies.
         """
         logger.debug(f"Node '{self.reference}': adding dependencies {dependencies}")
         for dependency in dependencies:
-            self.add_dependency(dependency, check_cycles=check_cycles)
+            self.add_dependency(dependency, check_cycles=check_cycles, **attributes)
 
-    def add_dependency(self, dependency: Self, check_cycles: bool = False) -> None:
+    def add_dependency(
+        self, dependency: Self, check_cycles: bool = False, **attributes: Any
+    ) -> None:
         """
         Add a single dependency to this node.
 
         Args:
             dependency (Self): The Graphable node to add as a dependency.
             check_cycles (bool): If True, check if adding this dependency would create a cycle.
+            **attributes: Edge attributes (e.g., weight, label).
 
         Raises:
             GraphCycleError: If check_cycles is True and a cycle would be created.
@@ -138,18 +172,21 @@ class Graphable[T]:
                 )
 
         logger.debug(
-            f"Node '{self.reference}': adding dependency '{dependency.reference}'"
+            f"Node '{self.reference}': adding dependency '{dependency.reference}' with attributes {attributes}"
         )
-        self._add_depends_on(dependency)
-        dependency._add_dependent(self)
+        self._add_depends_on(dependency, **attributes)
+        dependency._add_dependent(self, **attributes)
 
-    def add_dependent(self, dependent: Self, check_cycles: bool = False) -> None:
+    def add_dependent(
+        self, dependent: Self, check_cycles: bool = False, **attributes: Any
+    ) -> None:
         """
         Add a single dependent to this node.
 
         Args:
             dependent (Self): The Graphable node to add as a dependent.
             check_cycles (bool): If True, check if adding this dependent would create a cycle.
+            **attributes: Edge attributes (e.g., weight, label).
 
         Raises:
             GraphCycleError: If check_cycles is True and a cycle would be created.
@@ -170,48 +207,59 @@ class Graphable[T]:
                 )
 
         logger.debug(
-            f"Node '{self.reference}': adding dependent '{dependent.reference}'"
+            f"Node '{self.reference}': adding dependent '{dependent.reference}' with attributes {attributes}"
         )
-        self._add_dependent(dependent)
-        dependent._add_depends_on(self)
+        self._add_dependent(dependent, **attributes)
+        dependent._add_depends_on(self, **attributes)
 
-    def add_dependents(self, dependents: set[Self], check_cycles: bool = False) -> None:
+    def add_dependents(
+        self, dependents: set[Self], check_cycles: bool = False, **attributes: Any
+    ) -> None:
         """
         Add multiple dependents to this node.
 
         Args:
             dependents (set[Self]): A set of Graphable nodes to add as dependents.
             check_cycles (bool): If True, check if adding these dependents would create a cycle.
+            **attributes: Edge attributes to apply to all added dependents.
         """
         logger.debug(f"Node '{self.reference}': adding dependents {dependents}")
         for dependent in dependents:
-            self.add_dependent(dependent, check_cycles=check_cycles)
+            self.add_dependent(dependent, check_cycles=check_cycles, **attributes)
 
-    def _add_dependent(self, dependent: Self) -> None:
+    def _add_dependent(self, dependent: Self, **attributes: Any) -> None:
         """
         Internal method to add a dependent node (incoming edge in dependency graph).
 
         Args:
             dependent (Self): The node that depends on this node.
+            **attributes: Edge attributes.
         """
-        if dependent not in self._dependents:
-            self._dependents.add(dependent)
+        if (
+            dependent not in self._dependents
+            or self._dependents[dependent] != attributes
+        ):
+            self._dependents[dependent] = attributes
             logger.debug(
-                f"Node '{self.reference}': added dependent '{dependent.reference}'"
+                f"Node '{self.reference}': added dependent '{dependent.reference}' with attributes {attributes}"
             )
             self._notify_change()
 
-    def _add_depends_on(self, depends_on: Self) -> None:
+    def _add_depends_on(self, depends_on: Self, **attributes: Any) -> None:
         """
         Internal method to add a dependency (outgoing edge in dependency graph).
 
         Args:
             depends_on (Self): The node that this node depends on.
+            **attributes: Edge attributes.
         """
-        if depends_on not in self._depends_on:
-            self._depends_on.add(depends_on)
+        if (
+            depends_on not in self._depends_on
+            or self._depends_on[depends_on] != attributes
+        ):
+            self._depends_on[depends_on] = attributes
             logger.debug(
-                f"Node '{self.reference}': added dependency '{depends_on.reference}'"
+                f"Node '{self.reference}': added dependency '{depends_on.reference}' with attributes {attributes}"
             )
             self._notify_change()
 
@@ -223,7 +271,7 @@ class Graphable[T]:
             dependent (Self): The node to remove.
         """
         if dependent in self._dependents:
-            self._dependents.remove(dependent)
+            del self._dependents[dependent]
             logger.debug(
                 f"Node '{self.reference}': removed dependent '{dependent.reference}'"
             )
@@ -237,17 +285,17 @@ class Graphable[T]:
             depends_on (Self): The node to remove.
         """
         if depends_on in self._depends_on:
-            self._depends_on.remove(depends_on)
+            del self._depends_on[depends_on]
             logger.debug(
                 f"Node '{self.reference}': removed dependency '{depends_on.reference}'"
             )
             self._notify_change()
 
-    def _register_observer(self, observer: Any) -> None:
+    def _register_observer(self, observer: GraphObserver) -> None:
         """Register an observer to be notified of changes."""
         self._observers.add(observer)
 
-    def _unregister_observer(self, observer: Any) -> None:
+    def _unregister_observer(self, observer: GraphObserver) -> None:
         """Unregister an observer."""
         self._observers.discard(observer)
 
@@ -294,6 +342,48 @@ class Graphable[T]:
         """
         logger.debug(f"Node '{self.reference}': checking if tagged with '{tag}'")
         return tag in self._tags
+
+    def edge_attributes(self, other: Self) -> dict[str, Any]:
+        """
+        Get the attributes of the edge between this node and another.
+        Checks both outgoing (dependents) and incoming (depends_on) edges.
+
+        Args:
+            other (Self): The other node.
+
+        Returns:
+            dict[str, Any]: The edge attributes.
+
+        Raises:
+            KeyError: If no edge exists between the nodes.
+        """
+        if other in self._dependents:
+            return self._dependents[other]
+        if other in self._depends_on:
+            return self._depends_on[other]
+        raise KeyError(f"No edge between '{self.reference}' and '{other.reference}'")
+
+    def set_edge_attribute(self, other: Self, key: str, value: Any) -> None:
+        """
+        Set an attribute on the edge between this node and another.
+
+        Args:
+            other (Self): The other node.
+            key (str): The attribute key.
+            value (Any): The attribute value.
+        """
+        if other in self._dependents:
+            self._dependents[other][key] = value
+            other._depends_on[self][key] = value
+            self._notify_change()
+        elif other in self._depends_on:
+            self._depends_on[other][key] = value
+            other._dependents[self][key] = value
+            self._notify_change()
+        else:
+            raise KeyError(
+                f"No edge between '{self.reference}' and '{other.reference}'"
+            )
 
     def find_path(self, target: Self) -> list[Self] | None:
         """

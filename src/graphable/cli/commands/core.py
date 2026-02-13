@@ -2,82 +2,52 @@ from pathlib import Path
 from typing import Any, Callable
 
 from ...graph import Graph
-from ...parsers.csv import load_graph_csv
-from ...parsers.graphml import load_graph_graphml
-from ...parsers.json import load_graph_json
-from ...parsers.toml import load_graph_toml
-from ...parsers.yaml import load_graph_yaml
-from ...views.asciiflow import export_topology_ascii_flow
-from ...views.csv import export_topology_csv
-from ...views.d2 import export_topology_d2
-from ...views.graphml import export_topology_graphml
-from ...views.graphviz import export_topology_graphviz_dot
-from ...views.html import export_topology_html
-from ...views.json import export_topology_json
-from ...views.mermaid import export_topology_mermaid_mmd
-from ...views.plantuml import export_topology_plantuml
-from ...views.texttree import export_topology_tree_txt
-from ...views.tikz import export_topology_tikz
-from ...views.toml import export_topology_toml
-from ...views.yaml import export_topology_yaml
+from ...registry import EXPORTERS, PARSERS
 
 
 def get_parser(extension: str) -> Callable[..., Graph[Any]]:
-    parsers = {
-        ".json": load_graph_json,
-        ".yaml": load_graph_yaml,
-        ".yml": load_graph_yaml,
-        ".toml": load_graph_toml,
-        ".csv": load_graph_csv,
-        ".graphml": load_graph_graphml,
-    }
-    parser = parsers.get(extension.lower())
+    parser = PARSERS.get(extension.lower())
     if not parser:
         raise ValueError(f"No parser available for extension: {extension}")
     return parser
 
 
 def get_exporter(extension: str) -> Callable[..., None] | None:
-    exporters = {
-        ".json": export_topology_json,
-        ".yaml": export_topology_yaml,
-        ".yml": export_topology_yaml,
-        ".toml": export_topology_toml,
-        ".csv": export_topology_csv,
-        ".graphml": export_topology_graphml,
-        ".dot": export_topology_graphviz_dot,
-        ".gv": export_topology_graphviz_dot,
-        ".svg": None,  # Needs special handling based on what tool is available
-        ".mmd": export_topology_mermaid_mmd,
-        ".d2": export_topology_d2,
-        ".puml": export_topology_plantuml,
-        ".html": export_topology_html,
-        ".tex": export_topology_tikz,
-        ".txt": export_topology_tree_txt,
-        ".ascii": export_topology_ascii_flow,
-    }
-
-    return exporters.get(extension.lower())
+    return EXPORTERS.get(extension.lower())
 
 
-def load_graph(path: Path) -> Graph[Any]:
+def load_graph(path: Path, tag: str | None = None) -> Graph[Any]:
     parser = get_parser(path.suffix)
-    return parser(path)
+    g = parser(path)
+    if tag:
+        g = g.subgraph_tagged(tag)
+    return g
 
 
-def info_command(path: Path) -> dict[str, Any]:
-    g = load_graph(path)
-    return {
+def info_command(path: Path, tag: str | None = None) -> dict[str, Any]:
+    g = load_graph(path, tag)
+    
+    stats = {
         "nodes": len(g),
         "edges": sum(len(node.dependents) for node in g),
         "sources": [n.reference for n in g.sources],
         "sinks": [n.reference for n in g.sinks],
+        "project_duration": None,
+        "critical_path_length": 0,
     }
 
+    # Check if we should run CPM (if any node has duration > 0)
+    if any(n.duration > 0 for n in g):
+        analysis = g.cpm_analysis()
+        stats["project_duration"] = max((v["EF"] for v in analysis.values()), default=0)
+        stats["critical_path_length"] = len(g.critical_path())
 
-def check_command(path: Path) -> dict[str, Any]:
+    return stats
+
+
+def check_command(path: Path, tag: str | None = None) -> dict[str, Any]:
     try:
-        g = load_graph(path)
+        g = load_graph(path, tag)
         g.check_cycles()
         g.check_consistency()
         return {"valid": True, "error": None}
@@ -86,24 +56,31 @@ def check_command(path: Path) -> dict[str, Any]:
 
 
 def reduce_command(
-    input_path: Path, output_path: Path, embed_checksum: bool = False
+    input_path: Path,
+    output_path: Path,
+    embed_checksum: bool = False,
+    tag: str | None = None,
 ) -> None:
-    g = load_graph(input_path)
+    g = load_graph(input_path, tag)
     g.write(output_path, transitive_reduction=True, embed_checksum=embed_checksum)
 
 
-def convert_command(input_path: Path, output_path: Path, **kwargs: Any) -> None:
-    g = load_graph(input_path)
+def convert_command(
+    input_path: Path, output_path: Path, tag: str | None = None, **kwargs: Any
+) -> None:
+    g = load_graph(input_path, tag)
     g.write(output_path, **kwargs)
 
 
-def checksum_command(path: Path) -> str:
-    g = load_graph(path)
+def checksum_command(path: Path, tag: str | None = None) -> str:
+    g = load_graph(path, tag)
     return g.checksum()
 
 
-def verify_command(path: Path, expected: str | None = None) -> dict[str, Any]:
-    g = load_graph(path)
+def verify_command(
+    path: Path, expected: str | None = None, tag: str | None = None
+) -> dict[str, Any]:
+    g = load_graph(path, tag)
     actual = g.checksum()
 
     if expected is None:
@@ -118,6 +95,25 @@ def verify_command(path: Path, expected: str | None = None) -> dict[str, Any]:
     return {"valid": actual == expected, "actual": actual, "expected": expected}
 
 
-def write_checksum_command(graph_path: Path, checksum_path: Path) -> None:
-    g = load_graph(graph_path)
+def write_checksum_command(
+    graph_path: Path, checksum_path: Path, tag: str | None = None
+) -> None:
+    g = load_graph(graph_path, tag)
     g.write_checksum(checksum_path)
+
+
+def diff_command(
+    path1: Path, path2: Path, tag: str | None = None
+) -> dict[str, Any]:
+    g1 = load_graph(path1, tag)
+    g2 = load_graph(path2, tag)
+    return g1.diff(g2)
+
+
+def diff_visual_command(
+    path1: Path, path2: Path, output_path: Path, tag: str | None = None
+) -> None:
+    g1 = load_graph(path1, tag)
+    g2 = load_graph(path2, tag)
+    dg = g1.diff_graph(g2)
+    dg.write(output_path)

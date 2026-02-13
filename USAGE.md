@@ -23,6 +23,8 @@ $ graphable [OPTIONS] COMMAND [ARGS]...
 * `checksum`: Calculate and print the graph checksum.
 * `verify`: Verify graph checksum (embedded or provided).
 * `write-checksum`: Write graph checksum to a standalone file.
+* `diff`: Compare two graphs and highlight differences.
+* `serve`: Start a local web server with...
 
 ## `graphable info`
 
@@ -40,6 +42,7 @@ $ graphable info [OPTIONS] FILE
 
 **Options**:
 
+* `-t, --tag TEXT`: Filter by tag
 * `--help`: Show this message and exit.
 
 ## `graphable check`
@@ -58,6 +61,7 @@ $ graphable check [OPTIONS] FILE
 
 **Options**:
 
+* `-t, --tag TEXT`: Filter by tag
 * `--help`: Show this message and exit.
 
 ## `graphable reduce`
@@ -78,6 +82,7 @@ $ graphable reduce [OPTIONS] INPUT OUTPUT
 **Options**:
 
 * `--embed`: Embed checksum in output
+* `-t, --tag TEXT`: Filter by tag
 * `--help`: Show this message and exit.
 
 ## `graphable convert`
@@ -98,6 +103,7 @@ $ graphable convert [OPTIONS] INPUT OUTPUT
 **Options**:
 
 * `--embed`: Embed checksum in output
+* `-t, --tag TEXT`: Filter by tag
 * `--help`: Show this message and exit.
 
 ## `graphable checksum`
@@ -116,6 +122,7 @@ $ graphable checksum [OPTIONS] FILE
 
 **Options**:
 
+* `-t, --tag TEXT`: Filter by tag
 * `--help`: Show this message and exit.
 
 ## `graphable verify`
@@ -135,6 +142,7 @@ $ graphable verify [OPTIONS] FILE
 **Options**:
 
 * `--expected TEXT`: Expected checksum (hex)
+* `-t, --tag TEXT`: Filter by tag
 * `--help`: Show this message and exit.
 
 ## `graphable write-checksum`
@@ -154,4 +162,45 @@ $ graphable write-checksum [OPTIONS] FILE OUTPUT
 
 **Options**:
 
+* `-t, --tag TEXT`: Filter by tag
+* `--help`: Show this message and exit.
+
+## `graphable diff`
+
+Compare two graphs and highlight differences.
+
+**Usage**:
+
+```console
+$ graphable diff [OPTIONS] FILE1 FILE2
+```
+
+**Arguments**:
+
+* `FILE1`: First graph file  [required]
+* `FILE2`: Second graph file  [required]
+
+**Options**:
+
+* `-o, --output PATH`: Output file for visual diff
+* `-t, --tag TEXT`: Filter by tag
+* `--help`: Show this message and exit.
+
+## `graphable serve`
+
+Start a local web server with live-reloading visualization.
+
+**Usage**:
+
+```console
+$ graphable serve [OPTIONS] FILE
+```
+
+**Arguments**:
+
+* `FILE`: Graph file to serve  [required]
+
+**Options**:
+
+* `-p, --port INTEGER`: Port to serve on  [default: 8000]
 * `--help`: Show this message and exit.

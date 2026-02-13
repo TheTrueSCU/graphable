@@ -82,11 +82,18 @@ def main():
     ui = Graphable("React")
 
     g = Graph()
-    g.add_edge(db, api)
-    g.add_edge(cache, api)
-    g.add_edge(api, ui)
-    g.add_edge(db, worker)
-    g.add_edge(api, worker)
+    g.add_edge(db, api, weight=5)
+    g.add_edge(cache, api, weight=2)
+    g.add_edge(api, ui, weight=1)
+    g.add_edge(db, worker, weight=10)
+    g.add_edge(api, worker, weight=2)
+
+    # Set durations for CPM demo
+    db.duration = 10
+    cache.duration = 2
+    api.duration = 5
+    worker.duration = 8
+    ui.duration = 3
 
     # Add a redundant edge for transitive reduction demo
     # Postgres -> React (redundant because Postgres -> FastAPI -> React)
@@ -126,20 +133,62 @@ def main():
     reduced_g = g.transitive_reduction()
     print(f"Edges after reduction: {sum(len(n.dependents) for n in reduced_g)}")
 
-    # 5. Basic Text Output
-    print("\n--- 5. Topological Order ---")
+    # 5. Advanced Analysis (v0.5.0)
+    print("\n--- 5. Advanced Analysis (v0.5.0) ---")
+
+    # CPM Analysis
+    analysis = g.cpm_analysis()
+    cp = g.critical_path()
+    print(f"Critical Path: {[n.reference for n in cp]}")
+    print(f"Project Duration: {max(v['EF'] for v in analysis.values())}")
+
+    # Slicing
+    upstream = g.upstream_of(ui)
+    print(f"Upstream of React: {[n.reference for n in upstream.topological_order()]}")
+
+    between = g.subgraph_between(db, ui)
+    print(
+        f"Between Postgres and React: {[n.reference for n in between.topological_order()]}"
+    )
+
+    # Transitive Closure
+    closure = g.transitive_closure()
+    print(f"Transitive Closure edges: {sum(len(n.dependents) for n in closure)}")
+
+    # BFS/DFS Traversals
+    print("\n--- 6. Native Traversals (BFS & DFS) ---")
+    from graphable.enums import Direction
+
+    print("BFS from Postgres (level-by-level):")
+    for node in g.bfs(db):
+        print(f"  - {node.reference}")
+
+    print("DFS from React (upstream chain):")
+    for node in g.dfs(ui, direction=Direction.UP):
+        print(f"  - {node.reference}")
+
+    # Diffing Demo
+    g_v2 = Graph.from_json(create_topology_json(g))
+    new_task = Graphable("Analytics")
+    g_v2.add_edge(g_v2["Postgres"], new_task)
+
+    diff_data = g.diff(g_v2)
+    print(f"Diff detected added node: {diff_data['added_nodes']}")
+
+    # 6. Basic Text Output
+    print("\n--- 6. Topological Order ---")
     for node in g:  # Using __iter__
         tags_str = f" (Tags: {', '.join(node.tags)})" if node.tags else ""
         print(f"- {node.reference}{tags_str}")
 
-    print("\n--- 6. Text Tree (Sinks to Sources) ---")
+    print("\n--- 7. Text Tree (Sinks to Sources) ---")
     print(g.render(create_topology_tree_txt))  # Using .render()
 
-    print("\n--- 7. ASCII Flowchart ---")
+    print("\n--- 8. ASCII Flowchart ---")
     print(create_topology_ascii_flow(g))
 
     # 8. Visualizations with Clustering
-    print("\n--- 8. Mermaid Definition (Clustered) ---")
+    print("\n--- 9. Mermaid Definition (Clustered) ---")
     mmd_config = MermaidStylingConfig(cluster_by_tag=True)
     print(g.render(create_topology_mermaid_mmd, config=mmd_config))
 

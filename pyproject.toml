@@ -1,6 +1,6 @@
 [project]
 name = "graphable"
-version = "0.4.0"
+version = "0.5.0"
 description = "A lightweight, type-safe library for building, managing, and visualizing dependency graphs."
 readme = "README.md"
 authors = [
@@ -23,7 +23,13 @@ classifiers = [
 networkx = ["networkx>=3.0"]
 yaml = ["PyYAML>=6.0"]
 toml = ["tomli-w>=1.0.0"]
-cli = ["typer>=0.15.1", "rich>=13.9.4"]
+cli = [
+    "typer>=0.15.1",
+    "rich>=13.9.4",
+    "starlette>=0.40.0",
+    "uvicorn>=0.30.0",
+    "watchfiles>=1.0.0",
+]
 
 [project.scripts]
 graphable = "graphable.cli.main:app"
@@ -61,4 +67,5 @@ dev = [
     "typer>=0.15.1",
     "ty>=0.0.12",
     "uvicorn>=0.40.0",
+    "watchfiles>=1.1.1",
 ]
