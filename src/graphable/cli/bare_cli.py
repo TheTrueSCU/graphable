@@ -13,7 +13,6 @@ from graphable.cli.commands.core import (
     verify_command,
     write_checksum_command,
 )
-from graphable.cli.commands.serve import serve_command
 
 
 def run_bare():
@@ -103,9 +102,7 @@ def run_bare():
             sys.exit(1)
 
     elif args.command == "reduce":
-        reduce_command(
-            args.input, args.output, embed_checksum=args.embed, tag=args.tag
-        )
+        reduce_command(args.input, args.output, embed_checksum=args.embed, tag=args.tag)
         print(f"Reduced graph saved to {args.output}")
 
     elif args.command == "convert":

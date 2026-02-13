@@ -94,7 +94,7 @@ class Graph[T: Graphable[Any]]:
         """
         neighbors = node.dependents if direction == Direction.DOWN else node.depends_on
         for neighbor in neighbors:
-            if neighbor in self:
+            if neighbor in self._nodes:
                 attrs = (
                     node.edge_attributes(neighbor)
                     if direction == Direction.DOWN
@@ -361,7 +361,7 @@ class Graph[T: Graphable[Any]]:
         Returns:
             Graph[T]: A new Graph instance.
         """
-        if source not in self or target not in self:
+        if source not in self._nodes or target not in self._nodes:
             raise KeyError("Both source and target must be in the graph.")
 
         # Nodes between U and V are nodes that are descendants of U AND ancestors of V
@@ -776,7 +776,7 @@ class Graph[T: Graphable[Any]]:
         """
         from collections import deque
 
-        if limit_to_graph and start_node not in self:
+        if limit_to_graph and start_node not in self._nodes:
             return
 
         visited: set[T] = {start_node}
@@ -974,7 +974,7 @@ class Graph[T: Graphable[Any]]:
         Returns:
             Graph[T]: A new Graph instance.
         """
-        if node not in self:
+        if node not in self._nodes:
             raise KeyError(f"Node '{node.reference}' not found in graph.")
 
         nodes = {node} | set(self.ancestors(node))
@@ -990,7 +990,7 @@ class Graph[T: Graphable[Any]]:
         Returns:
             Graph[T]: A new Graph instance.
         """
-        if node not in self:
+        if node not in self._nodes:
             raise KeyError(f"Node '{node.reference}' not found in graph.")
 
         nodes = {node} | set(self.descendants(node))
@@ -1351,8 +1351,9 @@ class Graph[T: Graphable[Any]]:
 
         if not create_fnc:
             # Fallback: export normally if we can't find a string-generating version
+            export_name = getattr(export_fnc, "__name__", str(export_fnc))
             logger.warning(
-                f"Could not find string-generating version of {export_fnc.__name__}. Exporting normally without checksum embedding."
+                f"Could not find string-generating version of {export_name}. Exporting normally without checksum embedding."
             )
             return export_fnc(target, p, **kwargs)
 

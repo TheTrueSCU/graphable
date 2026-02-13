@@ -55,10 +55,10 @@ class MermaidStylingConfig:
 
     node_ref_fnc: Callable[[Graphable[Any]], str] = lambda n: str(n.reference)
     node_text_fnc: Callable[[Graphable[Any]], str] = lambda n: str(n.reference)
-    node_style_fnc: Callable[[Graphable[Any]], str] | None = _get_node_style
+    node_style_fnc: Callable[[Graphable[Any]], str | None] | None = _get_node_style
     node_style_default: str | None = None
     link_text_fnc: Callable[[Graphable[Any], Graphable[Any]], str] = lambda n, sn: "-->"
-    link_style_fnc: Callable[[Graphable[Any], Graphable[Any]], str] | None = (
+    link_style_fnc: Callable[[Graphable[Any], Graphable[Any]], str | None] | None = (
         _get_link_style
     )
     link_style_default: str | None = None

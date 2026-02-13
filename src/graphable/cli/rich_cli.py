@@ -168,7 +168,7 @@ def diff(
             return
 
         data = diff_command(file1, file2, tag=tag)
-# ... (rest of diff command)
+        # ... (rest of diff command)
 
         if not any(data.values()):
             console.print("[green]Graphs are identical.[/green]")

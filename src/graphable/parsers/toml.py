@@ -26,7 +26,7 @@ def load_graph_toml(source: str | Path, reference_type: type = str) -> Graph[Any
         import tomllib
     except ImportError:
         try:
-            import tomli as tomllib
+            import tomli as tomllib  # type: ignore
         except ImportError:
             logger.error("No TOML parser found. On Python < 3.11, install 'tomli'.")
             raise ImportError(

@@ -26,7 +26,7 @@ def load_graph(path: Path, tag: str | None = None) -> Graph[Any]:
 
 def info_command(path: Path, tag: str | None = None) -> dict[str, Any]:
     g = load_graph(path, tag)
-    
+
     stats = {
         "nodes": len(g),
         "edges": sum(len(node.dependents) for node in g),
@@ -102,9 +102,7 @@ def write_checksum_command(
     g.write_checksum(checksum_path)
 
 
-def diff_command(
-    path1: Path, path2: Path, tag: str | None = None
-) -> dict[str, Any]:
+def diff_command(path1: Path, path2: Path, tag: str | None = None) -> dict[str, Any]:
     g1 = load_graph(path1, tag)
     g2 = load_graph(path2, tag)
     return g1.diff(g2)
