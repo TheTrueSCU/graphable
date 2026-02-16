@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Implement Cytoscape.js export functionality to provide interactive web-based visualizations**
+- [~] **Track: Implement Cytoscape.js export functionality to provide interactive web-based visualizations**
   *Link: [./tracks/cytoscape_export_20260215/](./tracks/cytoscape_export_20260215/)*
