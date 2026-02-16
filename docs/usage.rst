@@ -1,58 +1,22 @@
-Usage Examples
-==============
+Usage Guide
+===========
 
-The following example demonstrates the core features of ``graphable``, including building a graph, performing topological sorts, and generating various visualizations.
+This guide provides a comprehensive overview of how to use ``graphable`` for managing and visualizing dependency graphs.
 
-Basic Usage
------------
+Detailed Examples
+-----------------
 
-This script (available in the repository as ``examples/basic_usage.py``) shows how to:
-- Define nodes and relationships.
-- Use tags for organization and styling.
-- Utilize orchestration attributes (duration, status).
-- Perform advanced analysis (CPM, diffing, slicing).
-- Generate text-based and graphical representations.
+For complete, runnable scripts and their expected outputs, see the following pages:
 
-.. code-block:: bash
+* :doc:`examples_basic`
+* :doc:`examples_advanced`
+* :doc:`examples_parsers`
 
-   uv run examples/basic_usage.py --mermaid-svg --graphviz-svg --output-dir docs/_static/examples > docs/_static/examples/basic_usage_output.txt
-
-.. literalinclude:: ../examples/basic_usage.py
-   :language: python
-   :linenos:
-   :caption: examples/basic_usage.py
-
-Advanced Usage
---------------
-
-This script (available as ``examples/advanced_usage.py``) demonstrates complex directed acyclic graphs (DAGs), multiple export formats, and the use of the ``render`` method for high-level visualization orchestration.
-
-.. literalinclude:: ../examples/advanced_usage.py
-   :language: python
-   :linenos:
-   :caption: examples/advanced_usage.py
-
-Parser Examples
----------------
-
-This script (available as ``examples/parser_examples.py``) shows how to load graphs from various machine-readable formats including JSON, YAML, and CSV.
-
-.. literalinclude:: ../examples/parser_examples.py
-   :language: python
-   :linenos:
-   :caption: examples/parser_examples.py
-
-Output
-------
-
-Running the script produces the following text output:
-
-.. literalinclude:: _static/examples/basic_usage_output.txt
-   :language: text
-   :caption: Execution Output
+Core Concepts
+-------------
 
 Orchestration & Edge Attributes
--------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``graphable`` supports rich metadata on both nodes and edges, making it ideal for task orchestration and workflow management.
 
@@ -83,7 +47,7 @@ Edges can store arbitrary key-value pairs, such as weights or labels:
    node_a.set_edge_attribute(node_b, "weight", 20)
 
 Dependency Algorithms
----------------------
+^^^^^^^^^^^^^^^^^^^^^
 
 Beyond simple topological sorts, ``graphable`` provides native implementations of common graph algorithms.
 
@@ -117,16 +81,29 @@ Analyze the full reachability of your graph. The transitive closure contains an 
 
 **All Paths**
 
-Find every possible route between two nodes:
+Find every possible route between two nodes.
+
+**Python API**
 
 .. code-block:: python
 
+   # Returns a list of paths, each being a list of node objects
    paths = graph.all_paths(source, target)
 
+**Command Line**
+
+Use the ``paths`` subcommand to see all connections between two nodes:
+
+.. code-block:: bash
+
+   graphable paths topology.json Database React
+
 Advanced Slicing
-----------------
+^^^^^^^^^^^^^^^^
 
 Extract focused subgraphs to analyze specific parts of your dependency tree.
+
+**Python API**
 
 .. code-block:: python
 
@@ -139,8 +116,20 @@ Extract focused subgraphs to analyze specific parts of your dependency tree.
    # All nodes and edges on any path between 'start' and 'end'
    between = graph.subgraph_between(start, end)
 
+**Command Line**
+
+The ``info``, ``convert``, and ``render`` commands support slicing via flags:
+
+.. code-block:: bash
+
+   # Render only the ancestors of the 'React' node
+   graphable render topology.json react_upstream.png --upstream-of React
+
+   # Get information about the blast radius of the 'Database' node
+   graphable info topology.json --downstream-of Database
+
 Custom Traversals (BFS & DFS)
------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 For custom logic, you can perform breadth-first or depth-first searches using generators. This allows you to use standard Python loops to process nodes in a specific order.
 
@@ -159,7 +148,7 @@ For custom logic, you can perform breadth-first or depth-first searches using ge
 The ``bfs()`` and ``dfs()`` methods both accept a ``direction`` parameter (``Direction.UP`` or ``Direction.DOWN``) and a ``limit_to_graph`` boolean (defaulting to ``True``).
 
 Graph Diffing
--------------
+^^^^^^^^^^^^^
 
 Compare two versions of a graph to identify what changed.
 
@@ -182,7 +171,7 @@ Create a special "diff graph" where changes are tagged and colored (added=green,
    print(dg.render(create_topology_mermaid_mmd))
 
 Cycle Resolution
-----------------
+^^^^^^^^^^^^^^^^
 
 If your graph contains cycles (which prevents it from being a DAG), ``graphable`` can suggest which edges to remove to restore its integrity.
 
@@ -192,7 +181,7 @@ If your graph contains cycles (which prevents it from being a DAG), ``graphable`
    suggested_breaks = graph.suggest_cycle_breaks()
 
 Cycle Detection
----------------
+^^^^^^^^^^^^^^^
 
 When building a graph, especially when relationships are defined dynamically or based on user input, it's important to avoid circular dependencies. ``graphable`` provides a mechanism to check for cycles whenever you add a relationship.
 
@@ -230,7 +219,7 @@ The following methods support the ``check_cycles`` parameter:
 In addition, the ``Graph.add_edge`` and ``Graph.add_node`` methods always perform cycle detection to ensure the integrity of the graph.
 
 Transitive Reduction
---------------------
+^^^^^^^^^^^^^^^^^^^^
 
 For complex graphs, redundant edges can clutter the visualization. Transitive reduction removes these edges while preserving the reachability of the graph.
 
@@ -244,7 +233,7 @@ For complex graphs, redundant edges can clutter the visualization. Transitive re
    print(graph.render(create_topology_mermaid_mmd, transitive_reduction=True))
 
 Clustering by Tags
-------------------
+^^^^^^^^^^^^^^^^^^
 
 You can group nodes into clusters in visualizations like Mermaid, Graphviz, D2, and PlantUML based on their tags.
 
@@ -261,7 +250,7 @@ You can group nodes into clusters in visualizations like Mermaid, Graphviz, D2, 
 Nodes are grouped by their first tag (by default, tags are sorted alphabetically). You can provide a custom ``tag_sort_fnc`` in the configuration to control which tag is used for grouping.
 
 Parsing Graphs
---------------
+^^^^^^^^^^^^^^
 
 ``graphable`` can reconstruct graphs from all major export formats. This is useful for terminal-based tools or for persisting graph structures between sessions.
 
@@ -288,7 +277,7 @@ The following static methods are available on the ``Graph`` class:
 *   ``from_graphml(source, reference_type=str)``
 
 Equality Comparison
--------------------
+^^^^^^^^^^^^^^^^^^^
 
 Graphs can be compared for equality using the standard ``==`` operator or the ``is_equal_to()`` method. Two graphs are considered equal if they have:
 1. The same number of nodes.
@@ -304,7 +293,7 @@ Graphs can be compared for equality using the standard ``==`` operator or the ``
        print("The graphs are identical.")
 
 Subgraph Semantics & Syncing
-----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A ``Graph`` instance acts as a "view" of a specific set of nodes. Even if a node in the graph is connected to "external" nodes that are not members of the graph, operations like topological sorts and checksums will only respect and include nodes that are explicitly part of the ``Graph`` instance.
 
@@ -327,7 +316,7 @@ If you want to expand a ``Graph`` to include all reachable ancestors and descend
    g.discover()
 
 Node Ordering
--------------
+^^^^^^^^^^^^^
 
 ``Graphable`` nodes support rich comparison operators based on their reachability in the graph:
 - ``a < b``: ``a`` is a proper ancestor of ``b``.
@@ -343,7 +332,7 @@ This provides a clean way to check for dependency relationships directly between
        print("node_a must come before node_b")
 
 Caching & Performance
----------------------
+^^^^^^^^^^^^^^^^^^^^^
 
 The ``Graph`` class implements an efficient observer-based caching system for expensive operations:
 *   ``topological_order()``
@@ -353,7 +342,7 @@ The ``Graph`` class implements an efficient observer-based caching system for ex
 Calculations are performed once and cached. If any node in the graph is modified (tags changed, duration/status updated, dependencies added/removed), the graph is automatically notified and invalidates its cache. This ensures high performance for repeated access while maintaining absolute correctness.
 
 Unified I/O
------------
+^^^^^^^^^^^
 
 ``graphable`` provides high-level ``read()`` and ``write()`` methods that automatically detect the file format based on the extension. This is the simplest way to work with graph files.
 
@@ -370,7 +359,7 @@ Unified I/O
    g.write("simple.mmd", transitive_reduction=True)
 
 Integrity & Checksums
----------------------
+^^^^^^^^^^^^^^^^^^^^^
 
 To ensure your graph structure and metadata (tags, duration, status, edge attributes) haven't changed, you can use the deterministic BLAKE2b checksum feature.
 
@@ -386,7 +375,7 @@ To ensure your graph structure and metadata (tags, duration, status, edge attrib
 The checksum is stable across different Python sessions and is independent of node creation order.
 
 Parallel Processing
--------------------
+^^^^^^^^^^^^^^^^^^^
 
 For task orchestration, you often need to know which nodes can be processed simultaneously. The ``parallelized_topological_order()`` method groups nodes into independent "layers."
 
@@ -417,6 +406,7 @@ To get the full experience with formatted tables and panels, install the ``cli``
 *   **``convert <input> <output>``**: Converts between formats.
 *   **``reduce <input> <output>``**: Computes transitive reduction.
 *   **``render <input> <output> [-e engine]``**: Renders a graph as an image (SVG, PNG).
+*   **``paths <file> <source> <target>``**: Finds all paths between two nodes.
 *   **``diff <file1> <file2> [-o output]``**: Compares two graphs.
 *   **``serve <file> [-p port]``**: Starts a live-reloading interactive visualization.
 *   **``checksum <file>``**: Prints the graph checksum.
@@ -437,7 +427,7 @@ If you are using ``graphable`` in a script or CI/CD pipeline and want to ensure 
 - **Output**: All input formats plus ``.dot``, ``.gv``, ``.mmd``, ``.d2``, ``.puml``, ``.html``, ``.tex``, ``.txt``, ``.ascii``, ``.svg``, ``.png``
 
 Live Visualization
-------------------
+^^^^^^^^^^^^^^^^^^
 
 The ``serve`` command provides a "Live Preview" experience. It starts a local web server and automatically reloads the visualization in your browser whenever you save changes to the input graph file.
 
@@ -447,8 +437,17 @@ The ``serve`` command provides a "Live Preview" experience. It starts a local we
 
 This is perfect for architecting and debugging complex dependency systems in real-time.
 
+Enhanced Interactive UI
+^^^^^^^^^^^^^^^^^^^^^^^
+
+The interactive HTML export (and the ``serve`` command) includes several UI features:
+
+*   **Search Bar**: Quickly find nodes by reference. Matching nodes are highlighted in the viewport.
+*   **Metadata Sidebar**: Click on any node to view its detailed properties, including tags, duration, and execution status.
+*   **Panning & Zooming**: Standard Cytoscape.js controls for navigating large graphs.
+
 ASCII Flowchart
----------------
+^^^^^^^^^^^^^^^
 
 For a quick, boxed representation of the graph that handles multiple parents better than a standard tree, use the ``asciiflow`` view:
 
@@ -461,7 +460,7 @@ For a quick, boxed representation of the graph that handles multiple parents bet
 This is ideal for terminal-based tools or quick debugging where you need to see the full directed structure without leaving the command line.
 
 Scientific Publishing (TikZ)
-----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you are writing a LaTeX paper or report, you can export your graph directly to TikZ code:
 
@@ -475,7 +474,7 @@ If you are writing a LaTeX paper or report, you can export your graph directly t
 It supports the modern TikZ ``graphs`` library by default, ensuring high-quality vector output that matches your document's font and style perfectly.
 
 Data Export & Interoperability
-------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``graphable`` makes it easy to move your graph data into other tools for analysis or custom visualization.
 
@@ -532,7 +531,7 @@ For processing in Excel, Pandas, or other data tools:
    csv_data = create_topology_csv(g)
 
 NetworkX Integration
---------------------
+^^^^^^^^^^^^^^^^^^^^
 
 For users who need advanced graph analysis capabilities, ``graphable`` provides seamless integration with the `NetworkX <https://networkx.org/>`_ library.
 

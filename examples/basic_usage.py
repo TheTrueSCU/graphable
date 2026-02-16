@@ -138,8 +138,8 @@ def main():
     reduced_g = g.transitive_reduction()
     print(f"Edges after reduction: {sum(len(n.dependents) for n in reduced_g)}")
 
-    # 5. Advanced Analysis (v0.5.0)
-    print("\n--- 5. Advanced Analysis (v0.5.0) ---")
+    # 5. Advanced Analysis (v0.6.0)
+    print("\n--- 5. Advanced Analysis (v0.6.0) ---")
 
     # CPM Analysis
     analysis = g.cpm_analysis()

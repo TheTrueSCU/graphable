@@ -25,6 +25,7 @@ $ graphable [OPTIONS] COMMAND [ARGS]...
 * `verify`: Verify graph checksum (embedded or provided).
 * `write-checksum`: Write graph checksum to a standalone file.
 * `diff`: Compare two graphs and highlight differences.
+* `paths`: Find all paths between two nodes.
 * `serve`: Start a local web server with...
 
 ## `graphable info`
@@ -44,6 +45,8 @@ $ graphable info [OPTIONS] FILE
 **Options**:
 
 * `-t, --tag TEXT`: Filter by tag
+* `--upstream-of TEXT`: Filter to ancestors of node
+* `--downstream-of TEXT`: Filter to descendants of node
 * `--help`: Show this message and exit.
 
 ## `graphable check`
@@ -63,6 +66,8 @@ $ graphable check [OPTIONS] FILE
 **Options**:
 
 * `-t, --tag TEXT`: Filter by tag
+* `--upstream-of TEXT`: Filter to ancestors of node
+* `--downstream-of TEXT`: Filter to descendants of node
 * `--help`: Show this message and exit.
 
 ## `graphable reduce`
@@ -84,6 +89,8 @@ $ graphable reduce [OPTIONS] INPUT OUTPUT
 
 * `--embed`: Embed checksum in output
 * `-t, --tag TEXT`: Filter by tag
+* `--upstream-of TEXT`: Filter to ancestors of node
+* `--downstream-of TEXT`: Filter to descendants of node
 * `--help`: Show this message and exit.
 
 ## `graphable convert`
@@ -105,6 +112,8 @@ $ graphable convert [OPTIONS] INPUT OUTPUT
 
 * `--embed`: Embed checksum in output
 * `-t, --tag TEXT`: Filter by tag
+* `--upstream-of TEXT`: Filter to ancestors of node
+* `--downstream-of TEXT`: Filter to descendants of node
 * `--help`: Show this message and exit.
 
 ## `graphable render`
@@ -126,6 +135,8 @@ $ graphable render [OPTIONS] INPUT OUTPUT
 
 * `-e, --engine [mermaid|graphviz|d2|plantuml]`: Rendering engine to use
 * `-t, --tag TEXT`: Filter by tag
+* `--upstream-of TEXT`: Filter to ancestors of node
+* `--downstream-of TEXT`: Filter to descendants of node
 * `--help`: Show this message and exit.
 
 ## `graphable checksum`
@@ -145,6 +156,8 @@ $ graphable checksum [OPTIONS] FILE
 **Options**:
 
 * `-t, --tag TEXT`: Filter by tag
+* `--upstream-of TEXT`: Filter to ancestors of node
+* `--downstream-of TEXT`: Filter to descendants of node
 * `--help`: Show this message and exit.
 
 ## `graphable verify`
@@ -165,6 +178,8 @@ $ graphable verify [OPTIONS] FILE
 
 * `--expected TEXT`: Expected checksum (hex)
 * `-t, --tag TEXT`: Filter by tag
+* `--upstream-of TEXT`: Filter to ancestors of node
+* `--downstream-of TEXT`: Filter to descendants of node
 * `--help`: Show this message and exit.
 
 ## `graphable write-checksum`
@@ -185,6 +200,8 @@ $ graphable write-checksum [OPTIONS] FILE OUTPUT
 **Options**:
 
 * `-t, --tag TEXT`: Filter by tag
+* `--upstream-of TEXT`: Filter to ancestors of node
+* `--downstream-of TEXT`: Filter to descendants of node
 * `--help`: Show this message and exit.
 
 ## `graphable diff`
@@ -206,6 +223,29 @@ $ graphable diff [OPTIONS] FILE1 FILE2
 
 * `-o, --output PATH`: Output file for visual diff
 * `-t, --tag TEXT`: Filter by tag
+* `--help`: Show this message and exit.
+
+## `graphable paths`
+
+Find all paths between two nodes.
+
+**Usage**:
+
+```console
+$ graphable paths [OPTIONS] FILE SOURCE TARGET
+```
+
+**Arguments**:
+
+* `FILE`: Graph file  [required]
+* `SOURCE`: Source node reference  [required]
+* `TARGET`: Target node reference  [required]
+
+**Options**:
+
+* `-t, --tag TEXT`: Filter by tag
+* `--upstream-of TEXT`: Filter to ancestors of node
+* `--downstream-of TEXT`: Filter to descendants of node
 * `--help`: Show this message and exit.
 
 ## `graphable serve`

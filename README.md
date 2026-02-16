@@ -416,6 +416,12 @@ Full documentation is available in the `docs/` directory. You can build it local
 just docs-view
 ```
 
+## Security
+
+`graphable` takes security seriously. We implement strict sanitization for all external inputs and use secure defaults for parsing and export. For more details, see our [Security Policy](https://thetruescu.github.io/graphable/security.html).
+
+If you discover a vulnerability, please report it via email to the maintainer.
+
 ## Development
 
 This project uses `uv` for dependency management and `just` as a command runner.

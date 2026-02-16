@@ -1,13 +1,15 @@
 [project]
 name = "graphable"
-version = "0.5.0"
+version = "0.6.0"
 description = "A lightweight, type-safe library for building, managing, and visualizing dependency graphs."
 readme = "README.md"
 authors = [
     { name = "Richard West", email = "dopplereffect.us@gmail.com" }
 ]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "defusedxml>=0.7.1",
+]
 keywords = ["graph", "dependency-graph", "topological-sort", "dag", "orchestration", "parallel-processing", "caching", "mermaid", "graphviz", "d2", "plantuml", "tikz", "cytoscape", "json", "csv", "networkx", "visualization"]
 classifiers = [
     "Development Status :: 4 - Beta",
