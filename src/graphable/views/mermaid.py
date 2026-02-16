@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from functools import cache
 from logging import getLogger
 from pathlib import Path
+from shlex import quote
 from shutil import which
 from string import Template
 from subprocess import PIPE, CalledProcessError, run
@@ -109,13 +110,20 @@ def create_mmdc_script_content(source: Path, output: Path) -> str:
         str: The script content.
     """
     mmdc_script_content: str = _MMDC_SCRIPT_TEMPLATE.substitute(
-        mermaid_config=_write_mermaid_config(),
-        output=output,
-        puppeteer_config=_write_puppeteer_config(),
-        source=source,
+        mermaid_config=quote(str(_write_mermaid_config())),
+        output=quote(str(output)),
+        puppeteer_config=quote(str(_write_puppeteer_config())),
+        source=quote(str(source)),
     )
 
     return mmdc_script_content
+
+
+def _escape_mermaid_string(s: str) -> str:
+    """Escape special characters for Mermaid labels."""
+    # Mermaid labels in square brackets [text] can contain most characters,
+    # but we should escape double quotes and brackets if we use them.
+    return s.replace('"', "#quot;")
 
 
 def create_topology_mermaid_mmd(
@@ -168,7 +176,7 @@ def create_topology_mermaid_mmd(
 
         for node in nodes:
             node_ref = config.node_ref_fnc(node)
-            node_text = config.node_text_fnc(node)
+            node_text = _escape_mermaid_string(config.node_text_fnc(node))
             mermaid.append(f"{indent}{node_ref}[{node_text}]")
 
             if style := node_style(node):
@@ -264,7 +272,7 @@ def export_topology_mermaid_image(
     if embed_checksum:
         from .utils import wrap_with_checksum
 
-        mermaid = wrap_with_checksum(mermaid, graph.checksum(), p.suffix)
+        mermaid = wrap_with_checksum(mermaid, graph.checksum(), ".mmd")
 
     with NamedTemporaryFile(delete=False, mode="w+", suffix=".mmd") as f:
         f.write(mermaid)

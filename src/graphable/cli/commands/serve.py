@@ -1,4 +1,5 @@
 from asyncio import get_event_loop
+from html import escape
 from logging import getLogger
 from pathlib import Path
 
@@ -35,7 +36,8 @@ class Server:
             return HTMLResponse(html)
         except Exception as e:
             return HTMLResponse(
-                f"<h1>Error loading graph</h1><pre>{e}</pre>", status_code=500
+                f"<h1>Error loading graph</h1><pre>{escape(str(e))}</pre>",
+                status_code=500,
             )
 
     async def websocket_endpoint(self, websocket: WebSocket):

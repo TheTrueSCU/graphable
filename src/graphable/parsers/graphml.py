@@ -1,7 +1,8 @@
-import xml.etree.ElementTree as ET
 from logging import getLogger
 from pathlib import Path
 from typing import Any
+
+from defusedxml import ElementTree as ET
 
 from ..graph import Graph
 from ..registry import register_parser

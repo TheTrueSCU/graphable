@@ -50,11 +50,16 @@ def _check_dot_on_path() -> None:
         )
 
 
+def _escape_dot_string(s: str) -> str:
+    """Escape double quotes and backslashes for DOT strings."""
+    return s.replace("\\", "\\\\").replace('"', '\\"')
+
+
 def _format_attrs(attrs: dict[str, str] | None) -> str:
     """Format a dictionary of attributes into a DOT attribute string."""
     if not attrs:
         return ""
-    parts = [f'{k}="{v}"' for k, v in attrs.items()]
+    parts = [f'{k}="{_escape_dot_string(v)}"' for k, v in attrs.items()]
     return f" [{', '.join(parts)}]"
 
 
@@ -77,7 +82,7 @@ def create_topology_graphviz_dot(
     # Global attributes
     if config.graph_attr:
         for k, v in config.graph_attr.items():
-            dot.append(f'    {k}="{v}";')
+            dot.append(f'    {k}="{_escape_dot_string(v)}";')
 
     if config.node_attr_default:
         dot.append(f"    node{_format_attrs(config.node_attr_default)};")
@@ -103,12 +108,13 @@ def create_topology_graphviz_dot(
     for cluster_name, nodes in clusters.items():
         indent = "    "
         if cluster_name:
-            dot.append(f'    subgraph "cluster_{cluster_name}" {{')
-            dot.append(f'        label="{cluster_name}";')
+            safe_cluster = _escape_dot_string(cluster_name)
+            dot.append(f'    subgraph "cluster_{safe_cluster}" {{')
+            dot.append(f'        label="{safe_cluster}";')
             indent = "        "
 
         for node in nodes:
-            node_ref = config.node_ref_fnc(node)
+            node_ref = _escape_dot_string(config.node_ref_fnc(node))
             node_attrs = {"label": config.node_label_fnc(node)}
             if config.node_attr_fnc:
                 node_attrs.update(config.node_attr_fnc(node))
@@ -120,9 +126,9 @@ def create_topology_graphviz_dot(
 
     # Edges
     for node in graph.topological_order():
-        node_ref = config.node_ref_fnc(node)
+        node_ref = _escape_dot_string(config.node_ref_fnc(node))
         for dependent, attrs in graph.internal_dependents(node):
-            dep_ref = config.node_ref_fnc(dependent)
+            dep_ref = _escape_dot_string(config.node_ref_fnc(dependent))
             edge_attrs = {}
             if config.edge_attr_fnc:
                 edge_attrs.update(config.edge_attr_fnc(node, dependent))
