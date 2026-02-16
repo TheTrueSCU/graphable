@@ -6,7 +6,7 @@ from logging import getLogger
 from pathlib import Path
 from typing import Any, Callable, Iterator
 
-from .enums import Direction
+from .enums import Direction, Engine
 from .errors import GraphConsistencyError, GraphCycleError
 from .graphable import Graphable
 
@@ -304,6 +304,7 @@ class Graph[T: Graphable[Any]]:
         path: Path | str,
         transitive_reduction: bool = False,
         embed_checksum: bool = False,
+        engine: Engine | str | None = None,
         **kwargs: Any,
     ) -> None:
         """Write the graph to a file, automatically detecting the format."""
@@ -311,17 +312,17 @@ class Graph[T: Graphable[Any]]:
 
         p = Path(path)
         ext = p.suffix.lower()
-        exporter = EXPORTERS.get(ext)
+
+        # Handle images specifically to allow engine selection/auto-detection
+        if ext in (".svg", ".png"):
+            from .views.utils import get_image_exporter
+
+            exporter = get_image_exporter(engine)
+        else:
+            exporter = EXPORTERS.get(ext)
 
         if not exporter:
-            # Special handling for .svg (might be Graphviz or Mermaid)
-            if ext == ".svg":
-                try:
-                    from .views.mermaid import export_topology_mermaid_svg as exporter
-                except (ImportError, FileNotFoundError):
-                    from .views.graphviz import export_topology_graphviz_svg as exporter
-            else:
-                raise ValueError(f"Unsupported extension: {ext}")
+            raise ValueError(f"Unsupported extension: {ext}")
 
         return self.export(exporter, p, transitive_reduction, embed_checksum, **kwargs)
 

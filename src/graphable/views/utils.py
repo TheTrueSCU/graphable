@@ -1,4 +1,5 @@
 from shutil import which
+from typing import Callable
 
 
 def wrap_with_checksum(content: str, checksum: str, extension: str) -> str:
@@ -74,3 +75,35 @@ def detect_engine() -> str:
         "No rendering engine found on PATH. "
         "Please install one of: mermaid-cli, graphviz, d2, or plantuml."
     )
+
+
+def get_image_exporter(engine: str | None = None) -> Callable[..., None]:
+    """
+    Get the appropriate image exporter based on the engine name or auto-detection.
+
+    Args:
+        engine: Optional engine name (e.g., 'mermaid', 'graphviz').
+
+    Returns:
+        Callable: An export function that takes (graph, output_path, **kwargs).
+    """
+    from ..enums import Engine
+
+    if engine is None:
+        engine_val = detect_engine()
+    else:
+        # Normalize engine name
+        engine_val = engine.value if isinstance(engine, Engine) else engine.lower()
+
+    if engine_val == Engine.MERMAID:
+        from .mermaid import export_topology_mermaid_image as exporter
+    elif engine_val == Engine.GRAPHVIZ:
+        from .graphviz import export_topology_graphviz_image as exporter
+    elif engine_val == Engine.D2:
+        from .d2 import export_topology_d2_image as exporter
+    elif engine_val == Engine.PLANTUML:
+        from .plantuml import export_topology_plantuml_image as exporter
+    else:
+        raise ValueError(f"Unknown rendering engine: {engine_val}")
+
+    return exporter

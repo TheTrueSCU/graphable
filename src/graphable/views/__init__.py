@@ -32,8 +32,8 @@ from .markdown import export_markdown_wrapped, wrap_in_markdown
 from .mermaid import (
     MermaidStylingConfig,
     create_topology_mermaid_mmd,
-    export_topology_mermaid_mmd,
     export_topology_mermaid_image,
+    export_topology_mermaid_mmd,
 )
 from .networkx import to_networkx
 from .plantuml import (

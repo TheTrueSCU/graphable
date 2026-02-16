@@ -9,13 +9,13 @@ from graphable.views.csv import create_topology_csv
 from graphable.views.d2 import (
     D2StylingConfig,
     create_topology_d2,
-    export_topology_d2_svg,
+    export_topology_d2_image,
 )
 from graphable.views.graphml import create_topology_graphml
 from graphable.views.graphviz import (
     GraphvizStylingConfig,
     create_topology_graphviz_dot,
-    export_topology_graphviz_svg,
+    export_topology_graphviz_image,
 )
 from graphable.views.html import (
     HtmlStylingConfig,
@@ -26,12 +26,12 @@ from graphable.views.json import create_topology_json
 from graphable.views.mermaid import (
     MermaidStylingConfig,
     create_topology_mermaid_mmd,
-    export_topology_mermaid_svg,
+    export_topology_mermaid_image,
 )
 from graphable.views.plantuml import (
     PlantUmlStylingConfig,
     create_topology_plantuml,
-    export_topology_plantuml_svg,
+    export_topology_plantuml_image,
 )
 from graphable.views.texttree import create_topology_tree_txt
 from graphable.views.tikz import create_topology_tikz
@@ -293,7 +293,7 @@ def main():
         if args.mermaid_svg:
             mermaid_out = out_dir / "topology_mermaid.svg"
             try:
-                export_topology_mermaid_svg(g, mermaid_out)
+                export_topology_mermaid_image(g, mermaid_out)
                 print(f"Successfully generated: {mermaid_out}")
             except Exception as e:
                 print(f"Failed to generate Mermaid SVG: {e}", file=sys.stderr)
@@ -302,7 +302,7 @@ def main():
         if args.graphviz_svg:
             graphviz_out = out_dir / "topology_graphviz.svg"
             try:
-                export_topology_graphviz_svg(g, graphviz_out, gv_config)
+                export_topology_graphviz_image(g, graphviz_out, gv_config)
                 print(f"Successfully generated: {graphviz_out}")
             except Exception as e:
                 print(f"Failed to generate Graphviz SVG: {e}", file=sys.stderr)
@@ -311,7 +311,7 @@ def main():
         if args.d2_svg:
             d2_out = out_dir / "topology_d2.svg"
             try:
-                export_topology_d2_svg(g, d2_out, d2_config)
+                export_topology_d2_image(g, d2_out, d2_config)
                 print(f"Successfully generated: {d2_out}")
             except Exception as e:
                 print(f"Failed to generate D2 SVG: {e}", file=sys.stderr)
@@ -320,7 +320,7 @@ def main():
         if args.puml_svg:
             puml_out = out_dir / "topology_plantuml.svg"
             try:
-                export_topology_plantuml_svg(g, puml_out, puml_config)
+                export_topology_plantuml_image(g, puml_out, puml_config)
                 print(f"Successfully generated: {puml_out}")
             except Exception as e:
                 print(f"Failed to generate PlantUML SVG: {e}", file=sys.stderr)

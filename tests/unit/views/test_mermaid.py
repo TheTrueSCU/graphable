@@ -13,8 +13,8 @@ from graphable.views.mermaid import (
     _create_mmdc_script,
     _execute_build_script,
     create_topology_mermaid_mmd,
-    export_topology_mermaid_mmd,
     export_topology_mermaid_image,
+    export_topology_mermaid_mmd,
 )
 
 

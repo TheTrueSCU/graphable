@@ -4,10 +4,11 @@
 
 1. **The Plan is the Source of Truth:** All work must be tracked in `plan.md`
 2. **The Tech Stack is Deliberate:** Changes to the tech stack must be documented in `tech-stack.md` *before* implementation
-3. **Test-Driven Development:** Write unit tests before implementing functionality
-4. **High Code Coverage:** Aim for >93% code coverage for all modules
-5. **User Experience First:** Every decision should prioritize user experience
-6. **Non-Interactive & CI-Aware:** Prefer non-interactive commands. Use `CI=true` for watch-mode tools (tests, linters) to ensure single execution.
+3. **Documentation is Living:** All documentation (including `product.md`, `tech-stack.md`, and any relevant `.rst` or `.md` files) must be updated for each feature added, removed, or modified.
+4. **Test-Driven Development:** Write unit tests before implementing functionality
+5. **High Code Coverage:** Aim for >95% code coverage for all modules. Strictly respect the results of `just check`.
+6. **User Experience First:** Every decision should prioritize user experience
+7. **Non-Interactive & CI-Aware:** Prefer non-interactive commands. Use `CI=true` for watch-mode tools (tests, linters) to ensure single execution.
 
 ## Task Workflow
 
@@ -36,7 +37,7 @@ All tasks follow a strict lifecycle:
    ```bash
    just coverage
    ```
-   Target: >93% coverage for new code.
+   Target: >95% coverage for new code.
 
 7. **Document Deviations:** If implementation differs from tech stack:
    - **STOP** implementation
@@ -128,7 +129,7 @@ All tasks follow a strict lifecycle:
 Before marking any task complete, verify:
 
 - [ ] All tests pass
-- [ ] Code coverage meets requirements (>93%)
+- [ ] Code coverage meets requirements (>95%)
 - [ ] Code follows project's code style guidelines (as defined in `code_styleguides/`)
 - [ ] All public functions/methods are documented (e.g., docstrings)
 - [ ] Type safety is enforced (e.g., type hints)
@@ -181,7 +182,7 @@ Before requesting review:
 
 3. **Testing**
    - Unit tests comprehensive
-   - Coverage adequate (>93%)
+   - Coverage adequate (>95%)
 
 4. **Security**
    - No hardcoded secrets
@@ -215,7 +216,7 @@ A task is complete when:
 
 1. All code implemented to specification
 2. Unit tests written and passing
-3. Code coverage meets project requirements (>93%)
+3. Code coverage meets project requirements (>95%)
 4. Documentation complete (if applicable)
 5. Code passes all configured linting and static analysis checks (`just check`)
 6. Implementation notes added to `plan.md`
@@ -226,7 +227,7 @@ A task is complete when:
 
 ### Pre-Deployment Checklist
 - [ ] All tests passing
-- [ ] Coverage >93%
+- [ ] Coverage >95%
 - [ ] No linting errors
 - [ ] Documentation built and verified
 

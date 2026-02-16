@@ -1,9 +1,9 @@
 from pathlib import Path
 from typing import Any, Callable
 
+from ...enums import Engine
 from ...graph import Graph
 from ...registry import EXPORTERS, PARSERS
-from ...enums import Engine
 
 
 def get_parser(extension: str) -> Callable[..., Graph[Any]]:
@@ -133,23 +133,7 @@ def render_command(
 ) -> None:
     g = load_graph(input_path, tag)
 
-    if engine is None:
-        from ...views.utils import detect_engine
+    from ...views.utils import get_image_exporter
 
-        engine_val = detect_engine()
-    else:
-        # Use .value if it's an Engine enum, else assume it's a string
-        engine_val = engine.value if isinstance(engine, Engine) else engine.lower()
-
-    if engine_val == Engine.MERMAID:
-        from ...views.mermaid import export_topology_mermaid_image as exporter
-    elif engine_val == Engine.GRAPHVIZ:
-        from ...views.graphviz import export_topology_graphviz_image as exporter
-    elif engine_val == Engine.D2:
-        from ...views.d2 import export_topology_d2_image as exporter
-    elif engine_val == Engine.PLANTUML:
-        from ...views.plantuml import export_topology_plantuml_image as exporter
-    else:
-        raise ValueError(f"Unknown engine: {engine_val}")
-
+    exporter = get_image_exporter(engine)
     exporter(g, output_path)

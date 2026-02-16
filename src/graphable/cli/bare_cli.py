@@ -56,7 +56,10 @@ def run_bare():
     render_p.add_argument("input", type=Path, help="Input graph file")
     render_p.add_argument("output", type=Path, help="Output image file (.png, .svg)")
     render_p.add_argument(
-        "-e", "--engine", choices=[e.value.lower() for e in Engine], help="Rendering engine"
+        "-e",
+        "--engine",
+        choices=[e.value.lower() for e in Engine],
+        help="Rendering engine",
     )
     render_p.add_argument("-t", "--tag", help="Filter by tag")
 

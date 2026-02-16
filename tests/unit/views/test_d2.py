@@ -81,7 +81,9 @@ class TestD2:
 
     @patch("graphable.views.d2.run")
     @patch("graphable.views.d2._check_d2_on_path")
-    def test_export_topology_d2_image_svg_success(self, mock_check, mock_run, graph_fixture):
+    def test_export_topology_d2_image_svg_success(
+        self, mock_check, mock_run, graph_fixture
+    ):
         g, _, _ = graph_fixture
         output_path = Path("output.svg")
 
@@ -97,7 +99,9 @@ class TestD2:
 
     @patch("graphable.views.d2.run")
     @patch("graphable.views.d2._check_d2_on_path")
-    def test_export_topology_d2_image_png_success(self, mock_check, mock_run, graph_fixture):
+    def test_export_topology_d2_image_png_success(
+        self, mock_check, mock_run, graph_fixture
+    ):
         g, _, _ = graph_fixture
         output_path = Path("output.png")
 
@@ -134,7 +138,9 @@ class TestD2:
 
     @patch("graphable.views.d2.run")
     @patch("graphable.views.d2._check_d2_on_path")
-    def test_export_topology_d2_image_failure(self, mock_check, mock_run, graph_fixture):
+    def test_export_topology_d2_image_failure(
+        self, mock_check, mock_run, graph_fixture
+    ):
         g, _, _ = graph_fixture
         output_path = Path("output.svg")
 
