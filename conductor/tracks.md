@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: support exporting graphs as PNG images**
+- [~] **Track: support exporting graphs as PNG images**
   *Link: [./tracks/png_export_20260215/](./tracks/png_export_20260215/)*

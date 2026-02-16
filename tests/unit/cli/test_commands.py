@@ -1,3 +1,8 @@
+from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import pytest
+
 from graphable.cli.commands.core import (
     check_command,
     checksum_command,
@@ -6,9 +11,11 @@ from graphable.cli.commands.core import (
     diff_visual_command,
     info_command,
     reduce_command,
+    render_command,
     verify_command,
     write_checksum_command,
 )
+from graphable.enums import Engine
 
 
 def test_info_command(tmp_path):
@@ -49,6 +56,21 @@ def test_convert_command(tmp_path):
     convert_command(input_file, output_file)
     assert output_file.exists()
     assert "id: A" in output_file.read_text()
+
+
+def test_convert_command_error_on_images(tmp_path):
+    input_file = tmp_path / "test.json"
+    input_file.write_text('{"nodes": [{"id": "A"}], "edges": []}')
+
+    with pytest.raises(
+        ValueError, match="is for images. Use the 'render' command instead"
+    ):
+        convert_command(input_file, Path("output.png"))
+
+    with pytest.raises(
+        ValueError, match="is for images. Use the 'render' command instead"
+    ):
+        convert_command(input_file, Path("output.svg"))
 
 
 def test_reduce_command(tmp_path):
@@ -138,3 +160,52 @@ def test_diff_visual_command(tmp_path):
     diff_visual_command(f1, f2, output)
     assert output.exists()
     assert "diff:added" in output.read_text()
+
+
+@patch("graphable.cli.commands.core.load_graph")
+def test_render_command_explicit_engine(mock_load_graph):
+    """Verify render_command calls the correct engine when explicitly provided."""
+    mock_g = MagicMock()
+    mock_load_graph.return_value = mock_g
+
+    input_path = Path("input.json")
+    output_path = Path("output.png")
+
+    # Mermaid
+    with patch("graphable.views.mermaid.export_topology_mermaid_image") as mock_mermaid:
+        render_command(input_path, output_path, engine=Engine.MERMAID)
+        mock_mermaid.assert_called_once_with(mock_g, output_path)
+
+    # Graphviz
+    with patch(
+        "graphable.views.graphviz.export_topology_graphviz_image"
+    ) as mock_graphviz:
+        render_command(input_path, output_path, engine=Engine.GRAPHVIZ)
+        mock_graphviz.assert_called_once_with(mock_g, output_path)
+
+
+@patch("graphable.cli.commands.core.load_graph")
+@patch("graphable.views.utils.detect_engine")
+def test_render_command_auto_detection(mock_detect_engine, mock_load_graph):
+    """Verify render_command auto-detects engine when not provided."""
+    mock_g = MagicMock()
+    mock_load_graph.return_value = mock_g
+    mock_detect_engine.return_value = "graphviz"
+
+    input_path = Path("input.json")
+    output_path = Path("output.png")
+
+    with patch(
+        "graphable.views.graphviz.export_topology_graphviz_image"
+    ) as mock_graphviz:
+        render_command(input_path, output_path)
+        mock_detect_engine.assert_called_once()
+        mock_graphviz.assert_called_once_with(mock_g, output_path)
+
+
+@patch("graphable.cli.commands.core.load_graph")
+def test_render_command_invalid_engine(mock_load_graph):
+    """Verify render_command raises ValueError for unknown engine."""
+    mock_load_graph.return_value = MagicMock()
+    with pytest.raises(ValueError, match="Unknown engine: unknown"):
+        render_command(Path("i.json"), Path("o.png"), engine="unknown")

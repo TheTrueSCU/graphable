@@ -7,6 +7,9 @@ from .parsers.json import load_graph_json
 from .parsers.toml import load_graph_toml
 from .parsers.yaml import load_graph_yaml
 
+# Import views to trigger registration
+from . import views  # noqa: F401
+
 __all__ = [
     "Graph",
     "Graphable",

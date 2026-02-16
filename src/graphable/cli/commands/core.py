@@ -3,6 +3,7 @@ from typing import Any, Callable
 
 from ...graph import Graph
 from ...registry import EXPORTERS, PARSERS
+from ...enums import Engine
 
 
 def get_parser(extension: str) -> Callable[..., Graph[Any]]:
@@ -68,6 +69,13 @@ def reduce_command(
 def convert_command(
     input_path: Path, output_path: Path, tag: str | None = None, **kwargs: Any
 ) -> None:
+    # Restrict convert to non-image formats
+    ext = output_path.suffix.lower()
+    if ext in (".png", ".svg"):
+        raise ValueError(
+            f"Extension '{ext}' is for images. Use the 'render' command instead."
+        )
+
     g = load_graph(input_path, tag)
     g.write(output_path, **kwargs)
 
@@ -120,7 +128,7 @@ def diff_visual_command(
 def render_command(
     input_path: Path,
     output_path: Path,
-    engine: str | None = None,
+    engine: Engine | str | None = None,
     tag: str | None = None,
 ) -> None:
     g = load_graph(input_path, tag)
@@ -128,19 +136,20 @@ def render_command(
     if engine is None:
         from ...views.utils import detect_engine
 
-        engine = detect_engine()
+        engine_val = detect_engine()
+    else:
+        # Use .value if it's an Engine enum, else assume it's a string
+        engine_val = engine.value if isinstance(engine, Engine) else engine.lower()
 
-    engine = engine.lower()
-
-    if engine == "mermaid":
+    if engine_val == Engine.MERMAID:
         from ...views.mermaid import export_topology_mermaid_image as exporter
-    elif engine == "graphviz":
+    elif engine_val == Engine.GRAPHVIZ:
         from ...views.graphviz import export_topology_graphviz_image as exporter
-    elif engine == "d2":
+    elif engine_val == Engine.D2:
         from ...views.d2 import export_topology_d2_image as exporter
-    elif engine == "plantuml":
+    elif engine_val == Engine.PLANTUML:
         from ...views.plantuml import export_topology_plantuml_image as exporter
     else:
-        raise ValueError(f"Unknown engine: {engine}")
+        raise ValueError(f"Unknown engine: {engine_val}")
 
     exporter(g, output_path)

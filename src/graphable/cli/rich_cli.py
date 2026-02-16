@@ -13,10 +13,12 @@ from graphable.cli.commands.core import (
     diff_visual_command,
     info_command,
     reduce_command,
+    render_command,
     verify_command,
     write_checksum_command,
 )
 from graphable.cli.commands.serve import serve_command
+from graphable.enums import Engine
 
 app = typer.Typer(help="Graphable CLI (Rich)")
 console = Console()
@@ -96,6 +98,25 @@ def convert(
     with console.status(f"[bold green]Converting {input.name} to {output.name}..."):
         convert_command(input, output, embed_checksum=embed, tag=tag)
     console.print(f"[green]Successfully converted {input} to {output}[/green]")
+
+
+@app.command()
+def render(
+    input: Path = typer.Argument(..., help="Input graph file"),
+    output: Path = typer.Argument(..., help="Output image file (.png, .svg)"),
+    engine: Engine = typer.Option(
+        None, "--engine", "-e", help="Rendering engine to use", case_sensitive=False
+    ),
+    tag: str = typer.Option(None, "--tag", "-t", help="Filter by tag"),
+):
+    """Render a graph as an image."""
+    with console.status(f"[bold green]Rendering {input.name} to {output.name}..."):
+        try:
+            render_command(input, output, engine=engine, tag=tag)
+            console.print(f"[green]Successfully rendered {input} to {output}[/green]")
+        except Exception as e:
+            console.print(f"[red]Error:[/red] {e}")
+            raise typer.Exit(1)
 
 
 @app.command()

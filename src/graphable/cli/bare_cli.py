@@ -10,9 +10,11 @@ from graphable.cli.commands.core import (
     diff_visual_command,
     info_command,
     reduce_command,
+    render_command,
     verify_command,
     write_checksum_command,
 )
+from graphable.enums import Engine
 
 
 def run_bare():
@@ -48,6 +50,15 @@ def run_bare():
         "--embed", action="store_true", help="Embed checksum in output"
     )
     convert_p.add_argument("-t", "--tag", help="Filter by tag")
+
+    # render
+    render_p = subparsers.add_parser("render", help="Render graph as image")
+    render_p.add_argument("input", type=Path, help="Input graph file")
+    render_p.add_argument("output", type=Path, help="Output image file (.png, .svg)")
+    render_p.add_argument(
+        "-e", "--engine", choices=[e.value.lower() for e in Engine], help="Rendering engine"
+    )
+    render_p.add_argument("-t", "--tag", help="Filter by tag")
 
     # checksum
     checksum_p = subparsers.add_parser("checksum", help="Calculate graph checksum")
@@ -110,6 +121,10 @@ def run_bare():
             args.input, args.output, embed_checksum=args.embed, tag=args.tag
         )
         print(f"Converted {args.input} to {args.output}")
+
+    elif args.command == "render":
+        render_command(args.input, args.output, engine=args.engine, tag=args.tag)
+        print(f"Rendered {args.input} to {args.output}")
 
     elif args.command == "checksum":
         print(checksum_command(args.file, tag=args.tag))
