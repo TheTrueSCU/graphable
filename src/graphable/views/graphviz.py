@@ -150,35 +150,40 @@ def export_topology_graphviz_dot(
         f.write(create_topology_graphviz_dot(graph, config))
 
 
-def export_topology_graphviz_svg(
+@register_view([".svg", ".png"])
+def export_topology_graphviz_image(
     graph: Graph, output: Path, config: GraphvizStylingConfig | None = None
 ) -> None:
     """
-    Export the graph to an SVG file using the 'dot' command.
+    Export the graph to an image file (SVG or PNG) using the 'dot' command.
 
     Args:
         graph (Graph): The graph to export.
         output (Path): The output file path.
         config (GraphvizStylingConfig | None): Styling configuration.
     """
-    logger.info(f"Exporting graphviz svg to: {output}")
+    logger.info(f"Exporting graphviz image to: {output}")
     _check_dot_on_path()
 
+    p = Path(output)
     dot_content: str = create_topology_graphviz_dot(graph, config)
+
+    # Extension without dot
+    fmt = p.suffix[1:].lower()
 
     try:
         run(
-            ["dot", "-Tsvg", "-o", str(output)],
+            ["dot", f"-T{fmt}", "-o", str(p)],
             input=dot_content,
             check=True,
             stderr=PIPE,
             stdout=PIPE,
             text=True,
         )
-        logger.info(f"Successfully exported SVG to {output}")
+        logger.info(f"Successfully exported {fmt.upper()} to {output}")
     except CalledProcessError as e:
         logger.error(f"Error executing dot: {e.stderr}")
         raise
     except Exception as e:
-        logger.error(f"Failed to export SVG to {output}: {e}")
+        logger.error(f"Failed to export {fmt.upper()} to {output}: {e}")
         raise

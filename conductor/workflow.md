@@ -158,7 +158,7 @@ just check
 ## Testing Requirements
 
 ### Unit Testing
-- Every module must have corresponding tests in `tests/unit/`.
+- Every source module must have a corresponding test file in `tests/unit/` following a 1:1 file naming convention (e.g., `src/pkg/module.py` -> `tests/unit/pkg/test_module.py`).
 - Use `pytest` fixtures.
 - Mock external dependencies.
 - Test both success and failure cases.

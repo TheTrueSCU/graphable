@@ -157,20 +157,22 @@ def export_topology_d2(
         f.write(create_topology_d2(graph, config))
 
 
-def export_topology_d2_svg(
+@register_view([".svg", ".png"])
+def export_topology_d2_image(
     graph: Graph, output: Path, config: D2StylingConfig | None = None
 ) -> None:
     """
-    Export the graph to an SVG file using the 'd2' command.
+    Export the graph to an image file (SVG or PNG) using the 'd2' command.
 
     Args:
         graph (Graph): The graph to export.
         output (Path): The output file path.
         config (D2StylingConfig | None): Styling configuration.
     """
-    logger.info(f"Exporting D2 svg to: {output}")
+    logger.info(f"Exporting D2 image to: {output}")
     _check_d2_on_path()
 
+    p = Path(output)
     d2_content: str = create_topology_d2(graph, config)
 
     cmd = ["d2"]
@@ -179,7 +181,7 @@ def export_topology_d2_svg(
     if config and config.layout:
         cmd.extend(["--layout", config.layout])
 
-    cmd.extend(["-", str(output)])
+    cmd.extend(["-", str(p)])
 
     try:
         run(
@@ -190,10 +192,11 @@ def export_topology_d2_svg(
             stdout=PIPE,
             text=True,
         )
-        logger.info(f"Successfully exported SVG to {output}")
+        fmt = p.suffix[1:].upper()
+        logger.info(f"Successfully exported {fmt} to {output}")
     except CalledProcessError as e:
         logger.error(f"Error executing d2: {e.stderr}")
         raise
     except Exception as e:
-        logger.error(f"Failed to export SVG to {output}: {e}")
+        logger.error(f"Failed to export image to {output}: {e}")
         raise

@@ -115,35 +115,39 @@ def export_topology_plantuml(
         f.write(create_topology_plantuml(graph, config))
 
 
-def export_topology_plantuml_svg(
+@register_view([".svg", ".png"])
+def export_topology_plantuml_image(
     graph: Graph, output: Path, config: PlantUmlStylingConfig | None = None
 ) -> None:
     """
-    Export the graph to an SVG file using the 'plantuml' command.
+    Export the graph to an image file (SVG or PNG) using the 'plantuml' command.
 
     Args:
         graph (Graph): The graph to export.
         output (Path): The output file path.
-        config (PlantUMLStylingConfig | None): Styling configuration.
+        config (PlantUmlStylingConfig | None): Styling configuration.
     """
-    logger.info(f"Exporting PlantUML svg to: {output}")
+    logger.info(f"Exporting PlantUML image to: {output}")
     _check_plantuml_on_path()
 
+    p = Path(output)
     puml_content: str = create_topology_plantuml(graph, config)
+
+    fmt = p.suffix[1:].lower()
 
     try:
         run(
-            ["plantuml", "-tsvg", "-p"],
+            ["plantuml", f"-t{fmt}", "-p"],
             input=puml_content,
             check=True,
             stderr=PIPE,
-            stdout=open(output, "wb"),
+            stdout=open(p, "wb"),
             text=True,
         )
-        logger.info(f"Successfully exported SVG to {output}")
+        logger.info(f"Successfully exported {fmt.upper()} to {output}")
     except CalledProcessError as e:
         logger.error(f"Error executing plantuml: {e.stderr}")
         raise
     except Exception as e:
-        logger.error(f"Failed to export SVG to {output}: {e}")
+        logger.error(f"Failed to export {fmt.upper()} to {output}: {e}")
         raise

@@ -133,13 +133,13 @@ def render_command(
     engine = engine.lower()
 
     if engine == "mermaid":
-        from ...views.mermaid import export_topology_mermaid_svg as exporter
+        from ...views.mermaid import export_topology_mermaid_image as exporter
     elif engine == "graphviz":
-        from ...views.graphviz import export_topology_graphviz_svg as exporter
+        from ...views.graphviz import export_topology_graphviz_image as exporter
     elif engine == "d2":
-        from ...views.d2 import export_topology_d2_svg as exporter
+        from ...views.d2 import export_topology_d2_image as exporter
     elif engine == "plantuml":
-        from ...views.plantuml import export_topology_plantuml_svg as exporter
+        from ...views.plantuml import export_topology_plantuml_image as exporter
     else:
         raise ValueError(f"Unknown engine: {engine}")
 

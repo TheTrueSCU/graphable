@@ -14,7 +14,7 @@ from graphable.views.mermaid import (
     _execute_build_script,
     create_topology_mermaid_mmd,
     export_topology_mermaid_mmd,
-    export_topology_mermaid_svg,
+    export_topology_mermaid_image,
 )
 
 
@@ -124,7 +124,7 @@ class TestMermaid:
     @patch("graphable.views.mermaid._create_mmdc_script")
     @patch("graphable.views.mermaid.NamedTemporaryFile")
     @patch("graphable.views.mermaid._check_mmdc_on_path")
-    def test_export_topology_mermaid_svg(
+    def test_export_topology_mermaid_image_svg(
         self,
         mock_check,
         mock_temp,
@@ -146,7 +146,40 @@ class TestMermaid:
 
         mock_exec.return_value = True
 
-        export_topology_mermaid_svg(g, output_path)
+        export_topology_mermaid_image(g, output_path)
+
+        mock_check.assert_called_once()
+        mock_exec.assert_called_with(mock_script_path)
+        assert mock_script_path.unlink.call_count == 1
+
+    @patch("graphable.views.mermaid.Path.unlink")
+    @patch("graphable.views.mermaid._execute_build_script")
+    @patch("graphable.views.mermaid._create_mmdc_script")
+    @patch("graphable.views.mermaid.NamedTemporaryFile")
+    @patch("graphable.views.mermaid._check_mmdc_on_path")
+    def test_export_topology_mermaid_image_png(
+        self,
+        mock_check,
+        mock_temp,
+        mock_create_script,
+        mock_exec,
+        mock_unlink,
+        graph_fixture,
+    ):
+        g, _, _ = graph_fixture
+        output_path = Path("output.png")
+
+        # Setup mocks
+        mock_temp_file = MagicMock()
+        mock_temp_file.name = "temp.mmd"
+        mock_temp.return_value.__enter__.return_value = mock_temp_file
+
+        mock_script_path = MagicMock(spec=Path)
+        mock_create_script.return_value = mock_script_path
+
+        mock_exec.return_value = True
+
+        export_topology_mermaid_image(g, output_path)
 
         mock_check.assert_called_once()
         mock_exec.assert_called_with(mock_script_path)
@@ -156,7 +189,7 @@ class TestMermaid:
     @patch("graphable.views.mermaid._create_mmdc_script")
     @patch("graphable.views.mermaid.NamedTemporaryFile")
     @patch("graphable.views.mermaid._check_mmdc_on_path")
-    def test_export_topology_mermaid_svg_failure(
+    def test_export_topology_mermaid_image_failure(
         self,
         mock_check,
         mock_temp,
@@ -177,19 +210,9 @@ class TestMermaid:
 
         mock_exec.return_value = False
 
-        export_topology_mermaid_svg(g, output_path)
+        export_topology_mermaid_image(g, output_path)
 
         mock_exec.assert_called_with(mock_script_path)
-        # Should NOT unlink on failure in the current implementation?
-        # Wait, let's check the code:
-        # if _execute_build_script(build_script):
-        #     build_script.unlink()
-        #     source.unlink()
-        #     logger.info(f"Successfully exported SVG to {output}")
-        # else:
-        #     logger.error(f"Failed to export SVG to {output}")
-        # So it DOES NOT unlink if it fails. That might be a bug or intentional for debugging.
-        # But for coverage, it covers line 207.
         assert mock_script_path.unlink.call_count == 0
 
     def test_create_topology_mermaid_mmd_clustering(self):

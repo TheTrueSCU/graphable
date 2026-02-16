@@ -11,7 +11,7 @@ from graphable.views.graphviz import (
     _check_dot_on_path,
     create_topology_graphviz_dot,
     export_topology_graphviz_dot,
-    export_topology_graphviz_svg,
+    export_topology_graphviz_image,
 )
 
 
@@ -78,7 +78,7 @@ class TestGraphviz:
 
     @patch("graphable.views.graphviz.run")
     @patch("graphable.views.graphviz._check_dot_on_path")
-    def test_export_topology_graphviz_svg_success(
+    def test_export_topology_graphviz_image_svg(
         self, mock_check, mock_run, graph_fixture
     ):
         g, _, _ = graph_fixture
@@ -86,7 +86,7 @@ class TestGraphviz:
 
         mock_run.return_value = MagicMock()
 
-        export_topology_graphviz_svg(g, output_path)
+        export_topology_graphviz_image(g, output_path)
 
         mock_check.assert_called_once()
         mock_run.assert_called_once()
@@ -97,7 +97,26 @@ class TestGraphviz:
 
     @patch("graphable.views.graphviz.run")
     @patch("graphable.views.graphviz._check_dot_on_path")
-    def test_export_topology_graphviz_svg_failure(
+    def test_export_topology_graphviz_image_png(
+        self, mock_check, mock_run, graph_fixture
+    ):
+        g, _, _ = graph_fixture
+        output_path = Path("output.png")
+
+        mock_run.return_value = MagicMock()
+
+        export_topology_graphviz_image(g, output_path)
+
+        mock_check.assert_called_once()
+        mock_run.assert_called_once()
+        args, kwargs = mock_run.call_args
+        assert "dot" in args[0]
+        assert "-Tpng" in args[0]
+        assert str(output_path) in args[0]
+
+    @patch("graphable.views.graphviz.run")
+    @patch("graphable.views.graphviz._check_dot_on_path")
+    def test_export_topology_graphviz_image_failure(
         self, mock_check, mock_run, graph_fixture
     ):
         g, _, _ = graph_fixture
@@ -106,11 +125,11 @@ class TestGraphviz:
         mock_run.side_effect = CalledProcessError(1, "dot", stderr="error")
 
         with raises(CalledProcessError):
-            export_topology_graphviz_svg(g, output_path)
+            export_topology_graphviz_image(g, output_path)
 
     @patch("graphable.views.graphviz.run")
     @patch("graphable.views.graphviz._check_dot_on_path")
-    def test_export_topology_graphviz_svg_generic_exception(
+    def test_export_topology_graphviz_image_generic_exception(
         self, mock_check, mock_run, graph_fixture
     ):
         g, _, _ = graph_fixture
@@ -119,7 +138,7 @@ class TestGraphviz:
         mock_run.side_effect = Exception("generic error")
 
         with raises(Exception):
-            export_topology_graphviz_svg(g, output_path)
+            export_topology_graphviz_image(g, output_path)
 
     def test_create_topology_graphviz_dot_clustering(self):
         a = Graphable("A")

@@ -13,7 +13,7 @@ from .d2 import (
     D2StylingConfig,
     create_topology_d2,
     export_topology_d2,
-    export_topology_d2_svg,
+    export_topology_d2_image,
 )
 from .graphml import (
     GraphmlStylingConfig,
@@ -24,7 +24,7 @@ from .graphviz import (
     GraphvizStylingConfig,
     create_topology_graphviz_dot,
     export_topology_graphviz_dot,
-    export_topology_graphviz_svg,
+    export_topology_graphviz_image,
 )
 from .html import HtmlStylingConfig, create_topology_html, export_topology_html
 from .json import JsonStylingConfig, create_topology_json, export_topology_json
@@ -33,14 +33,14 @@ from .mermaid import (
     MermaidStylingConfig,
     create_topology_mermaid_mmd,
     export_topology_mermaid_mmd,
-    export_topology_mermaid_svg,
+    export_topology_mermaid_image,
 )
 from .networkx import to_networkx
 from .plantuml import (
     PlantUmlStylingConfig,
     create_topology_plantuml,
     export_topology_plantuml,
-    export_topology_plantuml_svg,
+    export_topology_plantuml_image,
 )
 from .texttree import (
     TextTreeStylingConfig,
@@ -78,16 +78,16 @@ __all__ = [
     "export_topology_csv",
     "export_topology_cytoscape",
     "export_topology_d2",
-    "export_topology_d2_svg",
+    "export_topology_d2_image",
     "export_topology_graphml",
     "export_topology_graphviz_dot",
-    "export_topology_graphviz_svg",
+    "export_topology_graphviz_image",
     "export_topology_html",
     "export_topology_json",
     "export_topology_mermaid_mmd",
-    "export_topology_mermaid_svg",
+    "export_topology_mermaid_image",
     "export_topology_plantuml",
-    "export_topology_plantuml_svg",
+    "export_topology_plantuml_image",
     "export_topology_tree_txt",
     "export_topology_tikz",
     "to_networkx",

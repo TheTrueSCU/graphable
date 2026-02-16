@@ -11,7 +11,7 @@ from graphable.views.plantuml import (
     _check_plantuml_on_path,
     create_topology_plantuml,
     export_topology_plantuml,
-    export_topology_plantuml_svg,
+    export_topology_plantuml_image,
 )
 
 
@@ -71,7 +71,7 @@ class TestPlantUML:
     @patch("graphable.views.plantuml.run")
     @patch("graphable.views.plantuml._check_plantuml_on_path")
     @patch("builtins.open", new_callable=mock_open)
-    def test_export_topology_plantuml_svg_success(
+    def test_export_topology_plantuml_image_svg_success(
         self, mock_file, mock_check, mock_run, graph_fixture
     ):
         g, _, _ = graph_fixture
@@ -79,7 +79,7 @@ class TestPlantUML:
 
         mock_run.return_value = MagicMock()
 
-        export_topology_plantuml_svg(g, output_path)
+        export_topology_plantuml_image(g, output_path)
 
         mock_check.assert_called_once()
         mock_run.assert_called_once()
@@ -90,7 +90,26 @@ class TestPlantUML:
     @patch("graphable.views.plantuml.run")
     @patch("graphable.views.plantuml._check_plantuml_on_path")
     @patch("builtins.open", new_callable=mock_open)
-    def test_export_topology_plantuml_svg_failure(
+    def test_export_topology_plantuml_image_png_success(
+        self, mock_file, mock_check, mock_run, graph_fixture
+    ):
+        g, _, _ = graph_fixture
+        output_path = Path("output.png")
+
+        mock_run.return_value = MagicMock()
+
+        export_topology_plantuml_image(g, output_path)
+
+        mock_check.assert_called_once()
+        mock_run.assert_called_once()
+        args, kwargs = mock_run.call_args
+        assert "plantuml" in args[0]
+        assert "-tpng" in args[0]
+
+    @patch("graphable.views.plantuml.run")
+    @patch("graphable.views.plantuml._check_plantuml_on_path")
+    @patch("builtins.open", new_callable=mock_open)
+    def test_export_topology_plantuml_image_failure(
         self, mock_file, mock_check, mock_run, graph_fixture
     ):
         g, _, _ = graph_fixture
@@ -99,12 +118,12 @@ class TestPlantUML:
         mock_run.side_effect = CalledProcessError(1, "plantuml", stderr="error")
 
         with raises(CalledProcessError):
-            export_topology_plantuml_svg(g, output_path)
+            export_topology_plantuml_image(g, output_path)
 
     @patch("graphable.views.plantuml.run")
     @patch("graphable.views.plantuml._check_plantuml_on_path")
     @patch("builtins.open", new_callable=mock_open)
-    def test_export_topology_plantuml_svg_generic_exception(
+    def test_export_topology_plantuml_image_generic_exception(
         self, mock_file, mock_check, mock_run, graph_fixture
     ):
         g, _, _ = graph_fixture
@@ -113,7 +132,7 @@ class TestPlantUML:
         mock_run.side_effect = Exception("generic error")
 
         with raises(Exception):
-            export_topology_plantuml_svg(g, output_path)
+            export_topology_plantuml_image(g, output_path)
 
     def test_create_topology_plantuml_clustering(self):
         a = Graphable("A")

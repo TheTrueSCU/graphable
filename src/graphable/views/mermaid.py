@@ -239,15 +239,15 @@ def export_topology_mermaid_mmd(
         f.write(create_topology_mermaid_mmd(graph, config))
 
 
-@register_view(".svg")
-def export_topology_mermaid_svg(
+@register_view([".svg", ".png"])
+def export_topology_mermaid_image(
     graph: Graph,
     output: Path,
     config: MermaidStylingConfig | None = None,
     embed_checksum: bool = False,
 ) -> None:
     """
-    Export the graph to an SVG file using mmdc.
+    Export the graph to an image file (SVG or PNG) using mmdc.
 
     Args:
         graph (Graph): The graph to export.
@@ -255,15 +255,16 @@ def export_topology_mermaid_svg(
         config (MermaidStylingConfig | None): Styling configuration.
         embed_checksum (bool): If True, embed the graph's checksum as a comment.
     """
-    logger.info(f"Exporting mermaid svg to: {output}")
+    logger.info(f"Exporting mermaid image to: {output}")
     _check_mmdc_on_path()
 
+    p = Path(output)
     mermaid: str = create_topology_mermaid_mmd(graph, config)
 
     if embed_checksum:
         from .utils import wrap_with_checksum
 
-        mermaid = wrap_with_checksum(mermaid, graph.checksum(), output.suffix)
+        mermaid = wrap_with_checksum(mermaid, graph.checksum(), p.suffix)
 
     with NamedTemporaryFile(delete=False, mode="w+", suffix=".mmd") as f:
         f.write(mermaid)
@@ -272,7 +273,7 @@ def export_topology_mermaid_svg(
     logger.debug(f"Created temporary mermaid source file: {source}")
 
     build_script: Path = _create_mmdc_script(
-        create_mmdc_script_content(source=source, output=output)
+        create_mmdc_script_content(source=source, output=p)
     )
 
     if _execute_build_script(build_script):
