@@ -1,11 +1,8 @@
 import json
-from pathlib import Path
-from unittest.mock import mock_open, patch
-
-from pytest import fixture
 
 from graphable.graph import Graph
 from graphable.graphable import Graphable
+from graphable.registry import EXPORTERS
 from graphable.views.cytoscape import (
     CytoscapeStylingConfig,
     create_topology_cytoscape,
@@ -13,56 +10,72 @@ from graphable.views.cytoscape import (
 )
 
 
-class TestCytoscape:
-    @fixture
-    def graph_fixture(self):
-        a = Graphable("A")
-        b = Graphable("B")
-        g = Graph()
-        g.add_edge(a, b)
-        return g, a, b
+def test_cytoscape_registration():
+    """Verify that .cy.json is registered as an exporter."""
+    assert ".cy.json" in EXPORTERS
 
-    def test_create_topology_cytoscape_default(self, graph_fixture):
-        g, a, b = graph_fixture
-        json_str = create_topology_cytoscape(g)
-        elements = json.loads(json_str)
 
-        assert len(elements) == 3  # A, B, edge A_B
+def test_cytoscape_config_defaults():
+    """Verify default configuration values for Cytoscape."""
+    config = CytoscapeStylingConfig()
+    assert config.node_data_fnc is None
+    assert config.edge_data_fnc is None
+    assert config.indent == 2
 
-        # Verify node
-        node_a = next(e for e in elements if e["data"].get("id") == "A")
-        assert node_a["data"]["label"] == "A"
+    node = Graphable("A")
+    assert config.reference_fnc(node) == "A"
 
-        # Verify edge
-        edge = next(e for e in elements if "source" in e["data"])
-        assert edge["data"]["source"] == "A"
-        assert edge["data"]["target"] == "B"
 
-    def test_create_topology_cytoscape_custom_data(self, graph_fixture):
-        g, a, b = graph_fixture
-        config = CytoscapeStylingConfig(node_data_fnc=lambda n: {"extra": True})
-        json_str = create_topology_cytoscape(g, config=config)
-        data = json.loads(json_str)
+def test_create_topology_cytoscape_simple():
+    """Verify simple graph conversion to Cytoscape JSON."""
+    g = Graph()
+    a = Graphable("A")
+    b = Graphable("B")
+    g.add_edge(a, b, weight=10)
 
-        for element in data:
-            if "source" not in element["data"]:  # It's a node
-                assert element["data"]["extra"] is True
+    output = create_topology_cytoscape(g)
+    data = json.loads(output)
 
-    def test_create_topology_cytoscape_edge_data(self, graph_fixture):
-        g, a, b = graph_fixture
-        config = CytoscapeStylingConfig(edge_data_fnc=lambda n, sn: {"weight": 10})
-        json_str = create_topology_cytoscape(g, config=config)
-        data = json.loads(json_str)
+    # Expected: 2 nodes, 1 edge
+    assert len(data) == 3
 
-        edge = next(e for e in data if "source" in e["data"])
-        assert edge["data"]["weight"] == 10
+    nodes = [
+        item for item in data if "source" not in item["data"] and "id" in item["data"]
+    ]
+    edges = [item for item in data if "source" in item["data"]]
 
-    def test_export_topology_cytoscape(self, graph_fixture):
-        g, _, _ = graph_fixture
-        output_path = Path("output.json")
+    assert len(nodes) == 2
+    assert len(edges) == 1
 
-        with patch("builtins.open", mock_open()) as mock_file:
-            export_topology_cytoscape(g, output_path)
+    assert nodes[0]["data"]["id"] == "A"
+    assert nodes[1]["data"]["id"] == "B"
+    assert edges[0]["data"]["source"] == "A"
+    assert edges[0]["data"]["target"] == "B"
+    assert edges[0]["data"]["weight"] == 10
 
-            mock_file.assert_called_with(output_path, "w+")
-            mock_file().write.assert_called()
+
+def test_create_topology_cytoscape_with_tags():
+    """Verify node tags are included in Cytoscape JSON."""
+    g = Graph()
+    a = Graphable("A")
+    a.add_tag("v1")
+    g.add_node(a)
+
+    output = create_topology_cytoscape(g)
+    data = json.loads(output)
+
+    assert data[0]["data"]["tags"] == ["v1"]
+
+
+def test_export_topology_cytoscape(tmp_path):
+    """Verify file writing functionality for Cytoscape."""
+    g = Graph()
+    g.add_node(Graphable("A"))
+
+    output_file = tmp_path / "graph.cy.json"
+    export_topology_cytoscape(g, output_file)
+
+    assert output_file.exists()
+    with open(output_file, "r") as f:
+        data = json.load(f)
+        assert data[0]["data"]["id"] == "A"
