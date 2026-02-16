@@ -5,52 +5,55 @@ This plan outlines the steps to improve code coverage to >95% and perform a comp
 ## Phase 1: Coverage Improvement (CLI & Parsers)
 Focus on the modules with the lowest coverage to reach the 95% threshold.
 
-- [~] Task: Improve coverage for `src/graphable/cli/rich_cli.py` (Current: 28%)
-    - [ ] Write tests for terminal UI formatting and Rich-specific output logic in `tests/unit/cli/test_rich_cli.py`
-    - [ ] Implement missing logic/fixes to ensure tests pass
-- [ ] Task: Improve coverage for `src/graphable/cli/commands/serve.py` (Current: 40%)
-    - [ ] Write tests for the live-reload server and Starlette/Uvicorn integration in `tests/unit/cli/test_commands.py`
-    - [ ] Implement missing logic/fixes to ensure tests pass
-- [ ] Task: Improve coverage for `src/graphable/cli/bare_cli.py` (Current: 56%)
-    - [ ] Write tests for basic CLI entry points and argument parsing in `tests/unit/cli/test_bare_cli.py`
-    - [ ] Implement missing logic/fixes to ensure tests pass
-- [ ] Task: Improve coverage for Parsers (`graphml.py`, `toml.py`, `utils.py`, `yaml.py`)
-    - [ ] Write tests for edge cases and error handling in parser modules
-    - [ ] Implement missing logic/fixes to ensure tests pass
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Coverage Improvement (CLI & Parsers)' (Protocol in workflow.md)
+- [x] Task: Improve coverage for `src/graphable/cli/rich_cli.py` (Current: 28%) (89d9e36)
+    - [x] Write tests for terminal UI formatting and Rich-specific output logic in `tests/unit/cli/test_rich_cli.py`
+    - [x] Implement missing logic/fixes to ensure tests pass
+- [x] Task: Improve coverage for `src/graphable/cli/commands/serve.py` (Current: 40%) (89d9e36)
+    - [x] Write tests for the live-reload server and Starlette/Uvicorn integration in `tests/unit/cli/test_commands.py`
+    - [x] Implement missing logic/fixes to ensure tests pass
+- [x] Task: Improve coverage for `src/graphable/cli/bare_cli.py` (Current: 56%) (89d9e36)
+    - [x] Write tests for basic CLI entry points and argument parsing in `tests/unit/cli/test_bare_cli.py`
+    - [x] Implement missing logic/fixes to ensure tests pass
+- [x] Task: Improve coverage for Parsers (`graphml.py`, `toml.py`, `utils.py`, `yaml.py`) (89d9e36)
+    - [x] Write tests for edge cases and error handling in parser modules
+    - [x] Implement missing logic/fixes to ensure tests pass
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Coverage Improvement (CLI & Parsers)' (Protocol in workflow.md)
 
 ## Phase 2: Coverage Improvement (Core & Views)
 Refine coverage for the core library and visualization utilities.
 
-- [ ] Task: Improve coverage for `src/graphable/graph.py` and `src/graphable/graphable.py`
-    - [ ] Write tests for missing branches in graph algorithms and the main `Graphable` interface
-    - [ ] Implement missing logic/fixes to ensure tests pass
-- [ ] Task: Improve coverage for `src/graphable/views/utils.py` and other views
-    - [ ] Write tests for visualization utility functions and any view-specific gaps (e.g., TOML, YAML views)
-    - [ ] Implement missing logic/fixes to ensure tests pass
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Coverage Improvement (Core & Views)' (Protocol in workflow.md)
+- [x] Task: Improve coverage for `src/graphable/graph.py` and `src/graphable/graphable.py` (89d9e36)
+    - [x] Write tests for missing branches in graph algorithms and the main `Graphable` interface
+    - [x] Implement missing logic/fixes to ensure tests pass
+- [x] Task: Improve coverage for `src/graphable/views/utils.py` and other views (89d9e36)
+    - [x] Write tests for visualization utility functions and any view-specific gaps (e.g., TOML, YAML views)
+    - [x] Implement missing logic/fixes to ensure tests pass
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Coverage Improvement (Core & Views)' (Protocol in workflow.md)
 
 ## Phase 3: Documentation Audit and Update
 Update docstrings and Sphinx-based documentation.
 
-- [ ] Task: Audit and update API docstrings
-    - [ ] Review all public classes and methods in `src/graphable/`
-    - [ ] Ensure Google-style docstrings are complete and accurate
-- [ ] Task: Update Sphinx documentation and User Guides
-    - [ ] Update `docs/api.rst`, `docs/usage.rst`, and `docs/index.rst`
-    - [ ] Update `README.md` and `USAGE.md` with latest feature details (Cytoscape, Serve)
-- [ ] Task: Review internal Conductor documentation
-    - [ ] Ensure `conductor/` files are up-to-date and clear for future development
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Documentation Audit and Update' (Protocol in workflow.md)
+- [x] Task: Audit and update API docstrings (89d9e36)
+    - [x] Review all public classes and methods in `src/graphable/`
+    - [x] Ensure Google-style docstrings are complete and accurate
+- [x] Task: Update Sphinx documentation and User Guides (89d9e36)
+    - [x] Update `docs/api.rst`, `docs/usage.rst`, and `docs/index.rst`
+    - [x] Update `README.md` and `USAGE.md` with latest feature details (Cytoscape, Serve)
+- [x] Task: Review internal Conductor documentation (89d9e36)
+    - [x] Ensure `conductor/` files are up-to-date and clear for future development
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Documentation Audit and Update' (Protocol in workflow.md)
 
 ## Phase 4: Examples Expansion and Final Verification
 Add advanced examples and perform a final quality check.
 
-- [ ] Task: Update and expand `examples/` directory
-    - [ ] Audit `examples/basic_usage.py`
-    - [ ] Create `examples/advanced_usage.py` showing complex DAGs and multiple exports
-    - [ ] Create `examples/parser_examples.py` showing different input formats
-- [ ] Task: Final Quality Gate Verification
-    - [ ] Run `just check` to verify linting, type safety, and 95% coverage
-    - [ ] Build Sphinx docs (`cd docs && make html`) and verify output
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Examples Expansion and Final Verification' (Protocol in workflow.md)
+- [x] Task: Update and expand `examples/` directory (89d9e36)
+    - [x] Audit `examples/basic_usage.py`
+    - [x] Create `examples/advanced_usage.py` showing complex DAGs and multiple exports
+    - [x] Create `examples/parser_examples.py` showing different input formats
+- [x] Task: Final Quality Gate Verification (89d9e36)
+    - [x] Run `just check` to verify linting, type safety, and 95% coverage
+    - [x] Build Sphinx docs (`cd docs && make html`) and verify output
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Examples Expansion and Final Verification' (Protocol in workflow.md)
+
+## Phase: Review Fixes
+- [x] Task: Refactor all imports to 'from x import y' and consolidate coverage tests (89d9e36)
