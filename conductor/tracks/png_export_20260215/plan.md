@@ -29,3 +29,6 @@
     - [x] Write Tests: Ensure `convert` raises error for `.png` or `.svg`
     - [x] Implement Feature: Clean up `convert_command` logic
 - [x] Task: Conductor - User Manual Verification 'Phase 3: CLI Overhaul' (Protocol in workflow.md)
+
+## Phase: Review Fixes
+- [x] Task: Apply review suggestions a67e9ff
