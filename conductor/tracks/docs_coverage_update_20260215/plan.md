@@ -36,21 +36,21 @@ Update docstrings and Sphinx-based documentation.
 - [x] Task: Audit and update API docstrings (89d9e36)
     - [x] Review all public classes and methods in `src/graphable/`
     - [x] Ensure Google-style docstrings are complete and accurate
-- [x] Task: Update Sphinx documentation and User Guides (89d9e36)
+- [x] Task: Update Sphinx documentation and User Guides (2d957c8)
     - [x] Update `docs/api.rst`, `docs/usage.rst`, and `docs/index.rst`
     - [x] Update `README.md` and `USAGE.md` with latest feature details (Cytoscape, Serve)
-- [x] Task: Review internal Conductor documentation (89d9e36)
+- [x] Task: Review internal Conductor documentation (2d957c8)
     - [x] Ensure `conductor/` files are up-to-date and clear for future development
 - [x] Task: Conductor - User Manual Verification 'Phase 3: Documentation Audit and Update' (Protocol in workflow.md)
 
 ## Phase 4: Examples Expansion and Final Verification
 Add advanced examples and perform a final quality check.
 
-- [x] Task: Update and expand `examples/` directory (89d9e36)
+- [x] Task: Update and expand `examples/` directory (2d957c8)
     - [x] Audit `examples/basic_usage.py`
     - [x] Create `examples/advanced_usage.py` showing complex DAGs and multiple exports
     - [x] Create `examples/parser_examples.py` showing different input formats
-- [x] Task: Final Quality Gate Verification (89d9e36)
+- [x] Task: Final Quality Gate Verification (2d957c8)
     - [x] Run `just check` to verify linting, type safety, and 95% coverage
     - [x] Build Sphinx docs (`cd docs && make html`) and verify output
 - [x] Task: Conductor - User Manual Verification 'Phase 4: Examples Expansion and Final Verification' (Protocol in workflow.md)
