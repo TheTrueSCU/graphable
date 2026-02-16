@@ -7,7 +7,7 @@
 
 ## CLI & Web
 - **CLI Framework:** [typer](https://typer.tiangolo.com/)
-- **Terminal UI:** [rich](https://github.com/Textualize/rich)
+- **Terminal UI & Output:** [rich](https://github.com/Textualize/rich) for formatting and external CLI integration for image rendering (Mermaid, Graphviz, D2, PlantUML).
 - **Web Server (Serve Command):** [starlette](https://www.starlette.io/) / [uvicorn](https://www.uvicorn.org/)
 
 ## Testing & Quality

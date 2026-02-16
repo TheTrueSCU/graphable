@@ -11,7 +11,7 @@ graphable is a lightweight, type-safe Python library for building, managing, and
 ## Key Objectives
 - **Type-Safety:** Ensure robust, error-resistant graph manipulation using modern Python generics.
 - **Extensible Visualizations:** Maintain and expand support for a wide range of visualization formats (Mermaid, Graphviz, D2, PlantUML, etc.).
-- **Powerful Tooling:** Provide a full-featured CLI for graph analysis, conversion, and live-reloading visualization.
+- **Powerful Tooling:** Provide a full-featured CLI for graph analysis, conversion, image rendering (SVG, PNG), and live-reloading visualization.
 
 ## Core Features & Priorities
 - **Advanced Graph Algorithms:** Prioritize the implementation of complex algorithms like maximum flow and cycle resolution.
