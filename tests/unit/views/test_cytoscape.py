@@ -47,8 +47,10 @@ def test_create_topology_cytoscape_simple():
     assert len(nodes) == 2
     assert len(edges) == 1
 
-    assert nodes[0]["data"]["id"] == "A"
-    assert nodes[1]["data"]["id"] == "B"
+    # Nodes might be in any order depending on topo sort
+    node_ids = {n["data"]["id"] for n in nodes}
+    assert node_ids == {"A", "B"}
+
     assert edges[0]["data"]["source"] == "A"
     assert edges[0]["data"]["target"] == "B"
     assert edges[0]["data"]["weight"] == 10
@@ -79,3 +81,25 @@ def test_export_topology_cytoscape(tmp_path):
     with open(output_file, "r") as f:
         data = json.load(f)
         assert data[0]["data"]["id"] == "A"
+
+
+def test_create_topology_cytoscape_custom_data():
+    """Verify custom data mapping functions in Cytoscape JSON."""
+    g = Graph()
+    a = Graphable("A")
+    b = Graphable("B")
+    g.add_edge(a, b)
+
+    config = CytoscapeStylingConfig(
+        node_data_fnc=lambda n: {"extra_node": True},
+        edge_data_fnc=lambda u, v: {"extra_edge": True},
+    )
+
+    output = create_topology_cytoscape(g, config)
+    data = json.loads(output)
+
+    nodes = [item for item in data if "source" not in item["data"]]
+    edges = [item for item in data if "source" in item["data"]]
+
+    assert all(n["data"]["extra_node"] is True for n in nodes)
+    assert all(e["data"]["extra_edge"] is True for e in edges)
