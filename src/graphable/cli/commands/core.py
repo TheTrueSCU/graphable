@@ -115,3 +115,32 @@ def diff_visual_command(
     g2 = load_graph(path2, tag)
     dg = g1.diff_graph(g2)
     dg.write(output_path)
+
+
+def render_command(
+    input_path: Path,
+    output_path: Path,
+    engine: str | None = None,
+    tag: str | None = None,
+) -> None:
+    g = load_graph(input_path, tag)
+
+    if engine is None:
+        from ...views.utils import detect_engine
+
+        engine = detect_engine()
+
+    engine = engine.lower()
+
+    if engine == "mermaid":
+        from ...views.mermaid import export_topology_mermaid_svg as exporter
+    elif engine == "graphviz":
+        from ...views.graphviz import export_topology_graphviz_svg as exporter
+    elif engine == "d2":
+        from ...views.d2 import export_topology_d2_svg as exporter
+    elif engine == "plantuml":
+        from ...views.plantuml import export_topology_plantuml_svg as exporter
+    else:
+        raise ValueError(f"Unknown engine: {engine}")
+
+    exporter(g, output_path)
