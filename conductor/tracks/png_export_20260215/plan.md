@@ -1,13 +1,13 @@
 # Implementation Plan: PNG Export and Unified Rendering CLI
 
 ## Phase 1: Core Logic and Engine Unification
-- [ ] Task: Implement `render_command` core logic in `src/graphable/cli/commands/core.py`
-    - [ ] Write Tests: Verify logic for engine selection and output format detection
-    - [ ] Implement Feature: Command that dispatches to the correct visualization module
-- [ ] Task: Implement engine auto-detection logic in `src/graphable/views/utils.py`
-    - [ ] Write Tests: Verify priority-based detection (Mermaid -> Graphviz -> D2 -> PlantUML)
-    - [ ] Implement Feature: Utility to check system PATH for required executables
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Core Logic and Engine Unification' (Protocol in workflow.md)
+- [x] Task: Implement `render_command` core logic in `src/graphable/cli/commands/core.py`
+    - [x] Write Tests: Verify logic for engine selection and output format detection
+    - [x] Implement Feature: Command that dispatches to the correct visualization module
+- [x] Task: Implement engine auto-detection logic in `src/graphable/views/utils.py`
+    - [x] Write Tests: Verify priority-based detection (Mermaid -> Graphviz -> D2 -> PlantUML)
+    - [x] Implement Feature: Utility to check system PATH for required executables
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Core Logic and Engine Unification' (Protocol in workflow.md)
 
 ## Phase 2: Visualization Engine Updates
 - [ ] Task: Update Mermaid view for PNG support
