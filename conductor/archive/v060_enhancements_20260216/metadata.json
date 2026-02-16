@@ -1,0 +1,7 @@
+{
+  "id": "v060_enhancements_20260216",
+  "name": "v0.6.0 Feature Enhancements",
+  "description": "Expose graph analysis capabilities to the CLI and enhance interactive HTML visualizations.",
+  "status": "in-progress",
+  "created_at": "2026-02-16T00:00:00Z"
+}

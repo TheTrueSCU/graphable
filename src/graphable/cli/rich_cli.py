@@ -12,6 +12,7 @@ from graphable.cli.commands.core import (
     diff_command,
     diff_visual_command,
     info_command,
+    paths_command,
     reduce_command,
     render_command,
     verify_command,
@@ -28,10 +29,18 @@ console = Console()
 def info(
     file: Path = Argument(..., help="Input graph file"),
     tag: str = Option(None, "--tag", "-t", help="Filter by tag"),
+    upstream_of: str = Option(
+        None, "--upstream-of", help="Filter to ancestors of node"
+    ),
+    downstream_of: str = Option(
+        None, "--downstream-of", help="Filter to descendants of node"
+    ),
 ):
     """Get summary information about a graph."""
     try:
-        data = info_command(file, tag=tag)
+        data = info_command(
+            file, tag=tag, upstream_of=upstream_of, downstream_of=downstream_of
+        )
 
         title = f"Graph Summary: {file.name}" + (f" (Tag: {tag})" if tag else "")
         table = Table(title=title)
@@ -57,9 +66,17 @@ def info(
 def check(
     file: Path = Argument(..., help="Input graph file"),
     tag: str = Option(None, "--tag", "-t", help="Filter by tag"),
+    upstream_of: str = Option(
+        None, "--upstream-of", help="Filter to ancestors of node"
+    ),
+    downstream_of: str = Option(
+        None, "--downstream-of", help="Filter to descendants of node"
+    ),
 ):
     """Validate graph integrity (cycles and consistency)."""
-    data = check_command(file, tag=tag)
+    data = check_command(
+        file, tag=tag, upstream_of=upstream_of, downstream_of=downstream_of
+    )
     if data["valid"]:
         console.print(
             Panel("[green]Graph is valid![/green]", title="Validation Result")
@@ -80,10 +97,23 @@ def reduce(
     output: Path = Argument(..., help="Output graph file"),
     embed: bool = Option(False, "--embed", help="Embed checksum in output"),
     tag: str = Option(None, "--tag", "-t", help="Filter by tag"),
+    upstream_of: str = Option(
+        None, "--upstream-of", help="Filter to ancestors of node"
+    ),
+    downstream_of: str = Option(
+        None, "--downstream-of", help="Filter to descendants of node"
+    ),
 ):
     """Perform transitive reduction on a graph and save the result."""
     with console.status("[bold green]Reducing graph..."):
-        reduce_command(input, output, embed_checksum=embed, tag=tag)
+        reduce_command(
+            input,
+            output,
+            embed_checksum=embed,
+            tag=tag,
+            upstream_of=upstream_of,
+            downstream_of=downstream_of,
+        )
     console.print(f"[green]Successfully reduced graph and saved to {output}[/green]")
 
 
@@ -93,10 +123,23 @@ def convert(
     output: Path = Argument(..., help="Output graph file"),
     embed: bool = Option(False, "--embed", help="Embed checksum in output"),
     tag: str = Option(None, "--tag", "-t", help="Filter by tag"),
+    upstream_of: str = Option(
+        None, "--upstream-of", help="Filter to ancestors of node"
+    ),
+    downstream_of: str = Option(
+        None, "--downstream-of", help="Filter to descendants of node"
+    ),
 ):
     """Convert a graph between supported formats."""
     with console.status(f"[bold green]Converting {input.name} to {output.name}..."):
-        convert_command(input, output, embed_checksum=embed, tag=tag)
+        convert_command(
+            input,
+            output,
+            embed_checksum=embed,
+            tag=tag,
+            upstream_of=upstream_of,
+            downstream_of=downstream_of,
+        )
     console.print(f"[green]Successfully converted {input} to {output}[/green]")
 
 
@@ -108,11 +151,24 @@ def render(
         None, "--engine", "-e", help="Rendering engine to use", case_sensitive=False
     ),
     tag: str = Option(None, "--tag", "-t", help="Filter by tag"),
+    upstream_of: str = Option(
+        None, "--upstream-of", help="Filter to ancestors of node"
+    ),
+    downstream_of: str = Option(
+        None, "--downstream-of", help="Filter to descendants of node"
+    ),
 ):
     """Render a graph as an image."""
     with console.status(f"[bold green]Rendering {input.name} to {output.name}..."):
         try:
-            render_command(input, output, engine=engine, tag=tag)
+            render_command(
+                input,
+                output,
+                engine=engine,
+                tag=tag,
+                upstream_of=upstream_of,
+                downstream_of=downstream_of,
+            )
             console.print(f"[green]Successfully rendered {input} to {output}[/green]")
         except Exception as e:
             console.print(f"[red]Error:[/red] {e}")
@@ -123,10 +179,20 @@ def render(
 def checksum(
     file: Path = Argument(..., help="Graph file"),
     tag: str = Option(None, "--tag", "-t", help="Filter by tag"),
+    upstream_of: str = Option(
+        None, "--upstream-of", help="Filter to ancestors of node"
+    ),
+    downstream_of: str = Option(
+        None, "--downstream-of", help="Filter to descendants of node"
+    ),
 ):
     """Calculate and print the graph checksum."""
     try:
-        console.print(checksum_command(file, tag=tag))
+        console.print(
+            checksum_command(
+                file, tag=tag, upstream_of=upstream_of, downstream_of=downstream_of
+            )
+        )
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
         raise Exit(1)
@@ -137,10 +203,22 @@ def verify(
     file: Path = Argument(..., help="Graph file"),
     expected: str = Option(None, "--expected", help="Expected checksum (hex)"),
     tag: str = Option(None, "--tag", "-t", help="Filter by tag"),
+    upstream_of: str = Option(
+        None, "--upstream-of", help="Filter to ancestors of node"
+    ),
+    downstream_of: str = Option(
+        None, "--downstream-of", help="Filter to descendants of node"
+    ),
 ):
     """Verify graph checksum (embedded or provided)."""
     try:
-        data = verify_command(file, expected, tag=tag)
+        data = verify_command(
+            file,
+            expected,
+            tag=tag,
+            upstream_of=upstream_of,
+            downstream_of=downstream_of,
+        )
         if data["valid"] is True:
             console.print("[green]Checksum verified successfully.[/green]")
         elif data["valid"] is False:
@@ -162,10 +240,22 @@ def write_checksum(
     file: Path = Argument(..., help="Graph file"),
     output: Path = Argument(..., help="Output checksum file"),
     tag: str = Option(None, "--tag", "-t", help="Filter by tag"),
+    upstream_of: str = Option(
+        None, "--upstream-of", help="Filter to ancestors of node"
+    ),
+    downstream_of: str = Option(
+        None, "--downstream-of", help="Filter to descendants of node"
+    ),
 ):
     """Write graph checksum to a standalone file."""
     try:
-        write_checksum_command(file, output, tag=tag)
+        write_checksum_command(
+            file,
+            output,
+            tag=tag,
+            upstream_of=upstream_of,
+            downstream_of=downstream_of,
+        )
         console.print(f"[green]Checksum written to {output}[/green]")
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
@@ -221,6 +311,46 @@ def diff(
             )
 
         console.print(table)
+    except Exception as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise Exit(1)
+
+
+@app.command()
+def paths(
+    file: Path = Argument(..., help="Graph file"),
+    source: str = Argument(..., help="Source node reference"),
+    target: str = Argument(..., help="Target node reference"),
+    tag: str = Option(None, "--tag", "-t", help="Filter by tag"),
+    upstream_of: str = Option(
+        None, "--upstream-of", help="Filter to ancestors of node"
+    ),
+    downstream_of: str = Option(
+        None, "--downstream-of", help="Filter to descendants of node"
+    ),
+):
+    """Find all paths between two nodes."""
+    try:
+        data = paths_command(
+            file,
+            source,
+            target,
+            tag=tag,
+            upstream_of=upstream_of,
+            downstream_of=downstream_of,
+        )
+
+        if not data:
+            console.print(
+                f"[yellow]No paths found from '{source}' to '{target}'.[/yellow]"
+            )
+            return
+
+        title = f"Paths from '{source}' to '{target}'"
+        console.print(Panel(f"[bold]{title}[/bold]"))
+
+        for i, path in enumerate(data, 1):
+            console.print(f"{i}. {' -> '.join(path)}")
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
         raise Exit(1)

@@ -28,7 +28,9 @@ def test_rich_cli_info(mock_info):
     assert "Sinks" in result.stdout
     assert "Project Duration" in result.stdout
     assert "Critical Path Length" in result.stdout
-    mock_info.assert_called_once_with(Path("test.json"), tag=None)
+    mock_info.assert_called_once_with(
+        Path("test.json"), tag=None, upstream_of=None, downstream_of=None
+    )
 
 
 @patch("graphable.cli.rich_cli.info_command")
@@ -67,7 +69,12 @@ def test_rich_cli_reduce(mock_reduce):
     assert result.exit_code == 0
     assert "Successfully reduced graph" in result.stdout
     mock_reduce.assert_called_once_with(
-        Path("input.json"), Path("output.json"), embed_checksum=False, tag=None
+        Path("input.json"),
+        Path("output.json"),
+        embed_checksum=False,
+        tag=None,
+        upstream_of=None,
+        downstream_of=None,
     )
 
 
@@ -78,7 +85,12 @@ def test_rich_cli_convert(mock_convert):
     assert result.exit_code == 0
     assert "Successfully converted" in result.stdout
     mock_convert.assert_called_once_with(
-        Path("input.json"), Path("output.yaml"), embed_checksum=False, tag=None
+        Path("input.json"),
+        Path("output.yaml"),
+        embed_checksum=False,
+        tag=None,
+        upstream_of=None,
+        downstream_of=None,
     )
 
 
@@ -130,6 +142,9 @@ def test_rich_cli_verify_success(mock_verify):
     result = runner.invoke(app, ["verify", "test.json"])
     assert result.exit_code == 0
     assert "Checksum verified successfully." in result.stdout
+    mock_verify.assert_called_once_with(
+        Path("test.json"), None, tag=None, upstream_of=None, downstream_of=None
+    )
 
 
 @patch("graphable.cli.rich_cli.verify_command")
@@ -167,7 +182,11 @@ def test_rich_cli_write_checksum(mock_write):
     assert result.exit_code == 0
     assert "Checksum written to" in result.stdout
     mock_write.assert_called_once_with(
-        Path("test.json"), Path("test.blake2b"), tag=None
+        Path("test.json"),
+        Path("test.blake2b"),
+        tag=None,
+        upstream_of=None,
+        downstream_of=None,
     )
 
 

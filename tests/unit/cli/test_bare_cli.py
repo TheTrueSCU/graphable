@@ -21,7 +21,9 @@ def test_bare_cli_info():
             "critical_path_length": 2,
         }
         run_bare()
-        mock_info.assert_called_once_with(Path("test.json"), tag=None)
+        mock_info.assert_called_once_with(
+            Path("test.json"), tag=None, upstream_of=None, downstream_of=None
+        )
 
 
 def test_bare_cli_check_valid():
@@ -57,7 +59,12 @@ def test_bare_cli_reduce():
     ):
         run_bare()
         mock_reduce.assert_called_once_with(
-            Path("i.json"), Path("o.json"), embed_checksum=False, tag=None
+            Path("i.json"),
+            Path("o.json"),
+            embed_checksum=False,
+            tag=None,
+            upstream_of=None,
+            downstream_of=None,
         )
 
 
@@ -70,7 +77,12 @@ def test_bare_cli_convert():
     ):
         run_bare()
         mock_convert.assert_called_once_with(
-            Path("i.json"), Path("o.yaml"), embed_checksum=False, tag=None
+            Path("i.json"),
+            Path("o.yaml"),
+            embed_checksum=False,
+            tag=None,
+            upstream_of=None,
+            downstream_of=None,
         )
 
 
@@ -86,7 +98,12 @@ def test_bare_cli_render():
     ):
         run_bare()
         mock_render.assert_called_once_with(
-            Path("i.json"), Path("o.png"), engine="mermaid", tag=None
+            Path("i.json"),
+            Path("o.png"),
+            engine="mermaid",
+            tag=None,
+            upstream_of=None,
+            downstream_of=None,
         )
 
 
@@ -99,7 +116,9 @@ def test_bare_cli_checksum():
     ):
         mock_checksum.return_value = "hash"
         run_bare()
-        mock_checksum.assert_called_once()
+        mock_checksum.assert_called_once_with(
+            Path("test.json"), tag=None, upstream_of=None, downstream_of=None
+        )
 
 
 def test_bare_cli_verify_success():
@@ -111,7 +130,13 @@ def test_bare_cli_verify_success():
     ):
         mock_verify.return_value = {"valid": True, "actual": "abc", "expected": "abc"}
         run_bare()
-        mock_verify.assert_called_once()
+        mock_verify.assert_called_once_with(
+            Path("test.json"),
+            None,
+            tag=None,
+            upstream_of=None,
+            downstream_of=None,
+        )
 
 
 def test_bare_cli_verify_mismatch():
@@ -123,6 +148,13 @@ def test_bare_cli_verify_mismatch():
     ):
         mock_verify.return_value = {"valid": False, "actual": "abc", "expected": "def"}
         run_bare()
+        mock_verify.assert_called_once_with(
+            Path("test.json"),
+            None,
+            tag=None,
+            upstream_of=None,
+            downstream_of=None,
+        )
         mock_exit.assert_called_once_with(1)
 
 
@@ -135,7 +167,13 @@ def test_bare_cli_verify_no_checksum():
     ):
         mock_verify.return_value = {"valid": None, "actual": "abc", "expected": None}
         run_bare()
-        mock_verify.assert_called_once()
+        mock_verify.assert_called_once_with(
+            Path("test.json"),
+            None,
+            tag=None,
+            upstream_of=None,
+            downstream_of=None,
+        )
 
 
 def test_bare_cli_write_checksum():
@@ -146,7 +184,13 @@ def test_bare_cli_write_checksum():
         patch("sys.exit"),
     ):
         run_bare()
-        mock_write.assert_called_once()
+        mock_write.assert_called_once_with(
+            Path("test.json"),
+            Path("test.blake2b"),
+            tag=None,
+            upstream_of=None,
+            downstream_of=None,
+        )
 
 
 def test_bare_cli_diff_default():

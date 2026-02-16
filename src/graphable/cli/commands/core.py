@@ -17,16 +17,30 @@ def get_exporter(extension: str) -> Callable[..., None] | None:
     return EXPORTERS.get(extension.lower())
 
 
-def load_graph(path: Path, tag: str | None = None) -> Graph[Any]:
+def load_graph(
+    path: Path,
+    tag: str | None = None,
+    upstream_of: str | None = None,
+    downstream_of: str | None = None,
+) -> Graph[Any]:
     parser = get_parser(path.suffix)
     g = parser(path)
     if tag:
         g = g.subgraph_tagged(tag)
+    if upstream_of:
+        g = g.upstream_of(g[upstream_of])
+    if downstream_of:
+        g = g.downstream_of(g[downstream_of])
     return g
 
 
-def info_command(path: Path, tag: str | None = None) -> dict[str, Any]:
-    g = load_graph(path, tag)
+def info_command(
+    path: Path,
+    tag: str | None = None,
+    upstream_of: str | None = None,
+    downstream_of: str | None = None,
+) -> dict[str, Any]:
+    g = load_graph(path, tag, upstream_of, downstream_of)
 
     stats = {
         "nodes": len(g),
@@ -46,9 +60,14 @@ def info_command(path: Path, tag: str | None = None) -> dict[str, Any]:
     return stats
 
 
-def check_command(path: Path, tag: str | None = None) -> dict[str, Any]:
+def check_command(
+    path: Path,
+    tag: str | None = None,
+    upstream_of: str | None = None,
+    downstream_of: str | None = None,
+) -> dict[str, Any]:
     try:
-        g = load_graph(path, tag)
+        g = load_graph(path, tag, upstream_of, downstream_of)
         g.check_cycles()
         g.check_consistency()
         return {"valid": True, "error": None}
@@ -61,13 +80,20 @@ def reduce_command(
     output_path: Path,
     embed_checksum: bool = False,
     tag: str | None = None,
+    upstream_of: str | None = None,
+    downstream_of: str | None = None,
 ) -> None:
-    g = load_graph(input_path, tag)
+    g = load_graph(input_path, tag, upstream_of, downstream_of)
     g.write(output_path, transitive_reduction=True, embed_checksum=embed_checksum)
 
 
 def convert_command(
-    input_path: Path, output_path: Path, tag: str | None = None, **kwargs: Any
+    input_path: Path,
+    output_path: Path,
+    tag: str | None = None,
+    upstream_of: str | None = None,
+    downstream_of: str | None = None,
+    **kwargs: Any,
 ) -> None:
     # Restrict convert to non-image formats
     ext = output_path.suffix.lower()
@@ -76,19 +102,28 @@ def convert_command(
             f"Extension '{ext}' is for images. Use the 'render' command instead."
         )
 
-    g = load_graph(input_path, tag)
+    g = load_graph(input_path, tag, upstream_of, downstream_of)
     g.write(output_path, **kwargs)
 
 
-def checksum_command(path: Path, tag: str | None = None) -> str:
-    g = load_graph(path, tag)
+def checksum_command(
+    path: Path,
+    tag: str | None = None,
+    upstream_of: str | None = None,
+    downstream_of: str | None = None,
+) -> str:
+    g = load_graph(path, tag, upstream_of, downstream_of)
     return g.checksum()
 
 
 def verify_command(
-    path: Path, expected: str | None = None, tag: str | None = None
+    path: Path,
+    expected: str | None = None,
+    tag: str | None = None,
+    upstream_of: str | None = None,
+    downstream_of: str | None = None,
 ) -> dict[str, Any]:
-    g = load_graph(path, tag)
+    g = load_graph(path, tag, upstream_of, downstream_of)
     actual = g.checksum()
 
     if expected is None:
@@ -104,9 +139,13 @@ def verify_command(
 
 
 def write_checksum_command(
-    graph_path: Path, checksum_path: Path, tag: str | None = None
+    graph_path: Path,
+    checksum_path: Path,
+    tag: str | None = None,
+    upstream_of: str | None = None,
+    downstream_of: str | None = None,
 ) -> None:
-    g = load_graph(graph_path, tag)
+    g = load_graph(graph_path, tag, upstream_of, downstream_of)
     g.write_checksum(checksum_path)
 
 
@@ -130,6 +169,8 @@ def render_command(
     output_path: Path,
     engine: Engine | str | None = None,
     tag: str | None = None,
+    upstream_of: str | None = None,
+    downstream_of: str | None = None,
 ) -> None:
     """
     Load a graph and render it as an image (SVG or PNG).
@@ -140,10 +181,42 @@ def render_command(
         engine: The rendering engine to use (e.g., Engine.MERMAID, 'graphviz').
             If None, it will be auto-detected based on system PATH.
         tag: Optional tag to filter the graph before rendering.
+        upstream_of: Optional node reference to keep only its ancestors.
+        downstream_of: Optional node reference to keep only its descendants.
     """
-    g = load_graph(input_path, tag)
+    g = load_graph(input_path, tag, upstream_of, downstream_of)
 
     from ...views.utils import get_image_exporter
 
     exporter = get_image_exporter(engine)
     exporter(g, output_path)
+
+
+def paths_command(
+    path: Path,
+    source: str,
+    target: str,
+    tag: str | None = None,
+    upstream_of: str | None = None,
+    downstream_of: str | None = None,
+) -> list[list[str]]:
+    """
+    Find all paths between two nodes.
+
+    Args:
+        path: Path to the graph file.
+        source: Reference of the source node.
+        target: Reference of the target node.
+        tag: Optional tag to filter the graph.
+        upstream_of: Optional node reference to slice upstream.
+        downstream_of: Optional node reference to slice downstream.
+
+    Returns:
+        list[list[str]]: A list of paths, each being a list of node references.
+    """
+    g = load_graph(path, tag, upstream_of, downstream_of)
+    u = g[source]
+    v = g[target]
+
+    paths = g.all_paths(u, v)
+    return [[n.reference for n in path] for path in paths]
