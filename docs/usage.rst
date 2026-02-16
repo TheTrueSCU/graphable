@@ -22,6 +22,26 @@ This script (available in the repository as ``examples/basic_usage.py``) shows h
    :linenos:
    :caption: examples/basic_usage.py
 
+Advanced Usage
+--------------
+
+This script (available as ``examples/advanced_usage.py``) demonstrates complex directed acyclic graphs (DAGs), multiple export formats, and the use of the ``render`` method for high-level visualization orchestration.
+
+.. literalinclude:: ../examples/advanced_usage.py
+   :language: python
+   :linenos:
+   :caption: examples/advanced_usage.py
+
+Parser Examples
+---------------
+
+This script (available as ``examples/parser_examples.py``) shows how to load graphs from various machine-readable formats including JSON, YAML, and CSV.
+
+.. literalinclude:: ../examples/parser_examples.py
+   :language: python
+   :linenos:
+   :caption: examples/parser_examples.py
+
 Output
 ------
 
@@ -396,9 +416,11 @@ To get the full experience with formatted tables and panels, install the ``cli``
 *   **``check <file>``**: Performs validation (cycles and consistency).
 *   **``convert <input> <output>``**: Converts between formats.
 *   **``reduce <input> <output>``**: Computes transitive reduction.
+*   **``render <input> <output> [-e engine]``**: Renders a graph as an image (SVG, PNG).
 *   **``diff <file1> <file2> [-o output]``**: Compares two graphs.
 *   **``serve <file> [-p port]``**: Starts a live-reloading interactive visualization.
 *   **``checksum <file>``**: Prints the graph checksum.
+*   **``write-checksum <file> <output>``**: Writes the graph checksum to a file.
 *   **``verify <file> [--expected hash]``**: Verifies integrity.
 
 **CI/CD and Automation**
@@ -412,7 +434,7 @@ If you are using ``graphable`` in a script or CI/CD pipeline and want to ensure 
 **Supported Extensions**
 
 - **Input**: ``.json``, ``.yaml``, ``.yml``, ``.toml``, ``.csv``, ``.graphml``
-- **Output**: All input formats plus ``.dot``, ``.gv``, ``.mmd``, ``.d2``, ``.puml``, ``.html``, ``.tex``, ``.txt``, ``.ascii``, ``.svg``
+- **Output**: All input formats plus ``.dot``, ``.gv``, ``.mmd``, ``.d2``, ``.puml``, ``.html``, ``.tex``, ``.txt``, ``.ascii``, ``.svg``, ``.png``
 
 Live Visualization
 ------------------
@@ -473,13 +495,18 @@ Export to standard machine-readable formats:
 
 **Cytoscape**
 
-Generate a standalone, interactive HTML file that you can share with anyone. It uses Cytoscape.js for rendering and supports zooming, panning, and dragging:
+Generate a standalone, interactive HTML file or a machine-readable Cytoscape JSON file. The HTML version uses Cytoscape.js for rendering and supports zooming, panning, and dragging:
 
 .. code-block:: python
 
    from graphable.views.html import export_topology_html
+   from graphable.views.cytoscape import export_topology_cytoscape
 
+   # Export as interactive HTML
    export_topology_html(g, "interactive_graph.html")
+
+   # Export as machine-readable Cytoscape JSON
+   export_topology_cytoscape(g, "graph.cy.json")
 
 You can view a live demonstration here: :raw-html:`<a href="_static/examples/topology_interactive.html" target="_blank">topology_interactive.html</a>`
 
