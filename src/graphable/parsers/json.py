@@ -1,4 +1,4 @@
-import json
+from json import load, loads
 from logging import getLogger
 from pathlib import Path
 from typing import Any
@@ -25,10 +25,10 @@ def load_graph_json(source: str | Path, reference_type: type = str) -> Graph[Any
     if is_path(source):
         logger.debug(f"Loading JSON from file: {source}")
         with open(source, "r") as f:
-            data = json.load(f)
+            data = load(f)
     else:
         logger.debug("Loading JSON from string.")
-        data = json.loads(str(source))
+        data = loads(str(source))
 
     # Handle wrapped structure: {"checksum": "...", "graph": {"nodes": ..., "edges": ...}}
     if "graph" in data and ("nodes" not in data or "edges" not in data):

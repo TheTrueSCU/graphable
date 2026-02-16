@@ -1,4 +1,4 @@
-import json
+from json import load, loads
 
 from graphable.graph import Graph
 from graphable.graphable import Graphable
@@ -34,7 +34,7 @@ def test_create_topology_cytoscape_simple():
     g.add_edge(a, b, weight=10)
 
     output = create_topology_cytoscape(g)
-    data = json.loads(output)
+    data = loads(output)
 
     # Expected: 2 nodes, 1 edge
     assert len(data) == 3
@@ -64,7 +64,7 @@ def test_create_topology_cytoscape_with_tags():
     g.add_node(a)
 
     output = create_topology_cytoscape(g)
-    data = json.loads(output)
+    data = loads(output)
 
     assert data[0]["data"]["tags"] == ["v1"]
 
@@ -79,7 +79,7 @@ def test_export_topology_cytoscape(tmp_path):
 
     assert output_file.exists()
     with open(output_file, "r") as f:
-        data = json.load(f)
+        data = load(f)
         assert data[0]["data"]["id"] == "A"
 
 
@@ -96,7 +96,7 @@ def test_create_topology_cytoscape_custom_data():
     )
 
     output = create_topology_cytoscape(g, config)
-    data = json.loads(output)
+    data = loads(output)
 
     nodes = [item for item in data if "source" not in item["data"]]
     edges = [item for item in data if "source" in item["data"]]

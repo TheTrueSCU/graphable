@@ -1,5 +1,5 @@
-import json
 from dataclasses import dataclass
+from json import dumps
 from logging import getLogger
 from pathlib import Path
 from typing import Any, Callable
@@ -79,7 +79,7 @@ def create_topology_cytoscape(
 
             elements.append({"data": edge_data})
 
-    return json.dumps(elements, indent=config.indent)
+    return dumps(elements, indent=config.indent)
 
 
 @register_view(".cy.json", creator_fnc=create_topology_cytoscape)

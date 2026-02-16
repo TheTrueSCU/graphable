@@ -1,5 +1,5 @@
-import re
 from pathlib import Path
+from re import search
 from typing import Any
 
 from ..graph import Graph
@@ -109,7 +109,7 @@ def extract_checksum(source: str | Path) -> str | None:
         content = str(source)[:1024]
 
     # Match blake2b: followed by hex chars (usually 128 for blake2b)
-    match = re.search(r"blake2b:\s*([a-fA-F0-9]+)", content)
+    match = search(r"blake2b:\s*([a-fA-F0-9]+)", content)
     if match:
         return match.group(1)
 

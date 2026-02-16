@@ -1,5 +1,5 @@
-import csv
-import io
+from csv import reader as csv_reader
+from io import StringIO
 from logging import getLogger
 from pathlib import Path
 from typing import Any
@@ -29,8 +29,8 @@ def load_graph_csv(source: str | Path, reference_type: type = str) -> Graph[Any]
     else:
         content = str(source)
 
-    f = io.StringIO(content.strip())
-    reader = csv.reader(f)
+    f = StringIO(content.strip())
+    reader = csv_reader(f)
 
     # Detect header
     first_row = next(reader, None)

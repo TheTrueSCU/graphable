@@ -39,7 +39,7 @@ def create_topology_yaml(graph: Graph, config: YamlStylingConfig | None = None) 
         str: A YAML string containing 'nodes' and 'edges'.
     """
     try:
-        import yaml
+        from yaml import dump
     except ImportError:
         logger.error("PyYAML not found. Please install it with 'pip install PyYAML'.")
         raise ImportError(
@@ -68,7 +68,7 @@ def create_topology_yaml(graph: Graph, config: YamlStylingConfig | None = None) 
 
     data = {"nodes": nodes, "edges": edges}
 
-    return yaml.dump(data, indent=config.indent, sort_keys=False)
+    return dump(data, indent=config.indent, sort_keys=False)
 
 
 @register_view([".yaml", ".yml"], creator_fnc=create_topology_yaml)

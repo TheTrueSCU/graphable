@@ -20,6 +20,7 @@ $ graphable [OPTIONS] COMMAND [ARGS]...
 * `check`: Validate graph integrity (cycles and...
 * `reduce`: Perform transitive reduction on a graph...
 * `convert`: Convert a graph between supported formats.
+* `render`: Render a graph as an image.
 * `checksum`: Calculate and print the graph checksum.
 * `verify`: Verify graph checksum (embedded or provided).
 * `write-checksum`: Write graph checksum to a standalone file.
@@ -103,6 +104,27 @@ $ graphable convert [OPTIONS] INPUT OUTPUT
 **Options**:
 
 * `--embed`: Embed checksum in output
+* `-t, --tag TEXT`: Filter by tag
+* `--help`: Show this message and exit.
+
+## `graphable render`
+
+Render a graph as an image.
+
+**Usage**:
+
+```console
+$ graphable render [OPTIONS] INPUT OUTPUT
+```
+
+**Arguments**:
+
+* `INPUT`: Input graph file  [required]
+* `OUTPUT`: Output image file (.png, .svg)  [required]
+
+**Options**:
+
+* `-e, --engine [mermaid|graphviz|d2|plantuml]`: Rendering engine to use
 * `-t, --tag TEXT`: Filter by tag
 * `--help`: Show this message and exit.
 

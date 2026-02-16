@@ -1,6 +1,7 @@
-import argparse
-import sys
+from argparse import ArgumentParser
+from json import dumps
 from pathlib import Path
+from sys import exit
 
 from graphable.cli.commands.core import (
     check_command,
@@ -18,9 +19,7 @@ from graphable.enums import Engine
 
 
 def run_bare():
-    parser = argparse.ArgumentParser(
-        prog="graphable", description="Graphable CLI (Bare-bones)"
-    )
+    parser = ArgumentParser(prog="graphable", description="Graphable CLI (Bare-bones)")
     subparsers = parser.add_subparsers(dest="command", help="Commands")
 
     # info
@@ -113,7 +112,7 @@ def run_bare():
             print("Graph is valid.")
         else:
             print(f"Graph is invalid: {data['error']}")
-            sys.exit(1)
+            exit(1)
 
     elif args.command == "reduce":
         reduce_command(args.input, args.output, embed_checksum=args.embed, tag=args.tag)
@@ -138,7 +137,7 @@ def run_bare():
             print("Checksum verified.")
         elif data["valid"] is False:
             print(f"Checksum mismatch! Actual: {data['actual']}")
-            sys.exit(1)
+            exit(1)
         else:
             print(f"No checksum found to verify. Current: {data['actual']}")
 
@@ -152,7 +151,6 @@ def run_bare():
             print(f"Visual diff saved to {args.output}")
         else:
             data = diff_command(args.file1, args.file2, tag=args.tag)
-            import json
 
             # Convert sets to lists for JSON serialization
             serializable_data = {
@@ -162,7 +160,7 @@ def run_bare():
             for k in ["added_edges", "removed_edges", "modified_edges"]:
                 serializable_data[k] = [f"{u}->{v}" for u, v in data[k]]
 
-            print(json.dumps(serializable_data, indent=2))
+            print(dumps(serializable_data, indent=2))
 
     elif args.command == "serve":
         print(f"Serving {args.file} on http://127.0.0.1:{args.port}")

@@ -5,7 +5,7 @@ This plan outlines the steps to improve code coverage to >95% and perform a comp
 ## Phase 1: Coverage Improvement (CLI & Parsers)
 Focus on the modules with the lowest coverage to reach the 95% threshold.
 
-- [ ] Task: Improve coverage for `src/graphable/cli/rich_cli.py` (Current: 28%)
+- [~] Task: Improve coverage for `src/graphable/cli/rich_cli.py` (Current: 28%)
     - [ ] Write tests for terminal UI formatting and Rich-specific output logic in `tests/unit/cli/test_rich_cli.py`
     - [ ] Implement missing logic/fixes to ensure tests pass
 - [ ] Task: Improve coverage for `src/graphable/cli/commands/serve.py` (Current: 40%)

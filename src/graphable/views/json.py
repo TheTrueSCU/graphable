@@ -1,5 +1,5 @@
-import json
 from dataclasses import dataclass
+from json import dumps
 from logging import getLogger
 from pathlib import Path
 from typing import Any, Callable
@@ -60,7 +60,7 @@ def create_topology_json(graph: Graph, config: JsonStylingConfig | None = None) 
 
     data = {"nodes": nodes, "edges": edges}
 
-    return json.dumps(data, indent=config.indent)
+    return dumps(data, indent=config.indent)
 
 
 @register_view(".json", creator_fnc=create_topology_json)

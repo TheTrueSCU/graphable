@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-import pytest
+from pytest import raises
 
 from graphable.enums import Engine
 from graphable.views.utils import detect_engine, get_image_exporter
@@ -30,7 +30,7 @@ def test_detect_engine_priority(mock_which):
 def test_detect_engine_none_available(mock_which):
     """Verify error if no engine is found."""
     mock_which.return_value = None
-    with pytest.raises(RuntimeError, match="No rendering engine found on PATH"):
+    with raises(RuntimeError, match="No rendering engine found on PATH"):
         detect_engine()
 
 
@@ -57,5 +57,5 @@ def test_get_image_exporter_auto(mock_detect):
 
 def test_get_image_exporter_invalid():
     """Verify get_image_exporter raises error for unknown engine."""
-    with pytest.raises(ValueError, match="Unknown rendering engine: unknown"):
+    with raises(ValueError, match="Unknown rendering engine: unknown"):
         get_image_exporter("unknown")

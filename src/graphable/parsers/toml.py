@@ -23,10 +23,12 @@ def load_graph_toml(source: str | Path, reference_type: type = str) -> Graph[Any
         Graph: A new Graph instance populated from the TOML data.
     """
     try:
-        import tomllib
+        from tomllib import load as toml_load
+        from tomllib import loads as toml_loads
     except ImportError:
         try:
-            import tomli as tomllib  # type: ignore
+            from tomli import load as toml_load  # type: ignore
+            from tomli import loads as toml_loads  # type: ignore
         except ImportError:
             logger.error("No TOML parser found. On Python < 3.11, install 'tomli'.")
             raise ImportError(
@@ -36,10 +38,10 @@ def load_graph_toml(source: str | Path, reference_type: type = str) -> Graph[Any
     if is_path(source):
         logger.debug(f"Loading TOML from file: {source}")
         with open(source, "rb") as f:
-            data = tomllib.load(f)
+            data = toml_load(f)
     else:
         logger.debug("Loading TOML from string.")
-        data = tomllib.loads(str(source))
+        data = toml_loads(str(source))
 
     # Handle wrapped structure
     if "graph" in data and ("nodes" not in data or "edges" not in data):

@@ -131,6 +131,16 @@ def render_command(
     engine: Engine | str | None = None,
     tag: str | None = None,
 ) -> None:
+    """
+    Load a graph and render it as an image (SVG or PNG).
+
+    Args:
+        input_path: Path to the input graph file.
+        output_path: Path to the output image file.
+        engine: The rendering engine to use (e.g., Engine.MERMAID, 'graphviz').
+            If None, it will be auto-detected based on system PATH.
+        tag: Optional tag to filter the graph before rendering.
+    """
     g = load_graph(input_path, tag)
 
     from ...views.utils import get_image_exporter

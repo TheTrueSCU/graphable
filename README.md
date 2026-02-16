@@ -87,8 +87,11 @@ graphable info topology.json
 # Validate a graph for cycles and consistency
 graphable check topology.yaml
 
-# Convert between any supported formats
-graphable convert input.json output.mmd
+# Convert between graph data formats
+graphable convert input.json output.yaml
+
+# Render a graph as an image (SVG or PNG)
+graphable render input.json output.png --engine graphviz
 
 # Simplify a graph using transitive reduction
 graphable reduce complex.graphml simple.svg
@@ -115,7 +118,8 @@ graphable --bare info topology.json
 
 The CLI automatically detects formats based on file extensions:
 - **Parsers:** `.json`, `.yaml`/`.yml`, `.toml`, `.csv`, `.graphml`
-- **Exporters:** `.json`, `.yaml`, `.toml`, `.csv`, `.graphml`, `.dot`, `.mmd`, `.d2`, `.puml`, `.html`, `.tex`, `.txt`, `.ascii`, `.svg`
+- **Exporters:** `.json`, `.yaml`, `.toml`, `.csv`, `.graphml`, `.dot`, `.mmd`, `.d2`, `.puml`, `.html`, `.tex`, `.txt`, `.ascii`, `.cy.json`
+- **Image Engines:** Mermaid, Graphviz, D2, PlantUML (Supports `.svg` and `.png`)
 
 ---
 

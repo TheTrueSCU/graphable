@@ -23,7 +23,7 @@ def load_graph_yaml(source: str | Path, reference_type: type = str) -> Graph[Any
         Graph: A new Graph instance populated from the YAML data.
     """
     try:
-        import yaml
+        from yaml import safe_load
     except ImportError:
         logger.error("PyYAML not found. Please install it with 'pip install PyYAML'.")
         raise ImportError(
@@ -33,10 +33,10 @@ def load_graph_yaml(source: str | Path, reference_type: type = str) -> Graph[Any
     if is_path(source):
         logger.debug(f"Loading YAML from file: {source}")
         with open(source, "r") as f:
-            data = yaml.safe_load(f)
+            data = safe_load(f)
     else:
         logger.debug("Loading YAML from string.")
-        data = yaml.safe_load(str(source))
+        data = safe_load(str(source))
 
     # Handle wrapped structure
     if "graph" in data and ("nodes" not in data or "edges" not in data):

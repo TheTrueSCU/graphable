@@ -1,7 +1,7 @@
-import weakref
 from collections import deque
 from logging import getLogger
 from typing import Any, Protocol, Self, cast, runtime_checkable
+from weakref import WeakSet
 
 from .errors import GraphCycleError
 
@@ -34,7 +34,7 @@ class Graphable[T]:
         self._depends_on: dict[Graphable[Any], dict[str, Any]] = {}
         self._reference: T = reference
         self._tags: set[str] = set()
-        self._observers: weakref.WeakSet[GraphObserver] = weakref.WeakSet()
+        self._observers: WeakSet[GraphObserver] = WeakSet()
         self._duration: float = 0.0
         self._status: str = "pending"
         logger.debug(f"Created Graphable node for reference: {reference}")

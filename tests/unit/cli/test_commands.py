@@ -1,7 +1,8 @@
+from json import loads
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
+from pytest import raises
 
 from graphable.cli.commands.core import (
     check_command,
@@ -62,14 +63,10 @@ def test_convert_command_error_on_images(tmp_path):
     input_file = tmp_path / "test.json"
     input_file.write_text('{"nodes": [{"id": "A"}], "edges": []}')
 
-    with pytest.raises(
-        ValueError, match="is for images. Use the 'render' command instead"
-    ):
+    with raises(ValueError, match="is for images. Use the 'render' command instead"):
         convert_command(input_file, Path("output.png"))
 
-    with pytest.raises(
-        ValueError, match="is for images. Use the 'render' command instead"
-    ):
+    with raises(ValueError, match="is for images. Use the 'render' command instead"):
         convert_command(input_file, Path("output.svg"))
 
 
@@ -84,9 +81,7 @@ def test_reduce_command(tmp_path):
     reduce_command(input_file, output_file)
     assert output_file.exists()
 
-    import json
-
-    data = json.loads(output_file.read_text())
+    data = loads(output_file.read_text())
     # Should have 2 edges (A->B, B->C) instead of 3
     assert len(data["edges"]) == 2
 
@@ -217,5 +212,5 @@ def test_render_command_auto_detection(mock_detect_engine, mock_load_graph):
 def test_render_command_invalid_engine(mock_load_graph):
     """Verify render_command raises ValueError for unknown engine."""
     mock_load_graph.return_value = MagicMock()
-    with pytest.raises(ValueError, match="Unknown rendering engine: unknown"):
+    with raises(ValueError, match="Unknown rendering engine: unknown"):
         render_command(Path("i.json"), Path("o.png"), engine="unknown")

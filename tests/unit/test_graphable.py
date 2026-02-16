@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 from pytest import raises
 
 from graphable.errors import GraphCycleError
@@ -305,3 +307,42 @@ class TestGraphable:
         a.status = "running"
         assert a.duration == 5.0
         assert a.status == "running"
+
+    def test_comparison_not_implemented(self):
+        a = Graphable("A")
+        with raises(TypeError):
+            _ = a < 5
+        with raises(TypeError):
+            _ = a <= 5
+        with raises(TypeError):
+            _ = a > 5
+        with raises(TypeError):
+            _ = a >= 5
+
+    def test_edge_attributes_key_error(self):
+        a = Graphable("A")
+        b = Graphable("B")
+        with raises(KeyError, match="No edge between"):
+            a.edge_attributes(b)
+
+    def test_set_edge_attribute_upstream(self):
+        a = Graphable("A")
+        b = Graphable("B")
+        b.add_dependency(a)
+
+        # Set attribute from descendant to ancestor (upstream)
+        b.set_edge_attribute(a, "label", "upstream")
+        assert b.edge_attributes(a)["label"] == "upstream"
+        assert a.edge_attributes(b)["label"] == "upstream"
+
+    def test_set_edge_attribute_key_error(self):
+        a = Graphable("A")
+        b = Graphable("B")
+        with raises(KeyError, match="No edge between"):
+            a.set_edge_attribute(b, "key", "val")
+
+    def test_observer_discard_not_present(self):
+        a = Graphable("A")
+        mock_observer = MagicMock()
+        # Should not raise
+        a._unregister_observer(mock_observer)

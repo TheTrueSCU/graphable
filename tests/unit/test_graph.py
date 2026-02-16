@@ -1,3 +1,6 @@
+from json import loads
+from unittest.mock import MagicMock, patch
+
 from pytest import fixture, raises
 
 from graphable.graph import Graph, GraphConsistencyError, GraphCycleError
@@ -753,10 +756,7 @@ class TestGraph:
         json_file = tmp_path / "embedded.json"
         g.write(json_file, embed_checksum=True)
 
-        # Verify it is valid JSON
-        import json
-
-        data = json.loads(json_file.read_text())
+        data = loads(json_file.read_text())
         assert "checksum" in data
         assert "graph" in data
         assert data["graph"]["nodes"][0]["id"] == "A"
@@ -837,3 +837,59 @@ class TestGraph:
         dfs_nodes = list(g.dfs(a))
         assert len(dfs_nodes) == 4
         assert dfs_nodes[0] == a
+
+    def test_write_unsupported_extension(self):
+        g = Graph()
+        with raises(ValueError, match="Unsupported extension: .invalid"):
+            g.write("test.invalid")
+
+    @patch("graphable.views.utils.get_image_exporter")
+    def test_write_image_logic(self, mock_get_exporter):
+        mock_exporter = MagicMock()
+        mock_get_exporter.return_value = mock_exporter
+        g = Graph()
+        g.write("test.png", engine="mermaid")
+        mock_get_exporter.assert_called_with("mermaid")
+        mock_exporter.assert_called_once()
+
+    def test_diff_graph_complex(self):
+        # Coverage for modified/added edges in diff_graph
+        g1 = Graph()
+        a1 = Graphable("A")
+        b1 = Graphable("B")
+        g1.add_edge(a1, b1, weight=1)
+
+        g2 = Graph()
+        a2 = Graphable("A")
+        b2 = Graphable("B")
+        c2 = Graphable("C")
+        g2.add_edge(a2, b2, weight=2)  # Modified edge
+        g2.add_edge(b2, c2)  # Added node and edge
+
+        dg = g1.diff_graph(g2)
+        assert len(dg) == 3
+        # Check for tags/attributes if possible, or just confirm it runs
+        # The logic for color:orange and color:green should be hit
+
+    def test_parallelized_topological_order_filtered(self):
+        g = Graph()
+        a = Graphable("A")
+        b = Graphable("B")
+        g.add_edge(a, b)
+
+        # Filter to only include A
+        order = g.parallelized_topological_order_filtered(lambda n: n.reference == "A")
+        assert len(order) == 1
+        assert list(order[0])[0].reference == "A"
+
+    def test_parallelized_topological_order_tagged(self):
+        g = Graph()
+        a = Graphable("A")
+        a.add_tag("v1")
+        b = Graphable("B")
+        g.add_node(a)
+        g.add_node(b)
+
+        order = g.parallelized_topological_order_tagged("v1")
+        assert len(order) == 1
+        assert list(order[0])[0].reference == "A"

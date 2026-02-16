@@ -1,12 +1,13 @@
-import asyncio
+from asyncio import get_event_loop
 from logging import getLogger
 from pathlib import Path
 
-import uvicorn
 from starlette.applications import Starlette
 from starlette.responses import HTMLResponse
 from starlette.routing import Route, WebSocketRoute
 from starlette.websockets import WebSocket
+from uvicorn import Config
+from uvicorn import Server as UvicornServer
 from watchfiles import awatch
 
 from ...views.html import create_topology_html
@@ -56,9 +57,9 @@ class Server:
 def serve_command(path: Path, port: int = 8000, tag: str | None = None):
     server = Server(path, tag=tag)
 
-    config = uvicorn.Config(server.app, host="127.0.0.1", port=port, log_level="info")
-    uv_server = uvicorn.Server(config)
+    config = Config(server.app, host="127.0.0.1", port=port, log_level="info")
+    uv_server = UvicornServer(config)
 
-    loop = asyncio.get_event_loop()
+    loop = get_event_loop()
     loop.create_task(server.watch_file())
     loop.run_until_complete(uv_server.serve())

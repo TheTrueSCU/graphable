@@ -1,5 +1,5 @@
-import csv
-import io
+from csv import writer as csv_writer
+from io import StringIO
 from logging import getLogger
 from pathlib import Path
 from typing import Any, Callable
@@ -28,8 +28,8 @@ def create_topology_csv(
         str: The CSV edge list as a string.
     """
     logger.debug("Creating CSV edge list.")
-    output = io.StringIO()
-    writer = csv.writer(output)
+    output = StringIO()
+    writer = csv_writer(output)
 
     if include_header:
         writer.writerow(["source", "target"])

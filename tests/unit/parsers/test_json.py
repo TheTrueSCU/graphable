@@ -1,4 +1,4 @@
-import json
+from json import dumps
 
 from graphable.graph import Graph, Graphable
 from graphable.parsers.json import load_graph_json
@@ -32,7 +32,7 @@ def test_load_graph_json_orphaned_nodes():
         ],
         "edges": [],
     }
-    json_str = json.dumps(data)
+    json_str = dumps(data)
 
     loaded_g = load_graph_json(json_str)
     assert len(loaded_g) == 2
@@ -43,7 +43,7 @@ def test_load_graph_json_orphaned_nodes():
 def test_load_graph_json_from_file(tmp_path):
     output_file = tmp_path / "graph.json"
     data = {"nodes": [{"id": "A", "reference": "A", "tags": []}], "edges": []}
-    output_file.write_text(json.dumps(data))
+    output_file.write_text(dumps(data))
 
     loaded_g = load_graph_json(output_file)
     assert len(loaded_g) == 1

@@ -1,8 +1,8 @@
 from pathlib import Path
 from unittest.mock import mock_open, patch
 
-import yaml
 from pytest import fixture
+from yaml import safe_load
 
 from graphable.graph import Graph
 from graphable.graphable import Graphable
@@ -26,7 +26,7 @@ class TestYAML:
     def test_create_topology_yaml_default(self, graph_fixture):
         g, a, b = graph_fixture
         yaml_str = create_topology_yaml(g)
-        data = yaml.safe_load(yaml_str)
+        data = safe_load(yaml_str)
 
         assert "nodes" in data
         assert "edges" in data
@@ -44,7 +44,7 @@ class TestYAML:
         g, a, b = graph_fixture
         config = YamlStylingConfig(node_data_fnc=lambda n: {"extra": True})
         yaml_str = create_topology_yaml(g, config=config)
-        data = yaml.safe_load(yaml_str)
+        data = safe_load(yaml_str)
 
         for node in data["nodes"]:
             assert node["extra"] is True

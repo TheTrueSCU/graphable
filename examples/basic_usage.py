@@ -72,6 +72,11 @@ def main():
         action="store_true",
         help="Generate PlantUML SVG (requires plantuml)",
     )
+    parser.add_argument(
+        "--png",
+        action="store_true",
+        help="Generate PNG image (auto-detects engine)",
+    )
     args = parser.parse_args()
 
     # 1. Define nodes and relationships
@@ -333,6 +338,16 @@ def main():
                 print(f"Successfully generated: {html_out}")
             except Exception as e:
                 print(f"Failed to generate Interactive HTML: {e}", file=sys.stderr)
+
+        # PNG Image (Auto-detect engine)
+        if args.png:
+            png_out = out_dir / "topology.png"
+            try:
+                # Use Graph.write which handles auto-detection and images
+                g.write(png_out)
+                print(f"Successfully generated: {png_out}")
+            except Exception as e:
+                print(f"Failed to generate PNG: {e}", file=sys.stderr)
 
 
 if __name__ == "__main__":

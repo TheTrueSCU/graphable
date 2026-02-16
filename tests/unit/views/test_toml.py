@@ -1,5 +1,5 @@
-import tomllib
 from pathlib import Path
+from tomllib import loads
 from unittest.mock import mock_open, patch
 
 from pytest import fixture
@@ -26,7 +26,7 @@ class TestTOML:
     def test_create_topology_toml_default(self, graph_fixture):
         g, a, b = graph_fixture
         toml_str = create_topology_toml(g)
-        data = tomllib.loads(toml_str)
+        data = loads(toml_str)
 
         assert "nodes" in data
         assert "edges" in data
@@ -44,7 +44,7 @@ class TestTOML:
         g, a, b = graph_fixture
         config = TomlStylingConfig(node_data_fnc=lambda n: {"extra": True})
         toml_str = create_topology_toml(g, config=config)
-        data = tomllib.loads(toml_str)
+        data = loads(toml_str)
 
         for node in data["nodes"]:
             assert node["extra"] is True

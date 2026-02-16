@@ -47,3 +47,20 @@ tags = []
     assert "B" in loaded_g
     assert loaded_g["A"].is_tagged("important")
     assert loaded_g["B"] in loaded_g["A"].dependents
+
+
+def test_load_graph_toml_wrapped():
+    toml_data = """
+[graph]
+[[graph.nodes]]
+id = "A"
+[[graph.nodes]]
+id = "B"
+[[graph.edges]]
+source = "A"
+target = "B"
+"""
+    g = load_graph_toml(toml_data)
+    assert len(g) == 2
+    assert "A" in g
+    assert "B" in g

@@ -307,7 +307,17 @@ class Graph[T: Graphable[Any]]:
         engine: Engine | str | None = None,
         **kwargs: Any,
     ) -> None:
-        """Write the graph to a file, automatically detecting the format."""
+        """
+        Write the graph to a file, automatically detecting the format.
+
+        Args:
+            path: Path to the output file.
+            transitive_reduction: If True, perform transitive reduction before writing.
+            embed_checksum: If True, embed a BLAKE2b checksum in the output.
+            engine: The rendering engine to use for images (.svg, .png).
+                If None, it will be auto-detected.
+            **kwargs: Additional arguments passed to the specific exporter.
+        """
         from .registry import EXPORTERS
 
         p = Path(path)

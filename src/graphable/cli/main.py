@@ -1,12 +1,12 @@
-import sys
+from sys import argv
 
 
 def app():
     """Main entry point that dispatches to rich or bare CLI."""
     # Check for --bare flag before anything else
-    if "--bare" in sys.argv:
+    if "--bare" in argv:
         # Remove --bare from argv so subparsers don't choke on it
-        sys.argv.remove("--bare")
+        argv.remove("--bare")
         from .bare_cli import run_bare
 
         run_bare()

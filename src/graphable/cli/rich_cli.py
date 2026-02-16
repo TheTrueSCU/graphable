@@ -1,9 +1,9 @@
 from pathlib import Path
 
-import typer
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+from typer import Argument, Exit, Option, Typer
 
 from graphable.cli.commands.core import (
     check_command,
@@ -20,14 +20,14 @@ from graphable.cli.commands.core import (
 from graphable.cli.commands.serve import serve_command
 from graphable.enums import Engine
 
-app = typer.Typer(help="Graphable CLI (Rich)")
+app = Typer(help="Graphable CLI (Rich)")
 console = Console()
 
 
 @app.command()
 def info(
-    file: Path = typer.Argument(..., help="Input graph file"),
-    tag: str = typer.Option(None, "--tag", "-t", help="Filter by tag"),
+    file: Path = Argument(..., help="Input graph file"),
+    tag: str = Option(None, "--tag", "-t", help="Filter by tag"),
 ):
     """Get summary information about a graph."""
     try:
@@ -50,13 +50,13 @@ def info(
         console.print(table)
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(1)
+        raise Exit(1)
 
 
 @app.command()
 def check(
-    file: Path = typer.Argument(..., help="Input graph file"),
-    tag: str = typer.Option(None, "--tag", "-t", help="Filter by tag"),
+    file: Path = Argument(..., help="Input graph file"),
+    tag: str = Option(None, "--tag", "-t", help="Filter by tag"),
 ):
     """Validate graph integrity (cycles and consistency)."""
     data = check_command(file, tag=tag)
@@ -71,15 +71,15 @@ def check(
                 title="Validation Result",
             )
         )
-        raise typer.Exit(1)
+        raise Exit(1)
 
 
 @app.command()
 def reduce(
-    input: Path = typer.Argument(..., help="Input graph file"),
-    output: Path = typer.Argument(..., help="Output graph file"),
-    embed: bool = typer.Option(False, "--embed", help="Embed checksum in output"),
-    tag: str = typer.Option(None, "--tag", "-t", help="Filter by tag"),
+    input: Path = Argument(..., help="Input graph file"),
+    output: Path = Argument(..., help="Output graph file"),
+    embed: bool = Option(False, "--embed", help="Embed checksum in output"),
+    tag: str = Option(None, "--tag", "-t", help="Filter by tag"),
 ):
     """Perform transitive reduction on a graph and save the result."""
     with console.status("[bold green]Reducing graph..."):
@@ -89,10 +89,10 @@ def reduce(
 
 @app.command()
 def convert(
-    input: Path = typer.Argument(..., help="Input graph file"),
-    output: Path = typer.Argument(..., help="Output graph file"),
-    embed: bool = typer.Option(False, "--embed", help="Embed checksum in output"),
-    tag: str = typer.Option(None, "--tag", "-t", help="Filter by tag"),
+    input: Path = Argument(..., help="Input graph file"),
+    output: Path = Argument(..., help="Output graph file"),
+    embed: bool = Option(False, "--embed", help="Embed checksum in output"),
+    tag: str = Option(None, "--tag", "-t", help="Filter by tag"),
 ):
     """Convert a graph between supported formats."""
     with console.status(f"[bold green]Converting {input.name} to {output.name}..."):
@@ -102,12 +102,12 @@ def convert(
 
 @app.command()
 def render(
-    input: Path = typer.Argument(..., help="Input graph file"),
-    output: Path = typer.Argument(..., help="Output image file (.png, .svg)"),
-    engine: Engine = typer.Option(
+    input: Path = Argument(..., help="Input graph file"),
+    output: Path = Argument(..., help="Output image file (.png, .svg)"),
+    engine: Engine = Option(
         None, "--engine", "-e", help="Rendering engine to use", case_sensitive=False
     ),
-    tag: str = typer.Option(None, "--tag", "-t", help="Filter by tag"),
+    tag: str = Option(None, "--tag", "-t", help="Filter by tag"),
 ):
     """Render a graph as an image."""
     with console.status(f"[bold green]Rendering {input.name} to {output.name}..."):
@@ -116,27 +116,27 @@ def render(
             console.print(f"[green]Successfully rendered {input} to {output}[/green]")
         except Exception as e:
             console.print(f"[red]Error:[/red] {e}")
-            raise typer.Exit(1)
+            raise Exit(1)
 
 
 @app.command()
 def checksum(
-    file: Path = typer.Argument(..., help="Graph file"),
-    tag: str = typer.Option(None, "--tag", "-t", help="Filter by tag"),
+    file: Path = Argument(..., help="Graph file"),
+    tag: str = Option(None, "--tag", "-t", help="Filter by tag"),
 ):
     """Calculate and print the graph checksum."""
     try:
         console.print(checksum_command(file, tag=tag))
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(1)
+        raise Exit(1)
 
 
 @app.command()
 def verify(
-    file: Path = typer.Argument(..., help="Graph file"),
-    expected: str = typer.Option(None, "--expected", help="Expected checksum (hex)"),
-    tag: str = typer.Option(None, "--tag", "-t", help="Filter by tag"),
+    file: Path = Argument(..., help="Graph file"),
+    expected: str = Option(None, "--expected", help="Expected checksum (hex)"),
+    tag: str = Option(None, "--tag", "-t", help="Filter by tag"),
 ):
     """Verify graph checksum (embedded or provided)."""
     try:
@@ -147,21 +147,21 @@ def verify(
             console.print(
                 f"[red]Checksum mismatch![/red] Expected {data['expected']}, got {data['actual']}"
             )
-            raise typer.Exit(1)
+            raise Exit(1)
         else:
             console.print(
                 f"[yellow]No checksum found to verify.[/yellow] Current hash: {data['actual']}"
             )
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(1)
+        raise Exit(1)
 
 
 @app.command()
 def write_checksum(
-    file: Path = typer.Argument(..., help="Graph file"),
-    output: Path = typer.Argument(..., help="Output checksum file"),
-    tag: str = typer.Option(None, "--tag", "-t", help="Filter by tag"),
+    file: Path = Argument(..., help="Graph file"),
+    output: Path = Argument(..., help="Output checksum file"),
+    tag: str = Option(None, "--tag", "-t", help="Filter by tag"),
 ):
     """Write graph checksum to a standalone file."""
     try:
@@ -169,17 +169,15 @@ def write_checksum(
         console.print(f"[green]Checksum written to {output}[/green]")
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(1)
+        raise Exit(1)
 
 
 @app.command()
 def diff(
-    file1: Path = typer.Argument(..., help="First graph file"),
-    file2: Path = typer.Argument(..., help="Second graph file"),
-    output: Path = typer.Option(
-        None, "--output", "-o", help="Output file for visual diff"
-    ),
-    tag: str = typer.Option(None, "--tag", "-t", help="Filter by tag"),
+    file1: Path = Argument(..., help="First graph file"),
+    file2: Path = Argument(..., help="Second graph file"),
+    output: Path = Option(None, "--output", "-o", help="Output file for visual diff"),
+    tag: str = Option(None, "--tag", "-t", help="Filter by tag"),
 ):
     """Compare two graphs and highlight differences."""
     try:
@@ -225,13 +223,13 @@ def diff(
         console.print(table)
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(1)
+        raise Exit(1)
 
 
 @app.command()
 def serve(
-    file: Path = typer.Argument(..., help="Graph file to serve"),
-    port: int = typer.Option(8000, "--port", "-p", help="Port to serve on"),
+    file: Path = Argument(..., help="Graph file to serve"),
+    port: int = Option(8000, "--port", "-p", help="Port to serve on"),
 ):
     """Start a local web server with live-reloading visualization."""
     try:
@@ -240,7 +238,7 @@ def serve(
         serve_command(file, port=port)
     except Exception as e:
         console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(1)
+        raise Exit(1)
 
 
 if __name__ == "__main__":

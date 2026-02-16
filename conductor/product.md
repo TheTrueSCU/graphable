@@ -15,5 +15,5 @@ graphable is a lightweight, type-safe Python library for building, managing, and
 
 ## Core Features & Priorities
 - **Advanced Graph Algorithms:** Prioritize the implementation of complex algorithms like maximum flow and cycle resolution.
-- **Expanded Visualization Ecosystem:** Support for web-based interactive visualizations like Cytoscape.js is implemented. Future work includes further improving existing viewers.
+- **Expanded Visualization Ecosystem:** Support for web-based interactive visualizations like Cytoscape.js and raster image export (PNG) is implemented. Future work includes further improving existing viewers.
 - **API Maturity:** Refine the core API to be the industry standard for lightweight DAG management in Python.
