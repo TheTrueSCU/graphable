@@ -15,7 +15,17 @@ We treat all external input as untrusted and apply strict sanitization and valid
 Recent Hardening
 ----------------
 
-As of version 0.6.0, the following security enhancements have been implemented:
+v0.6.1 (Current)
+~~~~~~~~~~~~~~~~
+
+*   **Repository Hardening**: 
+    *   All GitHub Actions are now pinned to SHA-1 hashes to prevent supply chain attacks.
+    *   CI workflows have been updated with explicit ``permissions`` to follow the principle of least privilege.
+    *   Dependabot is configured to provide automated security updates for Actions and Python dependencies.
+*   **Dependency Updates**: Bumps ``cryptography`` to 46.0.5 to address upstream security fixes.
+
+v0.6.0
+~~~~~~
 
 *   **Secure XML Parsing**: The GraphML parser now uses ``defusedxml`` to prevent XML External Entity (XXE) processing and expansion attacks.
 *   **Command Injection Mitigation**: Visualization exports that rely on external CLI tools (like Mermaid) use strict argument quoting (``shlex.quote``) to prevent arbitrary command execution via malformed file paths.
