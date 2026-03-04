@@ -89,7 +89,11 @@ update:
 [group('qa')]
 check: lint typing coverage
 
-[group('qa')]
+[group('run')]
+pr title body="":
+    just check
+    gh pr create --title "{{ title }}" --body "{{ body }}"
+
 @coverage *args:
     just test --cov=. --cov-fail-under=95 --cov-report html --cov-report term-missing:skip-covered {{ args }}
 
