@@ -7,6 +7,7 @@ from typing import Any, Callable
 
 from ..graph import Graph
 from ..graphable import Graphable
+from ..registry import register_view
 
 logger = getLogger(__name__)
 
@@ -35,6 +36,8 @@ class D2StylingConfig:
     global_style: dict[str, str] | None = None
     layout: str | None = None
     theme: str | None = None
+    cluster_by_tag: bool = False
+    tag_sort_fnc: Callable[[set[str]], list[str]] = lambda s: sorted(list(s))
 
 
 def _check_d2_on_path() -> None:
@@ -80,27 +83,55 @@ def create_topology_d2(graph: Graph, config: D2StylingConfig | None = None) -> s
     if config.theme:
         d2.append("direction: down")  # Default direction
 
-    # Nodes
+    def get_cluster(node: Graphable[Any]) -> str | None:
+        if not config.cluster_by_tag or not node.tags:
+            return None
+        sorted_tags = config.tag_sort_fnc(node.tags)
+        return sorted_tags[0] if sorted_tags else None
+
+    # Group nodes by cluster
+    clusters: dict[str | None, list[Graphable[Any]]] = {}
+    for node in graph.topological_order():
+        cluster = get_cluster(node)
+        if cluster not in clusters:
+            clusters[cluster] = []
+        clusters[cluster].append(node)
+
+    # Nodes (potentially within clusters)
+    for cluster_name, nodes in clusters.items():
+        indent = ""
+        if cluster_name:
+            d2.append(f"{cluster_name}: {{")
+            indent = "  "
+
+        for node in nodes:
+            node_ref = config.node_ref_fnc(node)
+            node_label = config.node_label_fnc(node)
+            d2.append(f"{indent}{node_ref}: {node_label}")
+
+            if config.node_style_fnc:
+                styles = config.node_style_fnc(node)
+                d2.extend(_format_styles(styles, indent=indent + "  "))
+
+        if cluster_name:
+            d2.append("}")
+
+    # Edges
     for node in graph.topological_order():
         node_ref = config.node_ref_fnc(node)
-        node_label = config.node_label_fnc(node)
-        d2.append(f"{node_ref}: {node_label}")
-
-        if config.node_style_fnc:
-            styles = config.node_style_fnc(node)
-            d2.extend(_format_styles(styles, indent="  "))
-
-        # Edges
-        for dependent in node.dependents:
-            dep_ref = config.node_ref_fnc(dependent)
-            edge_line = f"{node_ref} -> {dep_ref}"
+        for dependent, _ in graph.internal_dependents(node):
+            # If nodes are in clusters, D2 handles flat references or nested references.
+            # Usually, if IDs are unique, flat references work.
+            # But if we wanted to be explicit: cluster.node_ref
+            # For now, let's assume node_ref is globally unique (the default is reference string).
+            edge_line = f"{node_ref} -> {config.node_ref_fnc(dependent)}"
 
             if config.edge_style_fnc:
                 edge_styles = config.edge_style_fnc(node, dependent)
                 if edge_styles:
                     d2.append(f"{edge_line}: {{")
-                    d2.extend(_format_styles(edge_styles, indent="    "))
-                    d2.append("  }")
+                    d2.extend(_format_styles(edge_styles, indent="  "))
+                    d2.append("}")
                 else:
                     d2.append(edge_line)
             else:
@@ -109,6 +140,7 @@ def create_topology_d2(graph: Graph, config: D2StylingConfig | None = None) -> s
     return "\n".join(d2)
 
 
+@register_view(".d2", creator_fnc=create_topology_d2)
 def export_topology_d2(
     graph: Graph, output: Path, config: D2StylingConfig | None = None
 ) -> None:
@@ -125,20 +157,22 @@ def export_topology_d2(
         f.write(create_topology_d2(graph, config))
 
 
-def export_topology_d2_svg(
+@register_view([".svg", ".png"])
+def export_topology_d2_image(
     graph: Graph, output: Path, config: D2StylingConfig | None = None
 ) -> None:
     """
-    Export the graph to an SVG file using the 'd2' command.
+    Export the graph to an image file (SVG or PNG) using the 'd2' command.
 
     Args:
         graph (Graph): The graph to export.
         output (Path): The output file path.
         config (D2StylingConfig | None): Styling configuration.
     """
-    logger.info(f"Exporting D2 svg to: {output}")
+    logger.info(f"Exporting D2 image to: {output}")
     _check_d2_on_path()
 
+    p = Path(output)
     d2_content: str = create_topology_d2(graph, config)
 
     cmd = ["d2"]
@@ -147,7 +181,7 @@ def export_topology_d2_svg(
     if config and config.layout:
         cmd.extend(["--layout", config.layout])
 
-    cmd.extend(["-", str(output)])
+    cmd.extend(["-", str(p)])
 
     try:
         run(
@@ -158,10 +192,11 @@ def export_topology_d2_svg(
             stdout=PIPE,
             text=True,
         )
-        logger.info(f"Successfully exported SVG to {output}")
+        fmt = p.suffix[1:].upper()
+        logger.info(f"Successfully exported {fmt} to {output}")
     except CalledProcessError as e:
         logger.error(f"Error executing d2: {e.stderr}")
         raise
     except Exception as e:
-        logger.error(f"Failed to export SVG to {output}: {e}")
+        logger.error(f"Failed to export image to {output}: {e}")
         raise

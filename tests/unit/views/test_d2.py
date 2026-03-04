@@ -11,7 +11,7 @@ from graphable.views.d2 import (
     _check_d2_on_path,
     create_topology_d2,
     export_topology_d2,
-    export_topology_d2_svg,
+    export_topology_d2_image,
 )
 
 
@@ -81,13 +81,15 @@ class TestD2:
 
     @patch("graphable.views.d2.run")
     @patch("graphable.views.d2._check_d2_on_path")
-    def test_export_topology_d2_svg_success(self, mock_check, mock_run, graph_fixture):
+    def test_export_topology_d2_image_svg_success(
+        self, mock_check, mock_run, graph_fixture
+    ):
         g, _, _ = graph_fixture
         output_path = Path("output.svg")
 
         mock_run.return_value = MagicMock()
 
-        export_topology_d2_svg(g, output_path)
+        export_topology_d2_image(g, output_path)
 
         mock_check.assert_called_once()
         mock_run.assert_called_once()
@@ -97,7 +99,25 @@ class TestD2:
 
     @patch("graphable.views.d2.run")
     @patch("graphable.views.d2._check_d2_on_path")
-    def test_export_topology_d2_svg_with_config(
+    def test_export_topology_d2_image_png_success(
+        self, mock_check, mock_run, graph_fixture
+    ):
+        g, _, _ = graph_fixture
+        output_path = Path("output.png")
+
+        mock_run.return_value = MagicMock()
+
+        export_topology_d2_image(g, output_path)
+
+        mock_check.assert_called_once()
+        mock_run.assert_called_once()
+        args, kwargs = mock_run.call_args
+        assert "d2" == args[0][0]
+        assert str(output_path) in args[0]
+
+    @patch("graphable.views.d2.run")
+    @patch("graphable.views.d2._check_d2_on_path")
+    def test_export_topology_d2_image_with_config(
         self, mock_check, mock_run, graph_fixture
     ):
         g, _, _ = graph_fixture
@@ -106,7 +126,7 @@ class TestD2:
 
         mock_run.return_value = MagicMock()
 
-        export_topology_d2_svg(g, output_path, config)
+        export_topology_d2_image(g, output_path, config)
 
         mock_run.assert_called_once()
         args, kwargs = mock_run.call_args
@@ -118,18 +138,20 @@ class TestD2:
 
     @patch("graphable.views.d2.run")
     @patch("graphable.views.d2._check_d2_on_path")
-    def test_export_topology_d2_svg_failure(self, mock_check, mock_run, graph_fixture):
+    def test_export_topology_d2_image_failure(
+        self, mock_check, mock_run, graph_fixture
+    ):
         g, _, _ = graph_fixture
         output_path = Path("output.svg")
 
         mock_run.side_effect = CalledProcessError(1, "d2", stderr="error")
 
         with raises(CalledProcessError):
-            export_topology_d2_svg(g, output_path)
+            export_topology_d2_image(g, output_path)
 
     @patch("graphable.views.d2.run")
     @patch("graphable.views.d2._check_d2_on_path")
-    def test_export_topology_d2_svg_generic_exception(
+    def test_export_topology_d2_image_generic_exception(
         self, mock_check, mock_run, graph_fixture
     ):
         g, _, _ = graph_fixture
@@ -138,4 +160,30 @@ class TestD2:
         mock_run.side_effect = Exception("generic error")
 
         with raises(Exception):
-            export_topology_d2_svg(g, output_path)
+            export_topology_d2_image(g, output_path)
+
+    def test_create_topology_d2_clustering(self):
+        a = Graphable("A")
+        a.add_tag("group1")
+        b = Graphable("B")
+        b.add_tag("group1")
+        c = Graphable("C")
+        c.add_tag("group2")
+
+        g = Graph()
+        g.add_edge(a, b)
+        g.add_edge(b, c)
+
+        from graphable.views.d2 import D2StylingConfig
+
+        config = D2StylingConfig(cluster_by_tag=True)
+
+        d2 = create_topology_d2(g, config)
+
+        assert "group1: {" in d2
+        assert "group2: {" in d2
+        assert "A: A" in d2
+        assert "B: B" in d2
+        assert "C: C" in d2
+        assert "A -> B" in d2
+        assert "B -> C" in d2

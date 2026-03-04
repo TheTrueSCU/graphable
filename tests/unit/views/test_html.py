@@ -28,6 +28,8 @@ class TestHtml:
         assert "<!DOCTYPE html>" in html
         assert "cytoscape.min.js" in html
         assert "Graphable Visualization" in html
+        assert 'id="search"' in html
+        assert 'id="sidebar"' in html
         assert '"source": "A"' in html
         assert '"target": "B"' in html
 

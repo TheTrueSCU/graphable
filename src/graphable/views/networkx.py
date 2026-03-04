@@ -38,7 +38,7 @@ def to_networkx(graph: Graph):
         dg.add_node(str(node.reference), reference=node.reference, tags=list(node.tags))
 
         # Add edges
-        for dependent in node.dependents:
-            dg.add_edge(str(node.reference), str(dependent.reference))
+        for dependent, attrs in graph.internal_dependents(node):
+            dg.add_edge(str(node.reference), str(dependent.reference), **attrs)
 
     return dg

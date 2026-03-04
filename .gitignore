@@ -28,3 +28,6 @@ screenshots/
 # temp files
 tmp/
 *.swp
+
+# Security analysis
+.gemini_security/

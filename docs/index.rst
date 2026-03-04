@@ -10,7 +10,11 @@ A Python library for managing and visualizing dependency graphs.
    :caption: Contents:
 
    usage
+   examples_basic
+   examples_advanced
+   examples_parsers
    api
+   security
    reports
 
 Indices and tables

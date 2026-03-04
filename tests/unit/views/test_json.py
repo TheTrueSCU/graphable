@@ -1,4 +1,4 @@
-import json
+from json import loads
 from pathlib import Path
 from unittest.mock import mock_open, patch
 
@@ -26,7 +26,7 @@ class TestJSON:
     def test_create_topology_json_default(self, graph_fixture):
         g, a, b = graph_fixture
         json_str = create_topology_json(g)
-        data = json.loads(json_str)
+        data = loads(json_str)
 
         assert "nodes" in data
         assert "edges" in data
@@ -44,7 +44,7 @@ class TestJSON:
         g, a, b = graph_fixture
         config = JsonStylingConfig(node_data_fnc=lambda n: {"extra": True})
         json_str = create_topology_json(g, config=config)
-        data = json.loads(json_str)
+        data = loads(json_str)
 
         for node in data["nodes"]:
             assert node["extra"] is True

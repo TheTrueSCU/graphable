@@ -7,6 +7,7 @@ from typing import Any, Callable
 
 from ..graph import Graph
 from ..graphable import Graphable
+from ..registry import register_view
 
 logger = getLogger(__name__)
 
@@ -35,6 +36,8 @@ class GraphvizStylingConfig:
     graph_attr: dict[str, str] | None = None
     node_attr_default: dict[str, str] | None = None
     edge_attr_default: dict[str, str] | None = None
+    cluster_by_tag: bool = False
+    tag_sort_fnc: Callable[[set[str]], list[str]] = lambda s: sorted(list(s))
 
 
 def _check_dot_on_path() -> None:
@@ -47,11 +50,16 @@ def _check_dot_on_path() -> None:
         )
 
 
+def _escape_dot_string(s: str) -> str:
+    """Escape double quotes and backslashes for DOT strings."""
+    return s.replace("\\", "\\\\").replace('"', '\\"')
+
+
 def _format_attrs(attrs: dict[str, str] | None) -> str:
     """Format a dictionary of attributes into a DOT attribute string."""
     if not attrs:
         return ""
-    parts = [f'{k}="{v}"' for k, v in attrs.items()]
+    parts = [f'{k}="{_escape_dot_string(v)}"' for k, v in attrs.items()]
     return f" [{', '.join(parts)}]"
 
 
@@ -74,7 +82,7 @@ def create_topology_graphviz_dot(
     # Global attributes
     if config.graph_attr:
         for k, v in config.graph_attr.items():
-            dot.append(f'    {k}="{v}";')
+            dot.append(f'    {k}="{_escape_dot_string(v)}";')
 
     if config.node_attr_default:
         dot.append(f"    node{_format_attrs(config.node_attr_default)};")
@@ -82,17 +90,45 @@ def create_topology_graphviz_dot(
     if config.edge_attr_default:
         dot.append(f"    edge{_format_attrs(config.edge_attr_default)};")
 
-    # Nodes and Edges
+    def get_cluster(node: Graphable[Any]) -> str | None:
+        if not config.cluster_by_tag or not node.tags:
+            return None
+        sorted_tags = config.tag_sort_fnc(node.tags)
+        return sorted_tags[0] if sorted_tags else None
+
+    # Group nodes by cluster
+    clusters: dict[str | None, list[Graphable[Any]]] = {}
     for node in graph.topological_order():
-        node_ref = config.node_ref_fnc(node)
-        node_attrs = {"label": config.node_label_fnc(node)}
-        if config.node_attr_fnc:
-            node_attrs.update(config.node_attr_fnc(node))
+        cluster = get_cluster(node)
+        if cluster not in clusters:
+            clusters[cluster] = []
+        clusters[cluster].append(node)
 
-        dot.append(f'    "{node_ref}"{_format_attrs(node_attrs)};')
+    # Nodes (potentially within clusters)
+    for cluster_name, nodes in clusters.items():
+        indent = "    "
+        if cluster_name:
+            safe_cluster = _escape_dot_string(cluster_name)
+            dot.append(f'    subgraph "cluster_{safe_cluster}" {{')
+            dot.append(f'        label="{safe_cluster}";')
+            indent = "        "
 
-        for dependent in node.dependents:
-            dep_ref = config.node_ref_fnc(dependent)
+        for node in nodes:
+            node_ref = _escape_dot_string(config.node_ref_fnc(node))
+            node_attrs = {"label": config.node_label_fnc(node)}
+            if config.node_attr_fnc:
+                node_attrs.update(config.node_attr_fnc(node))
+
+            dot.append(f'{indent}"{node_ref}"{_format_attrs(node_attrs)};')
+
+        if cluster_name:
+            dot.append("    }")
+
+    # Edges
+    for node in graph.topological_order():
+        node_ref = _escape_dot_string(config.node_ref_fnc(node))
+        for dependent, attrs in graph.internal_dependents(node):
+            dep_ref = _escape_dot_string(config.node_ref_fnc(dependent))
             edge_attrs = {}
             if config.edge_attr_fnc:
                 edge_attrs.update(config.edge_attr_fnc(node, dependent))
@@ -103,6 +139,7 @@ def create_topology_graphviz_dot(
     return "\n".join(dot)
 
 
+@register_view([".dot", ".gv"], creator_fnc=create_topology_graphviz_dot)
 def export_topology_graphviz_dot(
     graph: Graph, output: Path, config: GraphvizStylingConfig | None = None
 ) -> None:
@@ -119,35 +156,40 @@ def export_topology_graphviz_dot(
         f.write(create_topology_graphviz_dot(graph, config))
 
 
-def export_topology_graphviz_svg(
+@register_view([".svg", ".png"])
+def export_topology_graphviz_image(
     graph: Graph, output: Path, config: GraphvizStylingConfig | None = None
 ) -> None:
     """
-    Export the graph to an SVG file using the 'dot' command.
+    Export the graph to an image file (SVG or PNG) using the 'dot' command.
 
     Args:
         graph (Graph): The graph to export.
         output (Path): The output file path.
         config (GraphvizStylingConfig | None): Styling configuration.
     """
-    logger.info(f"Exporting graphviz svg to: {output}")
+    logger.info(f"Exporting graphviz image to: {output}")
     _check_dot_on_path()
 
+    p = Path(output)
     dot_content: str = create_topology_graphviz_dot(graph, config)
+
+    # Extension without dot
+    fmt = p.suffix[1:].lower()
 
     try:
         run(
-            ["dot", "-Tsvg", "-o", str(output)],
+            ["dot", f"-T{fmt}", "-o", str(p)],
             input=dot_content,
             check=True,
             stderr=PIPE,
             stdout=PIPE,
             text=True,
         )
-        logger.info(f"Successfully exported SVG to {output}")
+        logger.info(f"Successfully exported {fmt.upper()} to {output}")
     except CalledProcessError as e:
         logger.error(f"Error executing dot: {e.stderr}")
         raise
     except Exception as e:
-        logger.error(f"Failed to export SVG to {output}: {e}")
+        logger.error(f"Failed to export {fmt.upper()} to {output}: {e}")
         raise

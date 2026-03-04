@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 from pytest import raises
 
 from graphable.errors import GraphCycleError
@@ -236,3 +238,111 @@ class TestGraphable:
 
         a.add_dependent(a)
         assert a.find_path(a) == [a, a]
+
+    def test_ordering(self):
+        a = Graphable("A")
+        b = Graphable("B")
+        c = Graphable("C")
+
+        a.add_dependent(b)
+        b.add_dependent(c)
+
+        # A is ancestor of B and C
+        # B is ancestor of C
+        assert a < b
+        assert b < c
+        assert a < c
+
+        assert c > b
+        assert b > a
+        assert c > a
+
+        assert a <= b
+        assert a <= a
+
+        assert c >= b
+        assert c >= c
+
+        # Incomparable nodes
+        d = Graphable("D")
+        assert not (a < d)
+        assert not (d < a)
+        assert not (a > d)
+        assert not (d > a)
+
+        # Equality
+        assert a == a
+        assert a != b
+        assert not (a == b)
+
+    def test_total_ordering_decorator(self):
+        # Verify that functools.total_ordering filled in the rest
+        a = Graphable("A")
+        b = Graphable("B")
+        a.add_dependent(b)
+
+        assert a <= b  # Should be True
+        assert b >= a  # Should be True
+        assert b > a  # Should be True
+
+    def test_edge_attributes(self):
+        a = Graphable("A")
+        b = Graphable("B")
+        a.add_dependent(b, weight=10, label="primary")
+
+        assert a.edge_attributes(b)["weight"] == 10
+        assert a.edge_attributes(b)["label"] == "primary"
+        assert b.edge_attributes(a)["weight"] == 10
+
+        # Test updating attribute
+        a.set_edge_attribute(b, "weight", 20)
+        assert b.edge_attributes(a)["weight"] == 20
+
+    def test_node_duration_and_status(self):
+        a = Graphable("A")
+        assert a.duration == 0.0
+        assert a.status == "pending"
+
+        a.duration = 5.0
+        a.status = "running"
+        assert a.duration == 5.0
+        assert a.status == "running"
+
+    def test_comparison_not_implemented(self):
+        a = Graphable("A")
+        with raises(TypeError):
+            _ = a < 5
+        with raises(TypeError):
+            _ = a <= 5
+        with raises(TypeError):
+            _ = a > 5
+        with raises(TypeError):
+            _ = a >= 5
+
+    def test_edge_attributes_key_error(self):
+        a = Graphable("A")
+        b = Graphable("B")
+        with raises(KeyError, match="No edge between"):
+            a.edge_attributes(b)
+
+    def test_set_edge_attribute_upstream(self):
+        a = Graphable("A")
+        b = Graphable("B")
+        b.add_dependency(a)
+
+        # Set attribute from descendant to ancestor (upstream)
+        b.set_edge_attribute(a, "label", "upstream")
+        assert b.edge_attributes(a)["label"] == "upstream"
+        assert a.edge_attributes(b)["label"] == "upstream"
+
+    def test_set_edge_attribute_key_error(self):
+        a = Graphable("A")
+        b = Graphable("B")
+        with raises(KeyError, match="No edge between"):
+            a.set_edge_attribute(b, "key", "val")
+
+    def test_observer_discard_not_present(self):
+        a = Graphable("A")
+        mock_observer = MagicMock()
+        # Should not raise
+        a._unregister_observer(mock_observer)

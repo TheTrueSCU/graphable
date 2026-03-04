@@ -7,6 +7,7 @@ from xml.dom import minidom
 
 from ..graph import Graph
 from ..graphable import Graphable
+from ..registry import register_view
 
 logger = getLogger(__name__)
 
@@ -78,7 +79,7 @@ def create_topology_graphml(
             data_elem.text = ",".join(node.tags)
 
         # Edges
-        for dependent in node.dependents:
+        for dependent, _ in graph.internal_dependents(node):
             dep_id = config.node_ref_fnc(dependent)
             ET.SubElement(
                 graph_elem,
@@ -96,6 +97,7 @@ def create_topology_graphml(
     return parsed_xml.toprettyxml(indent="  ")
 
 
+@register_view(".graphml", creator_fnc=create_topology_graphml)
 def export_topology_graphml(
     graph: Graph, output: Path, config: GraphmlStylingConfig | None = None
 ) -> None:

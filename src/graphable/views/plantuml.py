@@ -7,6 +7,7 @@ from typing import Any, Callable
 
 from ..graph import Graph
 from ..graphable import Graphable
+from ..registry import register_view
 
 logger = getLogger(__name__)
 
@@ -27,6 +28,8 @@ class PlantUmlStylingConfig:
     node_label_fnc: Callable[[Graphable[Any]], str] = lambda n: str(n.reference)
     node_type: str = "node"
     direction: str = "top to bottom direction"
+    cluster_by_tag: bool = False
+    tag_sort_fnc: Callable[[set[str]], list[str]] = lambda s: sorted(list(s))
 
 
 def _check_plantuml_on_path() -> None:
@@ -55,16 +58,39 @@ def create_topology_plantuml(
     config = config or PlantUmlStylingConfig()
     puml: list[str] = ["@startuml", f"{config.direction}"]
 
-    # Nodes
+    def get_cluster(node: Graphable[Any]) -> str | None:
+        if not config.cluster_by_tag or not node.tags:
+            return None
+        sorted_tags = config.tag_sort_fnc(node.tags)
+        return sorted_tags[0] if sorted_tags else None
+
+    # Group nodes by cluster
+    clusters: dict[str | None, list[Graphable[Any]]] = {}
     for node in graph.topological_order():
-        node_ref = config.node_ref_fnc(node)
-        node_label = config.node_label_fnc(node)
-        puml.append(f'{config.node_type} "{node_label}" as {node_ref}')
+        cluster = get_cluster(node)
+        if cluster not in clusters:
+            clusters[cluster] = []
+        clusters[cluster].append(node)
+
+    # Nodes (potentially within clusters)
+    for cluster_name, nodes in clusters.items():
+        indent = ""
+        if cluster_name:
+            puml.append(f'package "{cluster_name}" {{')
+            indent = "  "
+
+        for node in nodes:
+            node_ref = config.node_ref_fnc(node)
+            node_label = config.node_label_fnc(node)
+            puml.append(f'{indent}{config.node_type} "{node_label}" as {node_ref}')
+
+        if cluster_name:
+            puml.append("}")
 
     # Edges
     for node in graph.topological_order():
         node_ref = config.node_ref_fnc(node)
-        for dependent in node.dependents:
+        for dependent, _ in graph.internal_dependents(node):
             dep_ref = config.node_ref_fnc(dependent)
             puml.append(f"{node_ref} --> {dep_ref}")
 
@@ -72,6 +98,7 @@ def create_topology_plantuml(
     return "\n".join(puml)
 
 
+@register_view(".puml", creator_fnc=create_topology_plantuml)
 def export_topology_plantuml(
     graph: Graph, output: Path, config: PlantUmlStylingConfig | None = None
 ) -> None:
@@ -88,35 +115,39 @@ def export_topology_plantuml(
         f.write(create_topology_plantuml(graph, config))
 
 
-def export_topology_plantuml_svg(
+@register_view([".svg", ".png"])
+def export_topology_plantuml_image(
     graph: Graph, output: Path, config: PlantUmlStylingConfig | None = None
 ) -> None:
     """
-    Export the graph to an SVG file using the 'plantuml' command.
+    Export the graph to an image file (SVG or PNG) using the 'plantuml' command.
 
     Args:
         graph (Graph): The graph to export.
         output (Path): The output file path.
-        config (PlantUMLStylingConfig | None): Styling configuration.
+        config (PlantUmlStylingConfig | None): Styling configuration.
     """
-    logger.info(f"Exporting PlantUML svg to: {output}")
+    logger.info(f"Exporting PlantUML image to: {output}")
     _check_plantuml_on_path()
 
+    p = Path(output)
     puml_content: str = create_topology_plantuml(graph, config)
+
+    fmt = p.suffix[1:].lower()
 
     try:
         run(
-            ["plantuml", "-tsvg", "-p"],
+            ["plantuml", f"-t{fmt}", "-p"],
             input=puml_content,
             check=True,
             stderr=PIPE,
-            stdout=open(output, "wb"),
+            stdout=open(p, "wb"),
             text=True,
         )
-        logger.info(f"Successfully exported SVG to {output}")
+        logger.info(f"Successfully exported {fmt.upper()} to {output}")
     except CalledProcessError as e:
         logger.error(f"Error executing plantuml: {e.stderr}")
         raise
     except Exception as e:
-        logger.error(f"Failed to export SVG to {output}: {e}")
+        logger.error(f"Failed to export {fmt.upper()} to {output}: {e}")
         raise
