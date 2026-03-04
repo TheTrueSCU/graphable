@@ -22,15 +22,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@eef61427696e92600c02884c12c84b55296d527b # v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Install uv
-        uses: astral-sh/setup-uv@f986551039737c51bdec33ef4f453f3d35fa28d5 # v5
+        uses: astral-sh/setup-uv@4db96194c378173c656ce18a155ffc14a9fc4355 # v5.2.2
         with:
           enable-cache: true
 
       - name: Set up Python
-        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fbbbd4ee # v5
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
         with:
           python-version-file: ".python-version"
 
@@ -38,7 +38,7 @@ jobs:
         uses: extractions/setup-just@dd310ad5a97d8e7b41793f8ef055398d51ad4de6 # v2
 
       - name: Set up Node.js
-        uses: actions/setup-node@39225597fd64c39d91223a498993f7734fdec560 # v4
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
           node-version: "lts/*"
 
@@ -66,7 +66,7 @@ jobs:
           touch docs/_build/html/.nojekyll
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@25357303d001614207908c691f1a50a11e74f9d0 # v3
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
         with:
           path: docs/_build/html
 
