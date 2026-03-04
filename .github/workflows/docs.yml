@@ -66,7 +66,7 @@ jobs:
           touch docs/_build/html/.nojekyll
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@25357303d001614207908c691f1a50a11e74f9d0 # v3
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
         with:
           path: docs/_build/html
 
