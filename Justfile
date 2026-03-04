@@ -92,7 +92,7 @@ check: lint typing coverage
 [group('run')]
 pr title body="":
     just check
-    gh pr create --title "{{ title }}" --body "{{ body }}"
+    gh pr create --repo TheTrueSCU/graphable --title "{{ title }}" --body "{{ body }}"
 
 @coverage *args:
     just test --cov=. --cov-fail-under=95 --cov-report html --cov-report term-missing:skip-covered {{ args }}
