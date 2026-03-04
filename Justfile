@@ -1,7 +1,7 @@
 set dotenv-load
 
-GIT_BRANCH:=`git branch --show-current`
-GIT_COMMIT:=`git rev-parse HEAD`
+GIT_BRANCH:=`git branch --show-current || echo "unknown"`
+GIT_COMMIT:=`git rev-parse HEAD || echo "unknown"`
 
 @_:
     just --list
