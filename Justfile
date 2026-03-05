@@ -91,9 +91,15 @@ check: lint typing coverage
 
 [group('run')]
 pr title body="":
+    #!/usr/bin/env bash
+    CURRENT_BRANCH=$(git branch --show-current)
+    if [ "$CURRENT_BRANCH" == "main" ]; then
+        echo "Error: You are on the 'main' branch. Please create a feature branch first!"
+        exit 1
+    fi
     just check
     git push
-    gh pr create --repo TheTrueSCU/graphable --head $(git branch --show-current) --title "{{ title }}" --body "{{ body }}"
+    gh pr create --repo TheTrueSCU/graphable --head "$CURRENT_BRANCH" --title "{{ title }}" --body "{{ body }}"
 
 @coverage *args:
     just test --cov=. --cov-fail-under=95 --cov-report html --cov-report term-missing:skip-covered {{ args }}
