@@ -98,7 +98,7 @@ pr title body="":
         exit 1
     fi
     just check
-    git push
+    git push -u origin "$CURRENT_BRANCH"
     gh pr create --repo TheTrueSCU/graphable --head "$CURRENT_BRANCH" --title "{{ title }}" --body "{{ body }}"
 
 @coverage *args:
