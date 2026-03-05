@@ -5,4 +5,4 @@
 - Always execute `just check` before committing any changes to ensure linting, typing, and coverage standards are met.
 - Always execute `just lint` after finishing code changes and address any issues flagged.
 - Do not use `pip` or `venv` directly; use `uv` for all environment management.
-- Do not stage or commit any changes
+- Do not stage or commit any changes unless explicitly instructed. When instructed to commit or push changes, you MUST first create a new feature branch and then execute `just pr <title> [body]` to prepare the pull request. If a pull request already exists for the current feature branch, push your updates to the same branch instead of creating a new pull request.
