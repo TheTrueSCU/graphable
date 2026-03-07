@@ -43,7 +43,7 @@ docs-git-graph:
     #!/usr/bin/env bash
     mkdir -p docs/_extra/git-graph
     if [ ! -f docs/_extra/git-graph/index.html ]; then
-        uv run git-graphable analyze . --engine html --output docs/_extra/git-graph/index.html --hygiene-output docs/_extra/git-graph/hygiene.json --production-branch main --highlight-critical --highlight-pr-status --highlight-direct-pushes --highlight-squashed --highlight-back-merges --highlight-silos
+        uv run git-graphable --bare analyze . --engine html --output docs/_extra/git-graph/index.html --hygiene-output docs/_extra/git-graph/hygiene.json --production-branch main --highlight-critical --highlight-pr-status --highlight-direct-pushes --highlight-squashed --highlight-back-merges --highlight-silos
     else
         echo "Git hygiene report already exists at docs/_extra/git-graph/index.html, skipping generation."
     fi

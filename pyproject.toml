@@ -70,5 +70,8 @@ dev = [
     "ty>=0.0.12",
     "uvicorn>=0.40.0",
     "watchfiles>=1.1.1",
-    "git-graphable>=0.5.0",
+    "git-graphable @ git+https://github.com/TheTrueSCU/git-graphable.git@v0.6.0",
 ]
+
+[tool.uv.sources]
+git-graphable = { git = "https://github.com/TheTrueSCU/git-graphable.git" }
