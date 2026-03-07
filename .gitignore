@@ -31,3 +31,5 @@ tmp/
 
 # Security analysis
 .gemini_security/
+docs/coverage.json
+docs/hygiene_badge.json

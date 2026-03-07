@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/TheTrueSCU/graphable/actions/workflows/ci.yml/badge.svg)](https://github.com/TheTrueSCU/graphable/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Coverage](https://img.shields.io/endpoint?url=https://thetruescu.github.io/graphable/coverage.json)](https://thetruescu.github.io/graphable/_extra/coverage/)
+[![Hygiene](https://img.shields.io/endpoint?url=https://thetruescu.github.io/graphable/hygiene_badge.json)](https://thetruescu.github.io/graphable/_extra/git-graph/)
 
 `graphable` is a lightweight, type-safe Python library for building, managing, and visualizing dependency graphs. It provides a simple API for defining nodes and their relationships, performing topological sorts, and exporting graphs to various formats like Mermaid, Graphviz, and ASCII text trees.
 
