@@ -32,6 +32,7 @@
 - **Unified I/O:** Easy `Graph.read()` and `graph.write()` methods with automatic format detection.
 - **Parsing:** Reconstruct graphs from JSON, YAML, TOML, CSV, or GraphML files and strings.
 - **Clustering:** Group nodes into subgraphs/clusters in visualizations based on tags.
+- **Git Hygiene:** Automatically analyze and visualize repository health with `git-graphable`.
 - **Visualizations:**
     - **Mermaid:** Generate flowchart definitions or export directly to SVG. Supports clustering and color-coded diffs.
     - **Graphviz:** Generate DOT definitions or export to SVG with custom styling. Supports clustering.
@@ -427,9 +428,10 @@ If you discover a vulnerability, please report it via email to the maintainer.
 This project uses `uv` for dependency management and `just` as a command runner.
 
 ```bash
-just install    # Install dependencies
-just check      # Run linting, type checking, and tests
-just coverage   # Run tests with coverage report
+just install         # Install dependencies
+just check           # Run linting, type checking, and tests
+just coverage        # Run tests with coverage report
+just docs-git-graph  # Generate git hygiene report
 ```
 
 ## License
