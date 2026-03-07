@@ -41,9 +41,9 @@ docs-usage:
 [group('docs')]
 docs-git-graph:
     #!/usr/bin/env bash
+    mkdir -p docs/_extra/git-graph
     if [ ! -f docs/_extra/git-graph/index.html ]; then
-        mkdir -p docs/_extra/git-graph
-        uv run git-graphable analyze . --engine html --output docs/_extra/git-graph/index.html --production-branch main --highlight-critical --highlight-pr-status --highlight-direct-pushes --highlight-squashed --highlight-back-merges --highlight-silos
+        uv run git-graphable analyze . --engine html --output docs/_extra/git-graph/index.html --hygiene-output docs/_extra/git-graph/hygiene.json --production-branch main --highlight-critical --highlight-pr-status --highlight-direct-pushes --highlight-squashed --highlight-back-merges --highlight-silos
     else
         echo "Git hygiene report already exists at docs/_extra/git-graph/index.html, skipping generation."
     fi
@@ -56,13 +56,26 @@ docs: docs-examples docs-usage docs-git-graph
         echo "Including coverage report..."
         rm -rf docs/_extra/coverage
         cp -r htmlcov docs/_extra/coverage
+        # Generate coverage badge JSON
+        COVERAGE=$(grep -oP 'pc_cov">\d+%' htmlcov/index.html | head -1 | grep -oP '\d+')
+        echo "{\"schemaVersion\": 1, \"label\": \"coverage\", \"message\": \"$COVERAGE%\", \"color\": \"brightgreen\"}" > docs/coverage.json
     fi
     if [ -d "htmlrep" ]; then
         echo "Including test report..."
         rm -rf docs/_extra/tests
         cp -r htmlrep docs/_extra/tests
     fi
+    # Generate hygiene badge JSON if hygiene.json exists
+    if [ -f docs/_extra/git-graph/hygiene.json ]; then
+        SCORE=$(grep -oP '"score": \K\d+(\.\d+)?' docs/_extra/git-graph/hygiene.json | head -1)
+        GRADE=$(grep -oP '"grade": "\K[^"]+' docs/_extra/git-graph/hygiene.json | head -1)
+        COLOR=$(grep -oP '"color": "\K[^"]+' docs/_extra/git-graph/hygiene.json | head -1)
+        echo "{\"schemaVersion\": 1, \"label\": \"hygiene\", \"message\": \"$SCORE% ($GRADE)\", \"color\": \"$COLOR\"}" > docs/hygiene_badge.json
+    fi
     uv run sphinx-build -b html docs docs/_build/html
+    # Ensure badges are in the root of the built documentation for GitHub Pages
+    cp docs/coverage.json docs/_build/html/ 2>/dev/null || true
+    cp docs/hygiene_badge.json docs/_build/html/ 2>/dev/null || true
 
 [group('docs')]
 docs-view mode="local":

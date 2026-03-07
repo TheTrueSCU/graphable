@@ -27,7 +27,7 @@ jobs:
           fetch-depth: 0
 
       - name: Git Graphable
-        uses: TheTrueSCU/git-graphable@v0.5.0
+        uses: TheTrueSCU/git-graphable@v0.6.0
         with:
           production_branch: 'main'
           output_dir: 'docs/_extra/git-graph'
