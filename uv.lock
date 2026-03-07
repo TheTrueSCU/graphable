@@ -346,6 +346,18 @@ wheels = [
 ]
 
 [[package]]
+name = "git-graphable"
+version = "0.5.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "graphable" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/4f/7e/c3cff5fd7b1f3dc52ed906659ae020b706817be2988dd4a7bb1c55a96a5a/git_graphable-0.5.0.tar.gz", hash = "sha256:85cc2bf72ad922eb52bc91c28371be8340a2639d14cb36d1dbbb6b9355864f0c", size = 197195, upload-time = "2026-03-06T20:27:39.594Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0a/be/099b0c9637b6a2d57688d3a6afbf21765829a6a9819fd1f61e826ba095a6/git_graphable-0.5.0-py3-none-any.whl", hash = "sha256:ee5d20bef9a81524b139719a1f28690c9c760078075d05d36887f1074b32c311", size = 39305, upload-time = "2026-03-06T20:27:38.561Z" },
+]
+
+[[package]]
 name = "graphable"
 version = "0.6.1"
 source = { editable = "." }
@@ -374,6 +386,7 @@ yaml = [
 [package.dev-dependencies]
 dev = [
     { name = "furo" },
+    { name = "git-graphable" },
     { name = "networkx" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -416,6 +429,7 @@ provides-extras = ["networkx", "yaml", "toml", "cli"]
 [package.metadata.requires-dev]
 dev = [
     { name = "furo", specifier = ">=2025.12.19" },
+    { name = "git-graphable", specifier = ">=0.5.0" },
     { name = "networkx", specifier = ">=3.6.1" },
     { name = "pytest", specifier = ">=9.0.2" },
     { name = "pytest-cov", specifier = ">=7.0.0" },

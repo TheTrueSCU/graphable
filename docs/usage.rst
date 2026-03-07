@@ -412,14 +412,34 @@ To get the full experience with formatted tables and panels, install the ``cli``
 *   **``checksum <file>``**: Prints the graph checksum.
 *   **``write-checksum <file> <output>``**: Writes the graph checksum to a file.
 *   **``verify <file> [--expected hash]``**: Verifies integrity.
-
-**CI/CD and Automation**
+CI/CD and Automation
+^^^^^^^^^^^^^^^^^^^^
 
 If you are using ``graphable`` in a script or CI/CD pipeline and want to ensure plain-text output regardless of installed dependencies, use the ``--bare`` flag before the subcommand:
 
 .. code-block:: bash
 
    graphable --bare info topology.json
+
+Git Hygiene
+^^^^^^^^^^^
+
+The ``graphable`` project itself uses its child project, `git-graphable <https://github.com/TheTrueSCU/git-graphable>`_, to analyze its own repository health and history.
+
+The project's CI pipeline automatically generates a Git Hygiene Report for every build. This report includes:
+
+*   **Hygiene Score**: A numeric grade reflecting commit health and workflow consistency.
+*   **Workflow Patterns**: Identification of direct pushes to main, WIP commits, and contributor silos.
+*   **Interactive History**: A visual, searchable graph of the repository's entire commit history.
+
+You can view the latest report here: :doc:`reports`
+
+To generate this report locally, use the ``just`` command:
+
+.. code-block:: bash
+
+   just docs-git-graph
+
 
 **Supported Extensions**
 
