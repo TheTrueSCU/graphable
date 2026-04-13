@@ -315,7 +315,7 @@ print(d2)
 print(f"Nodes: {len(g)}")
 if "Database" in g:
     node = g["Database"]
-    
+
 for node in g:  # Iterates in topological order
     print(node.reference)
 ```
@@ -383,7 +383,7 @@ Nodes support comparison based on reachability:
 ```python
 if db < api:
     print("Database is an ancestor of API")
-    
+
 if ui > api:
     print("UI is a descendant of API")
 ```

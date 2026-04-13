@@ -15,7 +15,7 @@ This track aims to bring the `graphable` project up to its defined quality stand
 - **Testing Standard:** Follow the existing TDD workflow, writing tests in `tests/unit/` that mirror the source structure.
 
 ### 2. Documentation Update
-- **API Reference:** 
+- **API Reference:**
     - Audit all public modules, classes, and methods for accurate and complete Google-style docstrings.
     - Ensure Sphinx correctly generates the API reference in `docs/api.rst`.
 - **User Guides:**

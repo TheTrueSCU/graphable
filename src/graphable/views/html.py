@@ -190,9 +190,9 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
         function openSidebar(node) {{
             var data = node.data();
             var content = '<h3>' + data.label + '</h3>';
-            
+
             content += '<div class="metadata-item"><span class="metadata-label">ID</span>' + data.id + '</div>';
-            
+
             if (data.tags && data.tags.length > 0) {{
                 content += '<div class="metadata-item"><span class="metadata-label">Tags</span>';
                 data.tags.forEach(function(tag) {{
@@ -200,11 +200,11 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
                 }});
                 content += '</div>';
             }}
-            
+
             if (data.duration !== undefined) {{
                 content += '<div class="metadata-item"><span class="metadata-label">Duration</span>' + data.duration + 's</div>';
             }}
-            
+
             if (data.status) {{
                 content += '<div class="metadata-item"><span class="metadata-label">Status</span>' + data.status + '</div>';
             }}
