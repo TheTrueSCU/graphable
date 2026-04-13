@@ -28,7 +28,7 @@ We treat all external input as untrusted and apply strict sanitization and valid
 ## Recent Hardening
 
 ### v0.6.1 (Current)
-*   **Repository Hardening**: 
+*   **Repository Hardening**:
     *   All GitHub Actions are now pinned to SHA-1 hashes to prevent supply chain attacks.
     *   CI workflows have been updated with explicit `permissions` to follow the principle of least privilege.
     *   Dependabot is configured to provide automated security updates for Actions and Python dependencies.

@@ -8,6 +8,7 @@ wheels/
 
 # QA files
 .coverage
+.hypothesis/
 .pytest_cache/
 .pytest_worker_jsons/
 .ruff_cache/

@@ -62,14 +62,14 @@ jobs:
       - name: Build documentation
         run: |
           uv sync
-          
+
           # Generate coverage and test reports for inclusion in the documentation
           # We use '|| true' because we want the docs even if coverage is below the threshold
           just coverage || echo "Coverage threshold not met, but proceeding with documentation build."
-          
+
           # Build the documentation (including example SVGs)
           just docs
-          
+
           # Ensure .nojekyll exists so GitHub Pages doesn't ignore files starting with underscore
           touch docs/_build/html/.nojekyll
 

@@ -144,6 +144,10 @@ lint:
     uv run ruff check --fix
 
 [group('qa')]
+@pre-commit:
+    uv run pre-commit run --all-files
+
+[group('qa')]
 @test *args:
     uv run -m pytest --git-branch {{ GIT_BRANCH }} --git-commit {{ GIT_COMMIT }} --html-output htmlrep -n auto --should-open-report never {{ args }}
 
@@ -157,4 +161,3 @@ typing:
 
 demo:
     uv run examples/basic_usage.py --mermaid-svg --graphviz-svg --d2-svg --puml-svg --output-dir examples_output
-

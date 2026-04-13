@@ -8,7 +8,7 @@ This track introduces support for exporting graphs as PNG images across all supp
 - **Supported Formats:** Support `.png` and `.svg` output extensions.
 - **Engine Selection:** Add an `--engine` (or `-e`) flag to specify the visualization engine (`mermaid`, `graphviz`, `d2`, `plantuml`).
 - **Auto-Detection:** If no engine is specified, auto-detect based on system availability with priority: Mermaid -> Graphviz -> D2 -> PlantUML.
-- **PNG Support:** 
+- **PNG Support:**
     - **Mermaid:** Use `mmdc` with the `-o` flag pointing to a `.png` file.
     - **Graphviz:** Use `dot -Tpng`.
     - **D2:** Use `d2` CLI which supports PNG natively.

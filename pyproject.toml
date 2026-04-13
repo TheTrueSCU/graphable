@@ -70,8 +70,19 @@ dev = [
     "ty>=0.0.12",
     "uvicorn>=0.40.0",
     "watchfiles>=1.1.1",
-    "git-graphable @ git+https://github.com/TheTrueSCU/git-graphable.git@v0.6.0",
+    "git-graphable @ git+https://github.com/TheTrueSCU/git-graphable.git@v0.7.0",
+    "hypothesis>=6.151.13",
+    "pre-commit>=4.5.1",
+    "python-semantic-release>=10.5.3",
 ]
 
 [tool.uv.sources]
 git-graphable = { git = "https://github.com/TheTrueSCU/git-graphable.git" }
+
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+build_command = "uv build"
+branch = "main"
+upload_to_pypi = true
+upload_to_release = true
+major_on_zero = false

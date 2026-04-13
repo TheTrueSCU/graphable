@@ -421,24 +421,29 @@ If you are using ``graphable`` in a script or CI/CD pipeline and want to ensure 
 
    graphable --bare info topology.json
 
-Git Hygiene
-^^^^^^^^^^^
+Property-Based Testing
+^^^^^^^^^^^^^^^^^^^^^^
 
-The ``graphable`` project itself uses its child project, `git-graphable <https://github.com/TheTrueSCU/git-graphable>`_, to analyze its own repository health and history.
+``graphable`` uses `Hypothesis <https://hypothesis.readthedocs.io/>`_ for property-based testing. This allows us to verify graph invariants (such as structural consistency and clone isomorphism) against thousands of randomly generated edge cases.
 
-The project's CI pipeline automatically generates a Git Hygiene Report for every build. This report includes:
+**Testing Strategy**
 
-*   **Hygiene Score**: A numeric grade reflecting commit health and workflow consistency.
-*   **Workflow Patterns**: Identification of direct pushes to main, WIP commits, and contributor silos.
-*   **Interactive History**: A visual, searchable graph of the repository's entire commit history.
+We employ the following strategies to stress-test the graph engine:
+- **Graph Invariants**: Ensures that generated graphs maintain internal consistency (no orphaned nodes or broken dependency references).
+- **Clone Preservation**: Verifies that deep clones of graphs preserve structural integrity, tags, and attributes.
 
-You can view the latest report here: :doc:`reports`
+**Running Tests**
 
-To generate this report locally, use the ``just`` command:
+To run the property-based tests locally:
 
 .. code-block:: bash
 
-   just docs-git-graph
+   uv run pytest tests/hypothesis/
+
+During the Pull Request process, these tests are automatically executed by the CI pipeline to ensure that new code does not introduce regressions in edge-case handling.
+
+.. note::
+   Property-based testing reports are generated and linked in the :doc:`reports` page.
 
 
 **Supported Extensions**
