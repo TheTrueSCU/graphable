@@ -1,2 +1,38 @@
-# Ignore conductor directory
-/conductor/
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# QA files
+.coverage
+.hypothesis/
+.pytest_cache/
+.pytest_worker_jsons/
+.ruff_cache/
+examples_output/
+final_report.json
+htmlcov/
+htmlrep/
+plus_metadata.json
+report_output/
+screenshots/
+
+# Virtual environments
+.venv/
+
+# VS Code/Codium settings
+.vscode
+
+# temp files
+tmp/
+*.swp
+
+# Gemini
+.gemini/
+.gemini_security/
+conductor/
+docs/coverage.json
+docs/hygiene_badge.json
