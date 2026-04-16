@@ -5,7 +5,7 @@ from shutil import which
 from subprocess import PIPE, CalledProcessError, run
 from typing import Any, Callable
 
-from ..graph import Graph
+from ..graph_base import GraphBase
 from ..graphable import Graphable
 from ..registry import register_view
 
@@ -64,13 +64,13 @@ def _format_attrs(attrs: dict[str, str] | None) -> str:
 
 
 def create_topology_graphviz_dot(
-    graph: Graph, config: GraphvizStylingConfig | None = None
+    graph: GraphBase, config: GraphvizStylingConfig | None = None
 ) -> str:
     """
     Generate Graphviz DOT definition from a Graph.
 
     Args:
-        graph (Graph): The graph to convert.
+        graph (GraphBase): The graph to convert.
         config (GraphvizStylingConfig | None): Styling configuration.
 
     Returns:
@@ -98,7 +98,7 @@ def create_topology_graphviz_dot(
 
     # Group nodes by cluster
     clusters: dict[str | None, list[Graphable[Any]]] = {}
-    for node in graph.topological_order():
+    for node in graph:
         cluster = get_cluster(node)
         if cluster not in clusters:
             clusters[cluster] = []
@@ -125,7 +125,7 @@ def create_topology_graphviz_dot(
             dot.append("    }")
 
     # Edges
-    for node in graph.topological_order():
+    for node in graph:
         node_ref = _escape_dot_string(config.node_ref_fnc(node))
         for dependent, attrs in graph.internal_dependents(node):
             dep_ref = _escape_dot_string(config.node_ref_fnc(dependent))
@@ -141,13 +141,13 @@ def create_topology_graphviz_dot(
 
 @register_view([".dot", ".gv"], creator_fnc=create_topology_graphviz_dot)
 def export_topology_graphviz_dot(
-    graph: Graph, output: Path, config: GraphvizStylingConfig | None = None
+    graph: GraphBase, output: Path, config: GraphvizStylingConfig | None = None
 ) -> None:
     """
     Export the graph to a Graphviz .dot file.
 
     Args:
-        graph (Graph): The graph to export.
+        graph (GraphBase): The graph to export.
         output (Path): The output file path.
         config (GraphvizStylingConfig | None): Styling configuration.
     """
@@ -158,13 +158,13 @@ def export_topology_graphviz_dot(
 
 @register_view([".svg", ".png"])
 def export_topology_graphviz_image(
-    graph: Graph, output: Path, config: GraphvizStylingConfig | None = None
+    graph: GraphBase, output: Path, config: GraphvizStylingConfig | None = None
 ) -> None:
     """
     Export the graph to an image file (SVG or PNG) using the 'dot' command.
 
     Args:
-        graph (Graph): The graph to export.
+        graph (GraphBase): The graph to export.
         output (Path): The output file path.
         config (GraphvizStylingConfig | None): Styling configuration.
     """

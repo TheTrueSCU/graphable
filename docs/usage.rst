@@ -560,14 +560,13 @@ NetworkX Integration
 
 For users who need advanced graph analysis capabilities, ``graphable`` provides seamless integration with the `NetworkX <https://networkx.org/>`_ library.
 
-If you have ``networkx`` installed, you can convert any ``graphable.Graph`` to a ``networkx.DiGraph`` using the ``to_networkx()`` method:
+If you have ``networkx`` installed, you can convert any ``graphable.acyclic_graph.AcyclicGraph`` to a ``networkx.DiGraph`` using the ``to_networkx()`` method:
 
 .. code-block:: python
 
    import networkx as nx
-   from graphable.graph import Graph
+   from graphable.acyclic_graph import AcyclicGraph as Graph
    from graphable.graphable import Graphable
-
    g = Graph()
    # ... build your graph ...
 

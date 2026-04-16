@@ -1,13 +1,13 @@
 from logging import getLogger
 
-from ..graph import Graph
+from ..graph_base import GraphBase
 
 logger = getLogger(__name__)
 
 
-def to_networkx(graph: Graph):
+def to_networkx(graph: GraphBase):
     """
-    Convert a graphable.Graph to a networkx.DiGraph.
+    Convert a graphable.acyclic_graph.AcyclicGraph or graphable.cyclic_graph.CyclicGraph to a networkx.DiGraph.
     Requires 'networkx' to be installed.
 
     Args:
@@ -33,7 +33,7 @@ def to_networkx(graph: Graph):
     logger.debug("Converting graph to NetworkX DiGraph.")
     dg = nx.DiGraph()
 
-    for node in graph.topological_order():
+    for node in graph:
         # Add node with metadata
         dg.add_node(str(node.reference), reference=node.reference, tags=list(node.tags))
 

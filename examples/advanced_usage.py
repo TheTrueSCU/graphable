@@ -1,4 +1,4 @@
-from graphable.graph import Graph
+from graphable.acyclic_graph import AcyclicGraph as Graph
 from graphable.graphable import Graphable
 from graphable.views.mermaid import MermaidStylingConfig, create_topology_mermaid_mmd
 

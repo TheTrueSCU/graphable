@@ -1,4 +1,4 @@
-from graphable.graph import Graph
+from graphable.acyclic_graph import AcyclicGraph as Graph
 from graphable.views.texttree import create_topology_tree_txt
 
 

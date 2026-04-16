@@ -3,7 +3,7 @@ from logging import getLogger
 from pathlib import Path
 from typing import Any, Callable
 
-from ..graph import Graph
+from ..graph_base import GraphBase
 from ..graphable import Graphable
 from ..registry import register_view
 
@@ -30,12 +30,14 @@ class TikzStylingConfig:
     use_graphs_lib: bool = True
 
 
-def create_topology_tikz(graph: Graph, config: TikzStylingConfig | None = None) -> str:
+def create_topology_tikz(
+    graph: GraphBase, config: TikzStylingConfig | None = None
+) -> str:
     """
     Generate TikZ LaTeX code from a Graph.
 
     Args:
-        graph (Graph): The graph to convert.
+        graph (GraphBase): The graph to convert.
         config (TikzStylingConfig | None): Styling configuration.
 
     Returns:
@@ -49,7 +51,7 @@ def create_topology_tikz(graph: Graph, config: TikzStylingConfig | None = None) 
         lines.append("  \\graph [nodes={" + config.node_options + "}] {")
 
         # Define nodes and edges in graph syntax
-        for node in graph.topological_order():
+        for node in graph:
             node_ref = config.node_ref_fnc(node)
             node_label = config.node_label_fnc(node)
             # TikZ graph syntax: alias/Label
@@ -62,14 +64,14 @@ def create_topology_tikz(graph: Graph, config: TikzStylingConfig | None = None) 
         lines.append("  };")
     else:
         # Standard TikZ syntax (simplified placement)
-        for i, node in enumerate(graph.topological_order()):
+        for i, node in enumerate(graph):
             node_ref = config.node_ref_fnc(node)
             node_label = config.node_label_fnc(node)
             lines.append(
                 f"  \\node[{config.node_options}] ({node_ref}) at (0,{-i * 1.5}) {{{node_label}}};"
             )
 
-        for node in graph.topological_order():
+        for node in graph:
             node_ref = config.node_ref_fnc(node)
             for dependent, _ in graph.internal_dependents(node):
                 dep_ref = config.node_ref_fnc(dependent)
@@ -83,7 +85,7 @@ def create_topology_tikz(graph: Graph, config: TikzStylingConfig | None = None) 
 
 @register_view(".tex", creator_fnc=create_topology_tikz)
 def export_topology_tikz(
-    graph: Graph, output: Path, config: TikzStylingConfig | None = None
+    graph: GraphBase, output: Path, config: TikzStylingConfig | None = None
 ) -> None:
     """
     Export the graph to a TikZ (.tex) file.

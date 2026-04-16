@@ -1,6 +1,6 @@
 from json import load, loads
 
-from graphable.graph import Graph
+from graphable.acyclic_graph import AcyclicGraph as Graph
 from graphable.graphable import Graphable
 from graphable.registry import EXPORTERS
 from graphable.views.cytoscape import (

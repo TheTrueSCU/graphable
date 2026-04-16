@@ -1,4 +1,5 @@
-from graphable.graph import Graph, Graphable
+from graphable.acyclic_graph import AcyclicGraph as Graph
+from graphable.graphable import Graphable
 from graphable.parsers.yaml import load_graph_yaml
 from graphable.views.yaml import create_topology_yaml
 

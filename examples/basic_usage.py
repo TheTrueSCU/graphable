@@ -2,7 +2,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from graphable.graph import Graph
+from graphable.acyclic_graph import AcyclicGraph as Graph
 from graphable.graphable import Graphable
 from graphable.views.asciiflow import create_topology_ascii_flow
 from graphable.views.csv import create_topology_csv
@@ -149,12 +149,10 @@ def main():
 
     # Slicing
     upstream = g.upstream_of(ui)
-    print(f"Upstream of React: {[n.reference for n in upstream.topological_order()]}")
+    print(f"Upstream of React: {[n.reference for n in list(upstream)]}")
 
     between = g.subgraph_between(db, ui)
-    print(
-        f"Between Postgres and React: {[n.reference for n in between.topological_order()]}"
-    )
+    print(f"Between Postgres and React: {[n.reference for n in list(between)]}")
 
     # Transitive Closure
     closure = g.transitive_closure()

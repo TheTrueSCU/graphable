@@ -10,7 +10,7 @@ from subprocess import PIPE, CalledProcessError, run
 from tempfile import NamedTemporaryFile
 from typing import Any, Callable
 
-from ..graph import Graph
+from ..graph_base import GraphBase
 from ..graphable import Graphable
 from ..registry import register_view
 
@@ -127,13 +127,13 @@ def _escape_mermaid_string(s: str) -> str:
 
 
 def create_topology_mermaid_mmd(
-    graph: Graph, config: MermaidStylingConfig | None = None
+    graph: GraphBase, config: MermaidStylingConfig | None = None
 ) -> str:
     """
     Generate Mermaid flowchart definition from a Graph.
 
     Args:
-        graph (Graph): The graph to convert.
+        graph (GraphBase): The graph to convert.
         config (MermaidStylingConfig | None): Styling configuration.
 
     Returns:
@@ -161,7 +161,7 @@ def create_topology_mermaid_mmd(
 
     # Group nodes by cluster
     clusters: dict[str | None, list[Graphable[Any]]] = {}
-    for node in graph.topological_order():
+    for node in graph:
         cluster = get_cluster(node)
         if cluster not in clusters:
             clusters[cluster] = []
@@ -187,7 +187,7 @@ def create_topology_mermaid_mmd(
 
     # Render edges
     link_num: int = 0
-    for node in graph.topological_order():
+    for node in graph:
         node_ref = config.node_ref_fnc(node)
         for subnode, _ in graph.internal_dependents(node):
             subnode_ref = config.node_ref_fnc(subnode)
@@ -232,7 +232,7 @@ def _execute_build_script(build_script: Path) -> bool:
 
 @register_view(".mmd", creator_fnc=create_topology_mermaid_mmd)
 def export_topology_mermaid_mmd(
-    graph: Graph, output: Path, config: MermaidStylingConfig | None = None
+    graph: GraphBase, output: Path, config: MermaidStylingConfig | None = None
 ) -> None:
     """
     Export the graph to a Mermaid .mmd file.
@@ -249,7 +249,7 @@ def export_topology_mermaid_mmd(
 
 @register_view([".svg", ".png"])
 def export_topology_mermaid_image(
-    graph: Graph,
+    graph: GraphBase,
     output: Path,
     config: MermaidStylingConfig | None = None,
     embed_checksum: bool = False,

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, cast
 
 from ...enums import Engine
 from ...graph import Graph
@@ -31,7 +31,7 @@ def load_graph(
         g = g.upstream_of(g[upstream_of])
     if downstream_of:
         g = g.downstream_of(g[downstream_of])
-    return g
+    return cast(Graph[Any], g)
 
 
 def info_command(

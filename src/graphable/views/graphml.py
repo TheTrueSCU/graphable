@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any, Callable
 from xml.dom import minidom
 
-from ..graph import Graph
+from ..graph_base import GraphBase
 from ..graphable import Graphable
 from ..registry import register_view
 
@@ -27,13 +27,13 @@ class GraphmlStylingConfig:
 
 
 def create_topology_graphml(
-    graph: Graph, config: GraphmlStylingConfig | None = None
+    graph: GraphBase, config: GraphmlStylingConfig | None = None
 ) -> str:
     """
     Generate a GraphML (XML) representation of the graph.
 
     Args:
-        graph (Graph): The graph to convert.
+        graph (GraphBase): The graph to convert.
         config (GraphmlStylingConfig | None): Export configuration.
 
     Returns:
@@ -69,7 +69,7 @@ def create_topology_graphml(
     graph_elem = ET.SubElement(root, "graph", {"id": "G", "edgedefault": "directed"})
 
     # Nodes
-    for node in graph.topological_order():
+    for node in graph:
         node_id = config.node_ref_fnc(node)
         node_elem = ET.SubElement(graph_elem, "node", {"id": node_id})
 
@@ -99,13 +99,13 @@ def create_topology_graphml(
 
 @register_view(".graphml", creator_fnc=create_topology_graphml)
 def export_topology_graphml(
-    graph: Graph, output: Path, config: GraphmlStylingConfig | None = None
+    graph: GraphBase, output: Path, config: GraphmlStylingConfig | None = None
 ) -> None:
     """
     Export the graph to a GraphML (.graphml) file.
 
     Args:
-        graph (Graph): The graph to export.
+        graph (GraphBase): The graph to export.
         output (Path): The output file path.
         config (GraphmlStylingConfig | None): Export configuration.
     """

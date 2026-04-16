@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, mock_open, patch
 
 from pytest import fixture, raises
 
-from graphable.graph import Graph
+from graphable.acyclic_graph import AcyclicGraph as Graph
 from graphable.graphable import Graphable
 from graphable.views.graphviz import (
     GraphvizStylingConfig,
