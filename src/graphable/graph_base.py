@@ -869,23 +869,24 @@ class GraphBase[T: Graphable[Any]]:
 
     def all_paths(self, source: T, target: T) -> list[list[T]]:
         """
-        Find all possible paths between two nodes.
+        Find all possible simple paths between two nodes.
 
         Args:
             source (T): Starting node.
             target (T): Ending node.
 
         Returns:
-            list[list[T]]: A list of all paths, where each path is a list of nodes.
+            list[list[T]]: A list of all simple paths, where each path is a list of nodes.
         """
 
         def find_all_paths(current: T, goal: T, path: list[T]) -> list[list[T]]:
             path = path + [current]
             if current == goal:
                 return [path]
+
             paths = []
             for neighbor in current.dependents:
-                if neighbor in self._nodes:
+                if neighbor in self._nodes and neighbor not in path:
                     new_paths = find_all_paths(neighbor, goal, path)
                     for p in new_paths:
                         paths.append(p)

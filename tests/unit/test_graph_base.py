@@ -300,6 +300,18 @@ class TestGraphBase:
         assert [a, b, d] in paths
         assert [a, c, d] in paths
 
+    def test_all_paths_cyclic(self):
+        a, b, c = [Graphable(x) for x in "ABC"]
+        g = GraphBase()
+        g.add_edge(a, b)
+        g.add_edge(b, a)  # Cycle A <-> B
+        g.add_edge(b, c)
+
+        # Should only find simple paths
+        paths = g.all_paths(a, c)
+        assert len(paths) == 1
+        assert paths[0] == [a, b, c]
+
     def test_suggest_cycle_breaks(self):
         a = Graphable("A")
         b = Graphable("B")

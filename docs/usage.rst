@@ -180,6 +180,43 @@ If your graph contains cycles (which prevents it from being a DAG), ``graphable`
    # Returns a list of (source, target) tuples to remove
    suggested_breaks = graph.suggest_cycle_breaks()
 
+Cyclic Graphs
+^^^^^^^^^^^^^
+
+While the default ``Graph`` class (an alias for ``AcyclicGraph``) strictly enforces acyclicity, you can use the ``CyclicGraph`` class to work with structures that contain loops.
+
+.. code-block:: python
+
+   from graphable.cyclic_graph import CyclicGraph
+   from graphable.graphable import Graphable
+
+   a = Graphable("A")
+   b = Graphable("B")
+
+   g = CyclicGraph()
+   g.add_edge(a, b)
+   g.add_edge(b, a) # This is allowed in CyclicGraph
+
+**Converting to Acyclic**
+
+If you have a ``CyclicGraph`` and need to perform DAG-specific operations (like topological sorts or CPM), you can convert it to an ``AcyclicGraph`` by breaking cycles:
+
+.. code-block:: python
+
+   # Returns a new AcyclicGraph with minimal edge breaks
+   dag = g.to_acyclic()
+
+**Unified I/O for Cyclic Graphs**
+
+Note that the high-level ``Graph.read()`` method will raise a ``GraphCycleError`` if the input file contains cycles. If you expect your data to be cyclic, use ``CyclicGraph.read()`` instead:
+
+.. code-block:: python
+
+   from graphable.cyclic_graph import CyclicGraph
+
+   # Correctly handles files with cycles
+   g = CyclicGraph.read("cyclic_structure.json")
+
 Cycle Detection
 ^^^^^^^^^^^^^^^
 
