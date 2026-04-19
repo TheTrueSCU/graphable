@@ -3,7 +3,7 @@ from logging import getLogger
 from pathlib import Path
 from typing import Any, Callable
 
-from ..graph import Graph
+from ..graph_base import GraphBase
 from ..graphable import Graphable
 from ..registry import register_view
 
@@ -26,7 +26,9 @@ class YamlStylingConfig:
     indent: int = 2
 
 
-def create_topology_yaml(graph: Graph, config: YamlStylingConfig | None = None) -> str:
+def create_topology_yaml(
+    graph: GraphBase, config: YamlStylingConfig | None = None
+) -> str:
     """
     Generate a YAML representation of the graph.
     Requires 'PyYAML' to be installed.
@@ -52,7 +54,7 @@ def create_topology_yaml(graph: Graph, config: YamlStylingConfig | None = None) 
     nodes = []
     edges = []
 
-    for node in graph.topological_order():
+    for node in graph:
         node_id = config.reference_fnc(node)
         node_entry = {
             "id": node_id,
@@ -73,7 +75,7 @@ def create_topology_yaml(graph: Graph, config: YamlStylingConfig | None = None) 
 
 @register_view([".yaml", ".yml"], creator_fnc=create_topology_yaml)
 def export_topology_yaml(
-    graph: Graph,
+    graph: GraphBase,
     output: Path,
     config: YamlStylingConfig | None = None,
 ) -> None:

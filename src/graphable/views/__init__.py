@@ -48,6 +48,8 @@ from .texttree import (
     export_topology_tree_txt,
 )
 from .tikz import TikzStylingConfig, create_topology_tikz, export_topology_tikz
+from .toml import TomlStylingConfig, create_topology_toml, export_topology_toml
+from .yaml import YamlStylingConfig, create_topology_yaml, export_topology_yaml
 
 __all__ = [
     "AsciiflowStylingConfig",
@@ -61,6 +63,8 @@ __all__ = [
     "PlantUmlStylingConfig",
     "TextTreeStylingConfig",
     "TikzStylingConfig",
+    "TomlStylingConfig",
+    "YamlStylingConfig",
     "create_topology_ascii_flow",
     "create_topology_csv",
     "create_topology_cytoscape",
@@ -73,6 +77,8 @@ __all__ = [
     "create_topology_plantuml",
     "create_topology_tree_txt",
     "create_topology_tikz",
+    "create_topology_toml",
+    "create_topology_yaml",
     "export_markdown_wrapped",
     "export_topology_ascii_flow",
     "export_topology_csv",
@@ -90,6 +96,8 @@ __all__ = [
     "export_topology_plantuml_image",
     "export_topology_tree_txt",
     "export_topology_tikz",
+    "export_topology_toml",
+    "export_topology_yaml",
     "to_networkx",
     "wrap_in_markdown",
 ]

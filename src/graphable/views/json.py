@@ -4,7 +4,7 @@ from logging import getLogger
 from pathlib import Path
 from typing import Any, Callable
 
-from ..graph import Graph
+from ..graph_base import GraphBase
 from ..graphable import Graphable
 from ..registry import register_view
 
@@ -27,12 +27,14 @@ class JsonStylingConfig:
     indent: int | str | None = 2
 
 
-def create_topology_json(graph: Graph, config: JsonStylingConfig | None = None) -> str:
+def create_topology_json(
+    graph: GraphBase, config: JsonStylingConfig | None = None
+) -> str:
     """
     Generate a JSON representation of the graph.
 
     Args:
-        graph (Graph): The graph to convert.
+        graph (GraphBase): The graph to convert.
         config (JsonStylingConfig | None): Serialization configuration.
 
     Returns:
@@ -44,7 +46,7 @@ def create_topology_json(graph: Graph, config: JsonStylingConfig | None = None) 
     nodes = []
     edges = []
 
-    for node in graph.topological_order():
+    for node in graph:
         node_id = config.reference_fnc(node)
         node_entry = {
             "id": node_id,
@@ -65,7 +67,7 @@ def create_topology_json(graph: Graph, config: JsonStylingConfig | None = None) 
 
 @register_view(".json", creator_fnc=create_topology_json)
 def export_topology_json(
-    graph: Graph,
+    graph: GraphBase,
     output: Path,
     config: JsonStylingConfig | None = None,
 ) -> None:
@@ -73,7 +75,7 @@ def export_topology_json(
     Export the graph to a JSON file.
 
     Args:
-        graph (Graph): The graph to export.
+        graph (GraphBase): The graph to export.
         output (Path): The output file path.
         config (JSONStylingConfig | None): Serialization configuration.
     """

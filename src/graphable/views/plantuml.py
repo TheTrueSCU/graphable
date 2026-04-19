@@ -5,7 +5,7 @@ from shutil import which
 from subprocess import PIPE, CalledProcessError, run
 from typing import Any, Callable
 
-from ..graph import Graph
+from ..graph_base import GraphBase
 from ..graphable import Graphable
 from ..registry import register_view
 
@@ -43,13 +43,13 @@ def _check_plantuml_on_path() -> None:
 
 
 def create_topology_plantuml(
-    graph: Graph, config: PlantUmlStylingConfig | None = None
+    graph: GraphBase, config: PlantUmlStylingConfig | None = None
 ) -> str:
     """
     Generate PlantUML definition from a Graph.
 
     Args:
-        graph (Graph): The graph to convert.
+        graph (GraphBase): The graph to convert.
         config (PlantUmlStylingConfig | None): Styling configuration.
 
     Returns:
@@ -66,7 +66,7 @@ def create_topology_plantuml(
 
     # Group nodes by cluster
     clusters: dict[str | None, list[Graphable[Any]]] = {}
-    for node in graph.topological_order():
+    for node in graph:
         cluster = get_cluster(node)
         if cluster not in clusters:
             clusters[cluster] = []
@@ -88,7 +88,7 @@ def create_topology_plantuml(
             puml.append("}")
 
     # Edges
-    for node in graph.topological_order():
+    for node in graph:
         node_ref = config.node_ref_fnc(node)
         for dependent, _ in graph.internal_dependents(node):
             dep_ref = config.node_ref_fnc(dependent)
@@ -100,7 +100,7 @@ def create_topology_plantuml(
 
 @register_view(".puml", creator_fnc=create_topology_plantuml)
 def export_topology_plantuml(
-    graph: Graph, output: Path, config: PlantUmlStylingConfig | None = None
+    graph: GraphBase, output: Path, config: PlantUmlStylingConfig | None = None
 ) -> None:
     """
     Export the graph to a PlantUML (.puml) file.
@@ -117,7 +117,7 @@ def export_topology_plantuml(
 
 @register_view([".svg", ".png"])
 def export_topology_plantuml_image(
-    graph: Graph, output: Path, config: PlantUmlStylingConfig | None = None
+    graph: GraphBase, output: Path, config: PlantUmlStylingConfig | None = None
 ) -> None:
     """
     Export the graph to an image file (SVG or PNG) using the 'plantuml' command.

@@ -6,7 +6,17 @@ API Reference
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: graphable.graph
+.. automodule:: graphable.acyclic_graph
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: graphable.cyclic_graph
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: graphable.graph_base
    :members:
    :undoc-members:
    :show-inheritance:

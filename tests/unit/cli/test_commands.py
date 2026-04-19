@@ -90,7 +90,7 @@ def test_checksum_command(tmp_path):
     graph_file = tmp_path / "test.json"
     graph_file.write_text('{"nodes": [{"id": "A"}], "edges": []}')
 
-    from graphable.graph import Graph
+    from graphable.acyclic_graph import AcyclicGraph as Graph
 
     g = Graph.from_json(graph_file)
     expected = g.checksum()
@@ -106,7 +106,7 @@ def test_write_checksum_command(tmp_path):
     write_checksum_command(graph_file, checksum_file)
     assert checksum_file.exists()
 
-    from graphable.graph import Graph
+    from graphable.acyclic_graph import AcyclicGraph as Graph
 
     g = Graph.from_json(graph_file)
     assert checksum_file.read_text() == g.checksum()
@@ -116,7 +116,7 @@ def test_verify_command(tmp_path):
     graph_file = tmp_path / "test.json"
     graph_file.write_text('{"nodes": [{"id": "A"}], "edges": []}')
 
-    from graphable.graph import Graph
+    from graphable.acyclic_graph import AcyclicGraph as Graph
 
     g = Graph.from_json(graph_file)
     digest = g.checksum()

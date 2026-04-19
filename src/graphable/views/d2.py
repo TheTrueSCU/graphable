@@ -5,7 +5,7 @@ from shutil import which
 from subprocess import PIPE, CalledProcessError, run
 from typing import Any, Callable
 
-from ..graph import Graph
+from ..graph_base import GraphBase
 from ..graphable import Graphable
 from ..registry import register_view
 
@@ -61,12 +61,12 @@ def _format_styles(styles: dict[str, str] | None, indent: str = "  ") -> list[st
     return lines
 
 
-def create_topology_d2(graph: Graph, config: D2StylingConfig | None = None) -> str:
+def create_topology_d2(graph: GraphBase, config: D2StylingConfig | None = None) -> str:
     """
     Generate D2 definition from a Graph.
 
     Args:
-        graph (Graph): The graph to convert.
+        graph (GraphBase): The graph to convert.
         config (D2StylingConfig | None): Styling configuration.
 
     Returns:
@@ -91,7 +91,7 @@ def create_topology_d2(graph: Graph, config: D2StylingConfig | None = None) -> s
 
     # Group nodes by cluster
     clusters: dict[str | None, list[Graphable[Any]]] = {}
-    for node in graph.topological_order():
+    for node in graph:
         cluster = get_cluster(node)
         if cluster not in clusters:
             clusters[cluster] = []
@@ -117,7 +117,7 @@ def create_topology_d2(graph: Graph, config: D2StylingConfig | None = None) -> s
             d2.append("}")
 
     # Edges
-    for node in graph.topological_order():
+    for node in graph:
         node_ref = config.node_ref_fnc(node)
         for dependent, _ in graph.internal_dependents(node):
             # If nodes are in clusters, D2 handles flat references or nested references.
@@ -142,13 +142,13 @@ def create_topology_d2(graph: Graph, config: D2StylingConfig | None = None) -> s
 
 @register_view(".d2", creator_fnc=create_topology_d2)
 def export_topology_d2(
-    graph: Graph, output: Path, config: D2StylingConfig | None = None
+    graph: GraphBase, output: Path, config: D2StylingConfig | None = None
 ) -> None:
     """
     Export the graph to a D2 file.
 
     Args:
-        graph (Graph): The graph to export.
+        graph (GraphBase): The graph to export.
         output (Path): The output file path.
         config (D2StylingConfig | None): Styling configuration.
     """
@@ -159,13 +159,13 @@ def export_topology_d2(
 
 @register_view([".svg", ".png"])
 def export_topology_d2_image(
-    graph: Graph, output: Path, config: D2StylingConfig | None = None
+    graph: GraphBase, output: Path, config: D2StylingConfig | None = None
 ) -> None:
     """
     Export the graph to an image file (SVG or PNG) using the 'd2' command.
 
     Args:
-        graph (Graph): The graph to export.
+        graph (GraphBase): The graph to export.
         output (Path): The output file path.
         config (D2StylingConfig | None): Styling configuration.
     """

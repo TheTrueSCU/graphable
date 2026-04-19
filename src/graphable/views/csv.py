@@ -4,7 +4,7 @@ from logging import getLogger
 from pathlib import Path
 from typing import Any, Callable
 
-from ..graph import Graph
+from ..graph_base import GraphBase
 from ..graphable import Graphable
 from ..registry import register_view
 
@@ -12,7 +12,7 @@ logger = getLogger(__name__)
 
 
 def create_topology_csv(
-    graph: Graph,
+    graph: GraphBase,
     node_text_fnc: Callable[[Graphable[Any]], str] = lambda n: n.reference,
     include_header: bool = True,
 ) -> str:
@@ -20,7 +20,7 @@ def create_topology_csv(
     Generate a CSV edge list from a Graph.
 
     Args:
-        graph (Graph): The graph to convert.
+        graph (GraphBase): The graph to convert.
         node_text_fnc: Function to generate the text for each node.
         include_header: Whether to include a header row ('source','target').
 
@@ -34,7 +34,7 @@ def create_topology_csv(
     if include_header:
         writer.writerow(["source", "target"])
 
-    for node in graph.topological_order():
+    for node in graph:
         source_text = node_text_fnc(node)
         for dependent, _ in graph.internal_dependents(node):
             target_text = node_text_fnc(dependent)
@@ -45,7 +45,7 @@ def create_topology_csv(
 
 @register_view(".csv", creator_fnc=create_topology_csv)
 def export_topology_csv(
-    graph: Graph,
+    graph: GraphBase,
     output: Path,
     node_text_fnc: Callable[[Graphable[Any]], str] = lambda n: n.reference,
     include_header: bool = True,
@@ -54,7 +54,7 @@ def export_topology_csv(
     Export the graph to a CSV file.
 
     Args:
-        graph (Graph): The graph to export.
+        graph (GraphBase): The graph to export.
         output (Path): The output file path.
         node_text_fnc: Function to generate the text for each node.
         include_header: Whether to include a header row.

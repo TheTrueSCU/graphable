@@ -4,7 +4,7 @@ from unittest.mock import mock_open, patch
 
 from pytest import fixture
 
-from graphable.graph import Graph
+from graphable.acyclic_graph import AcyclicGraph as Graph
 from graphable.graphable import Graphable
 from graphable.views.json import (
     JsonStylingConfig,

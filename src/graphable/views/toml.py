@@ -3,7 +3,7 @@ from logging import getLogger
 from pathlib import Path
 from typing import Any, Callable
 
-from ..graph import Graph
+from ..graph_base import GraphBase
 from ..graphable import Graphable
 from ..registry import register_view
 
@@ -24,7 +24,9 @@ class TomlStylingConfig:
     reference_fnc: Callable[[Graphable[Any]], str] = lambda n: str(n.reference)
 
 
-def create_topology_toml(graph: Graph, config: TomlStylingConfig | None = None) -> str:
+def create_topology_toml(
+    graph: GraphBase, config: TomlStylingConfig | None = None
+) -> str:
     """
     Generate a TOML representation of the graph.
     Requires 'tomli-w' to be installed.
@@ -50,7 +52,7 @@ def create_topology_toml(graph: Graph, config: TomlStylingConfig | None = None) 
     nodes = []
     edges = []
 
-    for node in graph.topological_order():
+    for node in graph:
         node_id = config.reference_fnc(node)
         node_entry = {
             "id": node_id,
@@ -71,7 +73,7 @@ def create_topology_toml(graph: Graph, config: TomlStylingConfig | None = None) 
 
 @register_view(".toml", creator_fnc=create_topology_toml)
 def export_topology_toml(
-    graph: Graph,
+    graph: GraphBase,
     output: Path,
     config: TomlStylingConfig | None = None,
 ) -> None:

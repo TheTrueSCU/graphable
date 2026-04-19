@@ -4,7 +4,7 @@ from logging import getLogger
 from pathlib import Path
 from typing import Any, Callable
 
-from ..graph import Graph
+from ..graph_base import GraphBase
 from ..graphable import Graphable
 from ..registry import register_view
 
@@ -32,13 +32,13 @@ class CytoscapeStylingConfig:
 
 
 def create_topology_cytoscape(
-    graph: Graph, config: CytoscapeStylingConfig | None = None
+    graph: GraphBase, config: CytoscapeStylingConfig | None = None
 ) -> str:
     """
     Generate a Cytoscape.js compatible JSON representation of the graph.
 
     Args:
-        graph (Graph): The graph to convert.
+        graph (GraphBase): The graph to convert.
         config (CytoscapeStylingConfig | None): Serialization configuration.
 
     Returns:
@@ -49,7 +49,7 @@ def create_topology_cytoscape(
 
     elements = []
 
-    for node in graph.topological_order():
+    for node in graph:
         # Node
         node_id = config.reference_fnc(node)
         node_data = {
@@ -84,7 +84,7 @@ def create_topology_cytoscape(
 
 @register_view(".cy.json", creator_fnc=create_topology_cytoscape)
 def export_topology_cytoscape(
-    graph: Graph,
+    graph: GraphBase,
     output: Path,
     config: CytoscapeStylingConfig | None = None,
 ) -> None:
@@ -92,7 +92,7 @@ def export_topology_cytoscape(
     Export the graph to a Cytoscape JSON file.
 
     Args:
-        graph (Graph): The graph to export.
+        graph (GraphBase): The graph to export.
         output (Path): The output file path.
         config (CytoscapeStylingConfig | None): Serialization configuration.
     """

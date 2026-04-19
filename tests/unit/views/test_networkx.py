@@ -1,7 +1,7 @@
 import networkx as nx
 from pytest import raises
 
-from graphable.graph import Graph
+from graphable.acyclic_graph import AcyclicGraph as Graph
 from graphable.graphable import Graphable
 
 

@@ -3,7 +3,7 @@ from logging import getLogger
 from pathlib import Path
 from typing import Any, Callable
 
-from ..graph import Graph
+from ..graph_base import GraphBase
 from ..graphable import Graphable
 from ..registry import register_view
 
@@ -25,7 +25,7 @@ class TextTreeStylingConfig:
 
 
 def create_topology_tree_txt(
-    graph: Graph, config: TextTreeStylingConfig | None = None
+    graph: GraphBase, config: TextTreeStylingConfig | None = None
 ) -> str:
     """
     Create a text-based tree representation of the graph topology.
@@ -109,7 +109,7 @@ def create_topology_tree_txt(
 
 @register_view(".txt", creator_fnc=create_topology_tree_txt)
 def export_topology_tree_txt(
-    graph: Graph, output: Path, config: TextTreeStylingConfig | None = None
+    graph: GraphBase, output: Path, config: TextTreeStylingConfig | None = None
 ) -> None:
     """
     Export the graph to a text tree file.

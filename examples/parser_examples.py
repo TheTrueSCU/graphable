@@ -1,4 +1,5 @@
-from graphable.graph import Graph
+from graphable.acyclic_graph import AcyclicGraph as Graph
+from graphable.cyclic_graph import CyclicGraph
 from graphable.views.texttree import create_topology_tree_txt
 
 
@@ -55,12 +56,31 @@ def demo_csv_parsing():
     print(g.render(create_topology_tree_txt))
 
 
+def demo_cyclic_parsing():
+    print("\n--- Cyclic JSON Parsing ---")
+    # A cycle: A -> B -> A
+    json_data = """
+    {
+      "nodes": [{"id": "A"}, {"id": "B"}],
+      "edges": [
+        {"source": "A", "target": "B"},
+        {"source": "B", "target": "A"}
+      ]
+    }
+    """
+    # Note: Using CyclicGraph because Graph (AcyclicGraph) would raise an error
+    g = CyclicGraph.from_json(json_data)
+    print(f"Loaded {len(g)} nodes from cyclic JSON string.")
+    print("Nodes: " + ", ".join([n.reference for n in g]))
+
+
 def main():
     print("Graphable Parser Examples\n")
     demo_json_parsing()
     demo_yaml_parsing()
     demo_toml_parsing()
     demo_csv_parsing()
+    demo_cyclic_parsing()
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 from json import dumps
 
-from graphable.graph import Graph, Graphable
+from graphable.acyclic_graph import AcyclicGraph as Graph
+from graphable.graphable import Graphable
 from graphable.parsers.json import load_graph_json
 from graphable.views.json import create_topology_json
 
